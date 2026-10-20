@@ -22,7 +22,7 @@ export function createBossScene() {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x05030c);
     scene.fog = new THREE.Fog(0x05030c, 22, 60);
-    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+    const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 200);
     const look = new THREE.Vector3(0, 4.9, 0);
 
     scene.add(new THREE.HemisphereLight(0x7a5ab0, 0x0a0614, 0.8));
@@ -186,7 +186,7 @@ export function createBossScene() {
             tmpE.set(p.rx, p.rx * 0.7, 0); tmpQ.setFromEuler(tmpE);
             tmpS.setScalar(p.size * (0.3 + 0.7 * k)); tmpP.set(p.x, p.y, p.z);
             tmpM.compose(tmpP, tmpQ, tmpS); pMesh.setMatrixAt(i, tmpM);
-            tmpC.copy(p.c).multiplyScalar(0.4 + k * 1.6); pMesh.setColorAt(i, tmpC);
+            tmpC.copy(p.c).multiplyScalar(0.25 + k * 0.85); pMesh.setColorAt(i, tmpC);
         }
         pMesh.instanceMatrix.needsUpdate = true;
         if (pMesh.instanceColor) pMesh.instanceColor.needsUpdate = true;
@@ -211,6 +211,11 @@ export function createBossScene() {
     let shieldT = 0;
 
     /* ---------- 상태 ---------- */
+    // 내 칭호 (캐릭터+아우라가 여기 들어옴) — 보스를 둘러싼 원 위에 서 있고, 회피하면 원을 따라 옆으로 이동
+    const player = new THREE.Group(); player.scale.setScalar(0.55); scene.add(player);
+    const PR = 8.5;
+    let ang = 0, angT = 0, lungeT = 0, recoilT = 0, flinch = 0;
+    const toBoss = new THREE.Vector3();
     let t = 0, shake = 0, flashBody = 0, flashScreen = 0;
     let chargeT = 0, chargeDur = 1, stunned = false, enraged = false, dead = false, deadT = 0, punchSide = 0, hp = 1;
     let entryT = 0;
@@ -226,13 +231,24 @@ export function createBossScene() {
     function update(dt, W, H) {
         t += dt; entryT = Math.min(1, entryT + dt * 0.7);
         // 카메라: 폰처럼 세로로 긴 화면이면 더 멀리서
+        // 내 칭호: 원 위에서 보스를 바라봄 (공격하면 앞으로 살짝, 맞으면 뒤로 밀림)
+        ang += (angT - ang) * Math.min(1, dt * 9);
+        lungeT = Math.max(0, lungeT - dt); recoilT = Math.max(0, recoilT - dt);
+        const push = Math.sin(lungeT / 0.25 * Math.PI) * 0.9 - Math.sin(recoilT / 0.35 * Math.PI) * 0.8;
+        const sx = Math.sin(ang), sz = Math.cos(ang);
+        player.position.set(sx * (PR - push), 0, sz * (PR - push));
+        player.rotation.y = ang + Math.PI;
+        // 카메라: 내 칭호 뒤 오른쪽 어깨 너머로 보스를 봄 (세로 화면이면 조금 더 뒤로)
         const aspect = W / H;
-        const fovT = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-        const dist = Math.max(17, 10.2 / (2 * fovT * aspect), 12.5 / (2 * fovT)) * (1.25 - 0.25 * entryT);
-        const yaw = Math.sin(t * 0.15) * 0.08;
-        camera.position.set(Math.sin(yaw) * dist, 5.6 + Math.sin(t * 0.4) * 0.15, Math.cos(yaw) * dist);
+        const back = (aspect < 0.7 ? 13 : 10) + (1 - entryT) * 6;
+        const side = aspect < 0.7 ? 2.6 : 3.4;
+        camera.position.set(sx * (PR + back) + sz * side, 6.4 + Math.sin(t * 0.4) * 0.12, sz * (PR + back) - sx * side);
         if (shake > 0.001) { camera.position.x += rand(-1, 1) * shake; camera.position.y += rand(-1, 1) * shake; shake *= Math.pow(0.015, dt); }
+        look.set(sx * 1.5, 4.6, sz * 1.5);
         camera.lookAt(look);
+        boss.rotation.y += (ang - boss.rotation.y) * Math.min(1, dt * 3);   // 보스는 나를 따라 몸을 돌림
+        flinch *= Math.pow(0.002, dt);
+        body.position.z = -flinch;
 
         setTint(stunned ? ICE : enraged ? RAGE : RIFT, dt);
 
@@ -271,7 +287,7 @@ export function createBossScene() {
             coreLight.color.copy(coreMat.emissive);
             eyeMat.color.copy(stunned ? ICE : enraged ? RAGE : new THREE.Color(0xff6ad8));
             const fl = flashBody;
-            bodyMats.forEach(m => { m.emissive.copy(BASE_EM).lerp(WHITE, Math.min(1, fl)); m.emissiveIntensity = 0.35 + fl * 0.9; });
+            bodyMats.forEach(m => { m.emissive.copy(BASE_EM).lerp(WHITE, Math.min(0.6, fl * 0.7)); m.emissiveIntensity = 0.35 + fl * 0.45; });
             if (chargeT > 0) {
                 chargeT -= dt;
                 if (Math.random() < dt * 40) emit(1, { x: rand(-7, 7), y: rand(0.5, 11), z: rand(-2, 5), spread: 0, speed: 0, life: 0.9, size: 0.2, color: [0xffffff, 0xff4a6a], home: coreG.getWorldPosition(new THREE.Vector3()) });
@@ -323,7 +339,14 @@ export function createBossScene() {
         updateParts(dt);
     }
 
-    const front = () => ({ x: rand(-1.6, 1.6), y: 5 + rand(-1.4, 1.6) + boss.position.y, z: 1.4 });
+    // 보스 몸에서 내 쪽을 향한 면 (피격 불꽃 위치)
+    const front = () => { const l = rand(-1.5, 1.5); return { x: Math.sin(ang) * 1.6 + Math.cos(ang) * l, y: 5 + rand(-1.4, 1.6) + boss.position.y, z: Math.cos(ang) * 1.6 - Math.sin(ang) * l }; };
+    // 내 칭호 → 보스로 날아가는 탄 (공격했다는 게 보이게)
+    function shot(color, n, size) {
+        const px = player.position.x, pz = player.position.z;
+        toBoss.set(-px, 1.8, -pz).normalize();
+        emit(n, { x: px + toBoss.x * 1.2, y: 2.4, z: pz + toBoss.z * 1.2, spread: 0.25, spreadZ: 0.25, speed: 26, dir: [toBoss.x, toBoss.y * 0.45, toBoss.z], life: 0.32, size, color: [color, 0xffffff] });
+    }
 
     return {
         scene, camera, update,
@@ -348,10 +371,16 @@ export function createBossScene() {
         setStun(v) { if (v && !stunned) { emit(30, { ...front(), spread: 2.5, speed: 5, life: 0.8, size: 0.3, color: [0xbff4ff, 0x7ae8ff, 0xffffff] }); chargeT = 0; } stunned = v; },
         setEnrage(v) { if (v && !enraged) { shake = 0.5; emit(50, { x: 0, y: 5, z: 1, spread: 2, speed: 10, life: 1, size: 0.3, color: [0xff3a3a, 0xff9a3a] }); } enraged = v; },
         setHp(k) { hp = k; },
-        // 내가 때림 (power 0~1: 셀수록 크게 번쩍)
+        player,
+        // 회피: 원을 따라 옆으로 (dir -1 왼쪽 / 1 오른쪽)
+        dodge(dir) { angT = Math.max(-1.1, Math.min(1.1, angT + dir * 0.55)); },
+        lunge(color = 0xffffff, big = false) { lungeT = 0.25; shot(color, big ? 18 : 5, big ? 0.35 : 0.2); },
+        recoil() { recoilT = 0.35; },
+        // 내 공격이 맞음 (power 0~1: 셀수록 크게 번쩍)
         hit(power = 0.3, color = 0xffffff) {
             if (dead) return;
-            flashBody = Math.max(flashBody, power * 0.7);
+            flinch = Math.max(flinch, 0.15 + power * 0.45);
+            flashBody = Math.max(flashBody, 0.15 + power * 0.4);
             const p = front();
             emit(3 + Math.round(power * 10), { ...p, spread: 0.3, speed: 4 + power * 6, life: 0.45, size: 0.14 + power * 0.12, color: [color, 0xffffff], jitter: 1.5 });
             if (power > 0.6) shake = Math.max(shake, 0.18);

@@ -4,9 +4,9 @@
    - 칭호 6개로 팀을 짜서 입장 → 앞의 칭호가 쓰러지면 다음 칭호가 나옴, 전멸하면 재정비 후 다시
    - 화면을 탭(꾹 누르기)하면 기본기 → 에너지가 차면 필살기, 좌우로 밀면 회피
    - 보스 약점 속성이면 피해 ×1.6, 저항 속성이면 ×0.625
-   - 이기면 포획 단계: 구슬을 던져 던전 칭호를 붙잡음
+   - 이기면 보상이 바로 들어옴 (낮은 확률로 레이드 전용 장비·칭호)
    - 솔로: 서버 없음 / 파티(최대 4명): Supabase 실시간 채널 (DB 저장 없음, 보스 체력만 같이 깎음)
-   - 던전 티켓 + 하루 3판까지
+   - 던전 티켓(상점에서 판매) + 하루 3판까지
    ========================================================= */
 
 export const ELEMENTS = {
@@ -40,15 +40,17 @@ export function raidInfo(a) {
 }
 
 export const DIFFS = [
-    { id: 'easy',   star: 1, label: '쉬움',   color: '#5fe08a', hp: 20000,  hit: 120, slam: 600,  jc: 60000,   xp: 1500, items: { limit_potion: 1 },                    egg: ['egg_basic', 0.2],   catchP: null },
-    { id: 'normal', star: 3, label: '보통',   color: '#ffd23a', hp: 60000,  hit: 300, slam: 1200, jc: 200000,  xp: 3000, items: { limit_potion: 2, star_potion: 1 },    egg: ['egg_rare', 0.25],   catchP: { walker: 0.03, lord: 0, lordP: 0 } },
-    { id: 'hard',   star: 5, label: '어려움', color: '#ff8a3a', hp: 200000, hit: 500, slam: 2200, jc: 600000,  xp: 5000, items: { overcome_potion: 1, dice_potion: 1 }, egg: ['egg_legend', 0.25], catchP: { walker: 0.06, lord: 0.03, lordP: 0.03 } },
-    { id: 'hell',   star: 6, label: '지옥',   color: '#ff2a4a', hp: 500000, hit: 800, slam: 3500, jc: 1800000, xp: 8000, items: { heaven_potion: 1 },                   egg: ['egg_mythic', 0.25], catchP: { walker: 0.10, lord: 0.04, lordP: 0.10 }, extra: ['void_potion', 0.3] }
+    { id: 'easy',   star: 1, label: '쉬움',   color: '#5fe08a', hp: 20000,  hit: 120, slam: 600,  jc: 60000,   xp: 1500, items: { limit_potion: 1 },                    egg: ['egg_basic', 0.2] },
+    { id: 'normal', star: 3, label: '보통',   color: '#ffd23a', hp: 60000,  hit: 300, slam: 1200, jc: 200000,  xp: 3000, items: { limit_potion: 2, star_potion: 1 },    egg: ['egg_rare', 0.25] },
+    { id: 'hard',   star: 5, label: '어려움', color: '#ff8a3a', hp: 200000, hit: 500, slam: 2200, jc: 600000,  xp: 5000, items: { overcome_potion: 1, dice_potion: 1 }, egg: ['egg_legend', 0.25] },
+    { id: 'hell',   star: 6, label: '지옥',   color: '#ff2a4a', hp: 500000, hit: 800, slam: 3500, jc: 1800000, xp: 8000, items: { heaven_potion: 1 },                   egg: ['egg_mythic', 0.25], extra: ['void_potion', 0.3] }
 ];
-// 레이드 클리어 시 장비 드롭 (난이도별 확률)
+// 레이드 클리어 시 전용 드롭 (난이도별 확률: ★1, ★3, ★5, ★6)
 export const DROPS = [
-    { id: 'gear_riftbreaker', p: [0, 0.02, 0.05, 0.12] },
-    { id: 'amu_riftcore',     p: [0, 0.03, 0.07, 0.15] }
+    { kind: 'gear', id: 'gear_riftbreaker', p: [0, 0.008, 0.02, 0.045] },
+    { kind: 'gear', id: 'amu_riftcore',     p: [0, 0.01, 0.025, 0.055] },
+    { kind: 'aura', id: 'dng_riftwalker',   p: [0, 0.006, 0.015, 0.035] },
+    { kind: 'aura', id: 'dng_riftlord',     p: [0, 0, 0.002, 0.008] }
 ];
 export const TICKET_DAILY = 2, TICKET_PRICE = 250000, RUN_CAP = 3;
 const TIME = 180, MAX_PARTY = 4, TEAM = 6, REJOIN_MS = 8000;
@@ -181,11 +183,11 @@ export function createDungeon(api) {
         return `<div class="rd-stars">${DIFFS.map((d, i) => `<button class="rd-star ${i === selDiff ? 'on' : ''} ${unlocked(i) ? '' : 'lock'}" style="--dc:${d.color}" data-dgdiff="${i}" ${disabled ? 'disabled' : ''}><b>${unlocked(i) ? stars(d.star) : '🔒'}</b><small>${d.label}${s.clears[d.id] ? ' ✓' : ''}</small></button>`).join('')}</div>`;
     }
     function rewardsHtml() {
-        const D = DIFFS[selDiff], c = D.catchP;
+        const D = DIFFS[selDiff];
         return `<div class="rd-rw">
             <div class="rd-rw-row">${api.rewardChips({ jc: D.jc, items: D.items })}<span class="at-rw">🎫 ${fmt(D.xp)} XP</span></div>
-            <div class="rd-rw-row"><span class="at-rw">🥚 ${api.eggName(D.egg[0])} ${Math.round(D.egg[1] * 100)}%</span>${D.extra ? `<span class="at-rw">${api.itemName(D.extra[0])} ${Math.round(D.extra[1] * 100)}%</span>` : ''}${DROPS.filter(x => x.p[selDiff]).map(x => `<span class="at-rw rd-gear">⚒ ${esc(api.gearName(x.id))} ${Math.round(x.p[selDiff] * 1000) / 10}%</span>`).join('')}</div>
-            <div class="rd-rw-note">${c ? `🎯 클리어하면 포획 단계 — 「${esc(api.aura('dng_riftwalker').name)}」${c.lordP ? ` · ${Math.round(c.lordP * 100)}% 확률로 「${esc(api.aura('dng_riftlord').name)}」 등장` : ''}` : '★1은 포획 단계가 없어요'}</div>
+            <div class="rd-rw-row"><span class="at-rw">🥚 ${api.eggName(D.egg[0])} ${Math.round(D.egg[1] * 100)}%</span>${D.extra ? `<span class="at-rw">${api.itemName(D.extra[0])} ${Math.round(D.extra[1] * 100)}%</span>` : ''}</div>
+            <div class="rd-rw-row">${DROPS.filter(x => x.p[selDiff]).map(x => `<span class="at-rw rd-gear">${x.kind === 'aura' ? '✦ ' + esc(api.aura(x.id).name) : '⚒ ' + esc(api.gearName(x.id))} ${Math.round(x.p[selDiff] * 1000) / 10}%</span>`).join('') || '<span class="rd-rw-note">★1은 레이드 전용 드롭이 없어요</span>'}</div>
         </div>`;
     }
     function teamHtml(disabled) {
@@ -211,7 +213,7 @@ export function createDungeon(api) {
             <div class="rd-foot">
                 <div class="rd-count">
                     <span>오늘 <b>${s.runs}</b>/${RUN_CAP}판</span>
-                    <span>🎟 티켓 <b>${s.tk}</b> <button class="rd-buy" data-dg="buy" ${api.gs().jc >= TICKET_PRICE ? '' : 'disabled'}>+ ${fmt(TICKET_PRICE / 10000)}만</button></span>
+                    <span>🎟 티켓 <b>${s.tk}</b> <button class="rd-buy" data-dg="shop">상점에서 사기</button></span>
                 </div>
                 <div class="rd-go">
                     <button class="btn btn-primary" data-dg="solo" ${lock || !canPlay() ? 'disabled' : ''}>⚔ 혼자 도전</button>
@@ -290,13 +292,7 @@ export function createDungeon(api) {
             case 'pkclose': picking = -1; render(); break;
             case 'rw': showRw = !showRw; render(); break;
             case 'auto': autoTeam(); break;
-            case 'buy': {
-                const gs = api.gs();
-                if (gs.jc < TICKET_PRICE) return;
-                gs.jc -= TICKET_PRICE; s.tk++; api.save(); api.renderStats(); render();
-                api.toast('🎟 던전 티켓 +1', 'gold');
-                break;
-            }
+            case 'shop': api.closeSheet('sheet-dungeon'); setTimeout(() => api.openShop(), 200); break;
             case 'solo':
                 if (!canPlay() || !unlocked(selDiff)) return;
                 startBattle({ diff: selDiff, roster: [meEntry()], host: true, net: makeNet(null, api) });
@@ -420,8 +416,8 @@ export function createDungeon(api) {
         B = {
             diff, D, net, host, roster, scene: null, over: false, t0: now, last: now, lastSt: now, end: now + TIME * 1000,
             me: { uid: me.uid, nick: me.nick, dmg: 0, pend: 0 },
-            team: mem, cur: 0, busyUntil: now + 1200, holding: false, dodgeUntil: 0, rejoinUntil: 0,
-            nextHit: now + 3000, nextCharge: now + 9000, tele: null,
+            team: mem, cur: 0, busyUntil: now + 1500, holding: false, dodgeUntil: 0, rejoinUntil: 0, swapOpen: false,
+            nextHit: now + 3500, nextCharge: now + 9000, tele: null,
             boss: { hp: bossMax, max: bossMax },
             party: new Map(roster.map(r => [r.uid, { nick: r.nick, dmg: 0 }])),
             repT: 0.6
@@ -430,10 +426,11 @@ export function createDungeon(api) {
         wireNet();
         api.setBusy(true);
         buildBattleUI();
-        import('./boss3d.js?v=58').then(({ createBossScene }) => {
+        import('./boss3d.js?v=59').then(({ createBossScene }) => {
             if (!B || B.net !== net) return;
             B.scene = createBossScene();
             api.setTakeover(B.scene);
+            showCur();
         }).catch(e => console.warn(e));
         B.timer = setInterval(tick, 50);
         floatText(`${BOSS.name} ${stars(D.star)}`, 'big', 50, 30);
@@ -449,7 +446,6 @@ export function createDungeon(api) {
             for (const uid in m.ps) { const p = B.party.get(uid); if (p) p.dmg = m.ps[uid]; }
         });
         net.on('ev', m => { if (B && !B.over && m.k === 'end') finish(m); });
-        net.on('fx', f => { if (B && !B.over && f?.from !== B.me.nick) B.scene?.skillFx(f.type, f.color); });
         if (B.host) net.on('act', a => {
             const S = B?.sim;
             if (!S || S.over || !a?.uid || !S.ps[a.uid]) return;
@@ -481,6 +477,9 @@ export function createDungeon(api) {
     }
 
     const curM = () => B.team[B.cur];
+    const colorNum = x => parseInt(x.E.color.slice(1), 16);
+    // 무대 캐릭터에 지금 칭호를 입힘
+    function showCur() { const x = B && curM(); if (x && B.scene) api.raidAura(x.id); }
     function tick() {
         if (!B || B.over) return;
         const now = Date.now();
@@ -491,10 +490,11 @@ export function createDungeon(api) {
             B.rejoinUntil = 0;
             B.team.forEach(x => { x.hp = x.max; x.dead = false; x.en = 0; });
             B.cur = 0; B.busyUntil = now + 800; B.nextHit = now + 2500; B.nextCharge = now + 8000;
+            showCur();
             floatText('다시 도전!', 'big', 50, 40);
         }
         if (!B.rejoinUntil) {
-            if (B.holding) fastAttack();
+            if (B.holding && !B.swapOpen) fastAttack();
             bossAi(now);
         }
         B.repT -= 0.05;
@@ -539,20 +539,25 @@ export function createDungeon(api) {
         x.hp -= v;
         x.en = Math.min(100, x.en + v / x.max * 40);   // 맞으면 에너지가 조금 참
         B.hurtAt = Date.now();
-        floatText(dodged ? `회피! -${fmt(v)}` : `-${fmt(v)}`, dodged ? 'dodge' : 'hurt', 30, 74);
+        if (!dodged) B.scene?.recoil();
+        floatText(dodged ? `회피! -${fmt(v)}` : `-${fmt(v)}`, dodged ? 'dodge' : 'hurt', 26, 58);
         try { navigator.vibrate?.(big && !dodged ? 160 : 30); } catch (e) {}
         if (big && !dodged) B.scene?.shake(0.6);
-        if (x.hp <= 0) { x.hp = 0; x.dead = true; floatText(`${x.a.name} 쓰러짐!`, 'hurt', 30, 66); setTimeout(nextAlive, 600); }
+        if (x.hp <= 0) { x.hp = 0; x.dead = true; floatText(`${x.a.name} 쓰러짐!`, 'hurt', 30, 50); setTimeout(nextAlive, 700); }
     }
+    // 정해 둔 순서대로 다음 칭호
     function nextAlive() {
         if (!B || B.over) return;
-        const i = B.team.findIndex(x => !x.dead);
+        const n = B.team.length;
+        let i = -1;
+        for (let k = 1; k <= n; k++) { const j = (B.cur + k) % n; if (!B.team[j].dead) { i = j; break; } }
         if (i < 0) {
-            B.rejoinUntil = Date.now() + REJOIN_MS; B.tele = null; flash(false); B.holding = false;
+            B.rejoinUntil = Date.now() + REJOIN_MS; B.tele = null; flash(false); B.holding = false; closeSwap();
             return;
         }
-        B.cur = i; B.busyUntil = Date.now() + 700;
-        floatText(`가라, ${B.team[i].a.name}!`, 'swap', 30, 66);
+        B.cur = i; B.busyUntil = Date.now() + 800;
+        showCur();
+        floatText(`가라, ${B.team[i].a.name}!`, 'swap', 30, 50);
     }
     function fastAttack() {
         const x = curM(), now = Date.now();
@@ -560,7 +565,10 @@ export function createDungeon(api) {
         const F = x.E.fast;
         B.busyUntil = now + F.t * 1000;
         x.en = Math.min(100, x.en + F.en);
-        deal(F.pw * x.atk / 100 * x.eff, false, x);
+        api.raidPunch('fast');
+        B.scene?.lunge(colorNum(x), false);
+        const v = F.pw * x.atk / 100 * x.eff;
+        setTimeout(() => B && !B.over && deal(v, false, x), 140);
     }
     function chargedAttack() {
         const x = curM(), now = Date.now();
@@ -569,39 +577,46 @@ export function createDungeon(api) {
         if (x.en < C.cost) return;
         x.en -= C.cost;
         B.busyUntil = now + 1300;
-        B.scene?.skillFx(x.E.fx, parseInt(x.E.color.slice(1), 16));
-        B.net.send('fx', { type: x.E.fx, color: parseInt(x.E.color.slice(1), 16), from: B.me.nick });
-        floatText(C.name, 'move', 50, 44);
+        api.raidPunch('charged');
+        floatText(C.name, 'move', 50, 46);
+        setTimeout(() => {
+            if (!B || B.over) return;
+            B.scene?.lunge(colorNum(x), true);
+            B.scene?.skillFx(x.E.fx, colorNum(x));
+        }, 380);
         setTimeout(() => {
             if (!B || B.over) return;
             deal(C.pw * x.atk / 100 * x.eff, true, x);
-            if (x.eff > 1) floatText('효과가 굉장했다!', 'eff up', 50, 52);
-            else if (x.eff < 1) floatText('효과가 별로인 듯하다…', 'eff down', 50, 52);
-        }, 450);
+            if (x.eff > 1) floatText('효과가 굉장했다!', 'eff up', 50, 40);
+            else if (x.eff < 1) floatText('효과가 별로인 듯하다…', 'eff down', 50, 40);
+        }, 560);
     }
     function dodge(dir) {
         const now = Date.now();
         if (!B || B.over || B.rejoinUntil || curM()?.dead || now < B.dodgeUntil + 300) return;
         B.dodgeUntil = now + 600;
         B.busyUntil = Math.max(B.busyUntil, now + 450);
-        const el = $('db-stage');
-        el?.classList.remove('dl', 'dr'); void el?.offsetWidth; el?.classList.add(dir < 0 ? 'dl' : 'dr');
+        B.scene?.dodge(dir);
     }
     function swapTo(i) {
         const now = Date.now(), x = B?.team[i];
-        if (!x || x.dead || B.cur === i || B.rejoinUntil || now < B.busyUntil) return;
-        B.cur = i; B.busyUntil = now + 700;
-        floatText(`가라, ${x.a.name}!`, 'swap', 30, 66);
+        closeSwap();
+        if (!x || x.dead || B.cur === i || B.rejoinUntil) return;
+        B.cur = i; B.busyUntil = Math.max(B.busyUntil, now + 800);
+        showCur();
+        floatText(`가라, ${x.a.name}!`, 'swap', 30, 50);
     }
     function deal(n, big, x) {
         const v = Math.round(n);
         B.me.pend += v; B.me.dmg += v;
         B.boss.hp = Math.max(0, B.boss.hp - v);
-        floatText(fmt(v), big ? 'crit' : x.eff > 1 ? 'dmg up' : 'dmg');
-        B.scene?.hit(big ? 0.9 : 0.12, big ? 0xffd23a : 0xffffff);
+        floatText(fmt(v), big ? 'crit' : x.eff > 1 ? 'dmg up' : 'dmg', 50 + (Math.random() - 0.3) * 26, 26 + Math.random() * 14);
+        B.scene?.hit(big ? 1 : 0.35, big ? 0xffd23a : colorNum(x));
+        const hb = $('db-bosshp');
+        hb?.classList.remove('hit'); void hb?.offsetWidth; hb?.classList.add('hit');
     }
 
-    /* ---------- 전투 화면 ---------- */
+    /* ---------- 전투 화면 (포켓몬GO 레이드처럼) ---------- */
     function buildBattleUI() {
         const el = $('dng-battle');
         document.body.classList.add('in-dng');
@@ -609,47 +624,58 @@ export function createDungeon(api) {
         el.innerHTML = `
             <div id="db-stage" class="db-stage"></div>
             <div id="db-flash" class="db-flash"></div>
+            <div id="db-hurt" class="db-hurt"></div>
             <div class="db-top">
-                <div class="db-boss">
-                    <div class="db-bname"><b>${BOSS.name}</b><small style="color:${B.D.color}">${stars(B.D.star)}</small><span id="db-timer">3:00</span></div>
-                    <div class="db-hpbar"><div id="db-hplag"></div><div id="db-hpfill"></div><span id="db-hptext"></span></div>
+                <div class="db-mine" id="db-mine"></div>
+                <div class="db-timer" id="db-timer">180</div>
+                <div class="db-bossbox" id="db-bosshp">
+                    <div class="db-bname"><b>${BOSS.name}</b><small style="color:${B.D.color}">${stars(B.D.star)}</small></div>
+                    <div class="db-hpbar"><div id="db-hplag"></div><div id="db-hpfill"></div></div>
+                    <small id="db-hptext"></small>
                 </div>
-                <button id="db-quit" class="db-quit">나가기</button>
             </div>
             <div id="db-party" class="db-party"></div>
             <div id="db-float" class="db-float"></div>
-            <div id="db-hurt" class="db-hurt"></div>
-            <div class="db-hint" id="db-hint">탭 · 꾹 눌러 공격 &nbsp;|&nbsp; 좌우로 밀어 회피</div>
-            <div class="db-bottom">
-                <div class="db-curbox">
-                    <div class="db-cur" id="db-cur"></div>
-                    <div class="db-team" id="db-team"></div>
-                </div>
-                <button id="db-charged" class="db-charged"><div class="db-ch-segs" id="db-segs"></div><b id="db-ch-name"></b></button>
-            </div>
+            <div class="db-hint" id="db-hint">화면 탭 · 꾹 눌러 공격 &nbsp;|&nbsp; 옆으로 그어 회피</div>
+            <button id="db-quit" class="db-quit" aria-label="나가기"><svg viewBox="0 0 24 24"><path d="M14 4a2 2 0 110 .01M10 9l3-1 3 3 3 1M13 8l-2 6 3 3v4M11 14l-3 2-3-1"/></svg></button>
+            <button id="db-charged" class="db-charged"><div class="db-ch-segs" id="db-segs"></div><b id="db-ch-name"></b></button>
+            <button id="db-swap" class="db-swapbtn" aria-label="교체"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><small>교체</small></button>
+            <div id="db-swappanel" class="db-swappanel hidden"></div>
             <div id="db-rejoin" class="db-rejoin hidden"><b>팀 전멸</b><small>재정비 중… <span id="db-rj-t">8</span>초 뒤 다시 들어가요</small></div>
-            <div id="db-catch" class="db-catch hidden"></div>
             <div id="db-result" class="db-result hidden"></div>`;
-        // 화면 조작: 누르면 공격(꾹 누르면 계속), 좌우로 밀면 회피
+        // 화면 조작: 누르면 공격(꾹 누르면 계속), 옆으로 그으면 회피
         const stage = $('db-stage');
         let sx = 0, sy = 0, moved = false;
-        stage.onpointerdown = e => { sx = e.clientX; sy = e.clientY; moved = false; if (B) { B.holding = true; fastAttack(); } try { stage.setPointerCapture(e.pointerId); } catch (er) {} };
+        stage.onpointerdown = e => { sx = e.clientX; sy = e.clientY; moved = false; if (B) { closeSwap(); B.holding = true; fastAttack(); } try { stage.setPointerCapture(e.pointerId); } catch (er) {} };
         stage.onpointermove = e => {
             if (!B || moved) return;
             const dx = e.clientX - sx;
-            if (Math.abs(dx) > 38 && Math.abs(dx) > Math.abs(e.clientY - sy)) { moved = true; B.holding = false; dodge(Math.sign(dx)); }
+            if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(e.clientY - sy)) { moved = true; B.holding = false; dodge(Math.sign(dx)); }
         };
         stage.onpointerup = stage.onpointercancel = () => { if (B) B.holding = false; };
         el.onclick = e => {
             const sw = e.target.closest('[data-dbsw]');
             if (sw) { swapTo(+sw.dataset.dbsw); return; }
+            if (e.target.closest('#db-swap')) { toggleSwap(); return; }
             if (e.target.closest('#db-charged')) { chargedAttack(); return; }
             if (e.target.closest('#db-quit')) { quit(); return; }
-            if (e.target.closest('[data-dbthrow]')) { throwBall(); return; }
             if (e.target.closest('[data-dbdone]')) closeBattle();
         };
         drawUI(Date.now());
     }
+    function toggleSwap() {
+        if (!B || B.over || B.rejoinUntil) return;
+        B.swapOpen = !B.swapOpen; B.holding = false;
+        const p = $('db-swappanel');
+        p.classList.toggle('hidden', !B.swapOpen);
+        if (B.swapOpen) p.innerHTML = `<div class="db-sw-head">교체할 칭호</div>` + B.team.map((m, i) => `
+            <button class="db-sw ${i === B.cur ? 'on' : ''} ${m.dead ? 'dead' : ''}" data-dbsw="${i}" ${m.dead || i === B.cur ? 'disabled' : ''} style="--ec:${m.E.color}">
+                <span class="db-sw-n">${i + 1}</span><span class="db-sw-el">${m.E.icon}</span>
+                <span class="db-sw-main"><b>${esc(m.a.name)}</b><i><em style="width:${m.hp / m.max * 100}%"></em></i></span>
+                <small>${i === B.cur ? '전투 중' : m.dead ? '쓰러짐' : `${fmt(Math.ceil(m.hp))}`}</small>
+            </button>`).join('');
+    }
+    function closeSwap() { if (B) B.swapOpen = false; $('db-swappanel')?.classList.add('hidden'); }
     function flash(on) { $('db-flash')?.classList.toggle('on', on); }
     function drawUI(now) {
         if (!B) return;
@@ -659,13 +685,14 @@ export function createDungeon(api) {
         $('db-hptext').textContent = `${fmt(Math.ceil(b.hp))} / ${fmt(b.max)}`;
         const left = Math.max(0, Math.ceil(((B.sim ? B.sim.end : B.end) - now) / 1000));
         const tm = $('db-timer');
-        tm.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+        tm.textContent = left;
         tm.classList.toggle('low', left <= 30);
         $('db-party').innerHTML = B.roster.length > 1 ? [...B.party.entries()].map(([uid, p]) => `<div class="db-pm ${uid === B.me.uid ? 'me' : ''}"><b>${esc(p.nick)}</b><small>${fmt(uid === B.me.uid ? Math.round(B.me.dmg) : p.dmg)}</small></div>`).join('') : '';
         const x = curM();
-        $('db-cur').innerHTML = x ? `<div class="db-cur-top" style="--ec:${x.E.color}"><span>${x.E.icon}</span><b>${esc(x.a.name)}</b></div><div class="db-cur-hp"><div style="width:${x.hp / x.max * 100}%" class="${x.hp / x.max < 0.25 ? 'low' : ''}"></div><span>${fmt(Math.ceil(x.hp))} / ${fmt(x.max)}</span></div>` : '';
-        $('db-team').innerHTML = B.team.map((m, i) => `<button class="db-tm ${i === B.cur ? 'on' : ''} ${m.dead ? 'dead' : ''}" data-dbsw="${i}" style="--ec:${m.E.color}"><span>${m.E.icon}</span><i style="height:${m.hp / m.max * 100}%"></i></button>`).join('');
         if (x) {
+            $('db-mine').innerHTML = `<div class="db-mine-top" style="--ec:${x.E.color}"><span>${x.E.icon}</span><b>${esc(x.a.name)}</b></div>
+                <div class="db-mine-hp"><div style="width:${x.hp / x.max * 100}%" class="${x.hp / x.max < 0.25 ? 'low' : ''}"></div></div>
+                <small>${fmt(Math.ceil(x.hp))} / ${fmt(x.max)} · 남은 칭호 ${B.team.filter(m => !m.dead).length}/${B.team.length}</small>`;
             const C = x.E.charged, n = Math.round(100 / C.cost);
             $('db-segs').innerHTML = Array.from({ length: n }, (_, i) => `<i><b style="width:${Math.max(0, Math.min(1, (x.en - i * C.cost) / C.cost)) * 100}%"></b></i>`).join('');
             $('db-ch-name').textContent = C.name;
@@ -684,8 +711,8 @@ export function createDungeon(api) {
         const d = document.createElement('div');
         d.className = 'db-num ' + cls;
         d.textContent = txt;
-        d.style.left = (x ?? 34 + Math.random() * 32) + '%';
-        d.style.top = (y ?? 32 + Math.random() * 16) + '%';
+        d.style.left = (x ?? 38 + Math.random() * 24) + '%';
+        d.style.top = (y ?? 28 + Math.random() * 12) + '%';
         box.appendChild(d);
         setTimeout(() => d.remove(), cls.includes('big') || cls.includes('eff') || cls === 'move' ? 1500 : 900);
     }
@@ -698,13 +725,13 @@ export function createDungeon(api) {
         else { B.net.emit('act', { uid: B.me.uid, dmg: Math.round(B.me.pend) }); B.me.pend = 0; finish({ win: false, quit: true }); }
     }
 
-    /* ---------- 결과 · 포획 ---------- */
+    /* ---------- 결과 (보상은 바로 들어옴) ---------- */
     function finish(m) {
         if (!B || B.over) return;
         B.over = true;
         B.holding = false;
         clearInterval(B.timer);
-        flash(false);
+        flash(false); closeSwap();
         $('db-hint')?.classList.add('fade');
         const s = st(), D = B.D, gs = api.gs();
         B.lines = []; B.won = !!m.win; B.result = m;
@@ -716,7 +743,18 @@ export function createDungeon(api) {
             api.addItems(D.items); B.lines.push(api.rewardChips({ items: D.items }));
             if (D.extra && Math.random() < D.extra[1]) { api.addItems({ [D.extra[0]]: 1 }); B.lines.push(api.rewardChips({ items: { [D.extra[0]]: 1 } })); }
             if (Math.random() < D.egg[1]) { api.addEgg(D.egg[0]); B.lines.push(api.rewardChips({ eggs: { [D.egg[0]]: 1 } })); }
-            for (const x of DROPS) if (Math.random() < x.p[B.diff]) { const t = api.grantGear(x.id); B.rare = `⚒ ${esc(api.gearName(x.id))}`; B.lines.push(`<span class="at-rw dg-rare">⚒ ${esc(api.gearName(x.id))} <small>${t}</small></span>`); }
+            for (const x of DROPS) {
+                if (!(Math.random() < x.p[B.diff])) continue;
+                if (x.kind === 'aura') {
+                    api.grantAura(x.id); api.broadcastAura?.(x.id);
+                    B.rare = `✦ 「${esc(api.aura(x.id).name)}」`;
+                    B.lines.unshift(`<span class="at-rw dg-rare">✦ 레이드 칭호 「${esc(api.aura(x.id).name)}」</span>`);
+                } else {
+                    const t = api.grantGear(x.id);
+                    B.rare = B.rare || `⚒ ${esc(api.gearName(x.id))}`;
+                    B.lines.unshift(`<span class="at-rw dg-rare">⚒ ${esc(api.gearName(x.id))} <small>${t}</small></span>`);
+                }
+            }
             s.clears[D.id] = (s.clears[D.id] || 0) + 1;
             api.dailyTrack('dungeon');
         } else {
@@ -725,74 +763,10 @@ export function createDungeon(api) {
             if (jc > 0) { gs.jc += jc; B.lines.push(`<span class="at-rw"><i class="coin"></i>${fmt(jc)} <small>(위로금)</small></span>`); }
         }
         api.save(); api.renderStats();
-        if (B.won && D.catchP) setTimeout(startCatch, 2000);
-        else setTimeout(showResult, B.won ? 1800 : 900);
-    }
-    // 포획: 줄어드는 고리가 작을 때 던질수록 잘 잡힘
-    function startCatch() {
-        if (!B) return;
-        const c = B.D.catchP;
-        const lord = c.lordP && Math.random() < c.lordP;
-        const id = lord ? 'dng_riftlord' : 'dng_riftwalker';
-        const ranks = B.result.dmg ? Object.entries(B.result.dmg).sort((a, b) => b[1][1] - a[1][1]) : [];
-        const top = ranks.length > 1 && ranks[0][0] === B.me.uid;
-        B.catch = { id, rate: lord ? c.lord : c.walker, balls: 5 + (B.roster.length - 1) + (top ? 1 : 0), t0: performance.now(), busy: false, done: false, bonus: [B.roster.length > 1 ? `파티 +${B.roster.length - 1}` : '', top ? '피해 1등 +1' : ''].filter(Boolean) };
-        const a = api.aura(id), el = $('db-catch');
-        el.classList.remove('hidden');
-        el.innerHTML = `
-            <div class="dc-title">${lord ? '✦ 균열의 지배자가 나타났다!' : '흩어지는 균열의 기운을 붙잡으세요'}</div>
-            <div class="dc-target" style="--c:${a.color}">
-                <div class="dc-orb"></div><div class="dc-ring" id="dc-ring"></div>
-                <div class="dc-name ${api.gradeCol(a.grade)}"><small>${a.grade}</small>${esc(a.name)}</div>
-                <div class="dc-ball hidden" id="dc-ball"></div>
-            </div>
-            <div class="dc-msg" id="dc-msg">고리가 작을 때 던지면 더 잘 잡혀요</div>
-            <button class="dc-throw" data-dbthrow><i class="dc-ball-ico"></i><b>던지기</b><small id="dc-left"></small></button>
-            ${B.catch.bonus.length ? `<div class="dc-bonus">구슬 보너스: ${B.catch.bonus.join(' · ')}</div>` : ''}`;
-        const loop = () => {
-            if (!B?.catch || B.catch.done) return;
-            const k = ((performance.now() - B.catch.t0) % 1700) / 1700;
-            const r = $('dc-ring');
-            if (r && !B.catch.busy) { r.style.transform = `translate(-50%, -50%) scale(${1 - 0.72 * k})`; r.style.borderColor = 1 - 0.72 * k < 0.45 ? '#ff4a6a' : 1 - 0.72 * k < 0.65 ? '#ffd23a' : '#6ff2c0'; }
-            $('dc-left').textContent = `구슬 ${B.catch.balls}개`;
-            requestAnimationFrame(loop);
-        };
-        requestAnimationFrame(loop);
-    }
-    function throwBall() {
-        const C = B?.catch;
-        if (!C || C.busy || C.done || C.balls <= 0) return;
-        C.busy = true; C.balls--;
-        const k = ((performance.now() - C.t0) % 1700) / 1700, size = 1 - 0.72 * k;
-        const [q, mul] = size < 0.45 ? ['Excellent!', 2] : size < 0.65 ? ['Great!', 1.6] : size < 0.85 ? ['Nice!', 1.3] : ['', 1];
-        const ok = Math.random() < Math.min(1, C.rate * mul);
-        const ball = $('dc-ball'), msg = $('dc-msg');
-        ball.classList.remove('hidden', 'shake', 'pop', 'got'); void ball.offsetWidth; ball.classList.add('fly');
-        msg.textContent = q || '…';
-        const shakes = ok ? 3 : 1 + Math.floor(Math.random() * 3);
-        setTimeout(() => { ball.classList.remove('fly'); ball.classList.add('shake'); ball.style.setProperty('--n', shakes); }, 600);
-        setTimeout(() => {
-            ball.classList.remove('shake');
-            if (ok) {
-                C.done = true; ball.classList.add('got');
-                msg.textContent = '잡았다!';
-                api.grantAura(C.id);
-                api.broadcastAura?.(C.id);
-                B.rare = `✦ 「${esc(api.aura(C.id).name)}」`;
-                B.lines.unshift(`<span class="at-rw dg-rare">✦ 던전 칭호 「${esc(api.aura(C.id).name)}」</span>`);
-                api.save();
-                setTimeout(showResult, 1600);
-            } else {
-                ball.classList.add('pop');
-                msg.textContent = C.balls > 0 ? '아앗! 빠져나왔다!' : '균열의 기운이 사라졌다…';
-                C.busy = false;
-                if (C.balls <= 0) { C.done = true; setTimeout(showResult, 1500); }
-            }
-        }, 600 + shakes * 650 + 200);
+        setTimeout(showResult, B.won ? 1800 : 900);
     }
     function showResult() {
         if (!B) return;
-        $('db-catch')?.classList.add('hidden');
         const m = B.result, D = B.D;
         const dmg = m.dmg ? Object.entries(m.dmg).sort((a, b) => b[1][1] - a[1][1]) : [[B.me.uid, [B.me.nick, Math.round(B.me.dmg)]]];
         const total = dmg.reduce((a, [, v]) => a + v[1], 0) || 1;
@@ -833,6 +807,7 @@ export function createDungeon(api) {
         bind() { $('dng-panel').addEventListener('click', onClick); },
         busy: () => !!B,
         ticketAdd(n) { st().tk += n; },
+        tickets: () => st().tk,
         _dbg: () => ({ B, party, lobby })
     };
 }

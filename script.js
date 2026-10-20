@@ -1,9 +1,9 @@
-import { AURA_DATA } from './auras.js?v=58';
-import { CRAFT_ITEMS } from './craftItems.js?v=58';
-import { createMusicPlayer, coverArt } from './music.js?v=58';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=58';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=58';
-import { createDungeon, raidInfo } from './dungeon.js?v=58';
+import { AURA_DATA } from './auras.js?v=59';
+import { CRAFT_ITEMS } from './craftItems.js?v=59';
+import { createMusicPlayer, coverArt } from './music.js?v=59';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=59';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=59';
+import { createDungeon, raidInfo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=59';
 
 /* =========================================================
    📦 게임 데이터
@@ -197,7 +197,15 @@ const dungeon = createDungeon({
     today: () => todayKey(),
     SB_URL: 'https://vccpgfalbvanmwitkoqy.supabase.co', get SB_KEY() { return SB_KEY; },
     openSheet: id => openSheet(id), closeSheet: id => closeSheet(id),
-    setTakeover: v => stage3d?.setTakeover?.(v),
+    setTakeover: v => {
+        if (!stage3d) return;
+        stage3d.setTakeover(v);
+        if (v) stage3d.raidEnter(v.player);
+        else { stage3d.raidExit(); applyEquippedAura(); }
+    },
+    raidAura: id => stage3d?.setAura(AURA_BY_ID[id], { force: true }),
+    raidPunch: k => stage3d?.raidPunch(k),
+    openShop: () => { openSheet('sheet-shop'); setShopTab('potion'); },
     setBusy: v => {
         if (v && isAutoRolling) { isAutoRolling = false; autoWorker.postMessage({ command: 'stop' }); renderRollToggles(); }
         stage3d?.setLowPower(false);
@@ -1206,7 +1214,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=58').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=59').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -1279,7 +1287,19 @@ function renderCraft() {
 function renderShop() {
     if (BANNERS[shopTab]) renderGacha();
     ui.shopGrid.classList.add('row-list');
-    ui.shopGrid.innerHTML = SHOP_ITEMS.filter(item => !item.gacha).map(item => {
+    const tkHave = dungeon.tickets();
+    ui.shopGrid.innerHTML = `
+        <div class="row shop-dtk">
+            <div class="dtk-ico"></div>
+            <div class="row-main">
+                <div class="row-name">던전 티켓</div>
+                <div class="row-desc">균열 레이드 입장권 · 매일 무료 2장 · 하루 3판까지 · 보유 ${fmt(tkHave)}</div>
+            </div>
+            <div class="row-side">
+                <div class="row-price">${fmt(DUNGEON_TICKET_PRICE)} <small>JC</small></div>
+                <button class="btn btn-sm btn-gold" data-buytk ${gameState.jc < DUNGEON_TICKET_PRICE ? 'disabled' : ''}>구매</button>
+            </div>
+        </div>` + SHOP_ITEMS.filter(item => !item.gacha).map(item => {
         const have = gameState.itemInventory[item.id] || 0;
         return `
         <div ${frameAttrs(item.frame, [item.color, item.color2 || item.color, item.color], item.unique).replace('class="', 'class="row ')}>${frameDeco(item.frame, item.unique)}
@@ -1811,6 +1831,22 @@ function sellAura(id) {
 
 /* ---------- 구매 ---------- */
 ui.shopGrid.addEventListener('click', e => {
+    if ('buytk' in e.target.dataset) {
+        const max = Math.floor(gameState.jc / DUNGEON_TICKET_PRICE);
+        if (max < 1) { toast('JC가 부족해요', 'bad'); return; }
+        openQtyDialog({
+            title: '던전 티켓', sub: `균열 레이드 입장권 (하루 3판까지)\n보유 JC ${fmt(gameState.jc)}`,
+            max, initial: 1, priceEach: DUNGEON_TICKET_PRICE, totalLabel: '총', okText: '구매',
+            onConfirm: n => {
+                if (gameState.jc < n * DUNGEON_TICKET_PRICE) { toast('JC가 부족해요', 'bad'); return; }
+                gameState.jc -= n * DUNGEON_TICKET_PRICE;
+                dungeon.ticketAdd(n);
+                saveGame(); renderStats(); renderShop();
+                toast(`🎟 던전 티켓 ${n}장 구매`, 'good');
+            }
+        });
+        return;
+    }
     const id = e.target.dataset.buy;
     if (!id) return;
     const item = SHOP_BY_ID[id];
@@ -4003,7 +4039,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=58')
+import('./aura3d.js?v=59')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {

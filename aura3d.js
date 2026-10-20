@@ -9,11 +9,11 @@ import { EffectComposer } from './lib/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from './lib/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from './lib/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from './lib/jsm/postprocessing/OutputPass.js';
-import { SIGNATURES, jxsGrand } from './auraSignatures.js?v=58';
-import { JXS_BACKDROPS } from './jxsBackdrops.js?v=58';
-import { POSES } from './poses.js?v=58';
-import { createGearRig } from './gear3d.js?v=58';
-import { createPetRig } from './pets3d.js?v=58';
+import { SIGNATURES, jxsGrand } from './auraSignatures.js?v=59';
+import { JXS_BACKDROPS } from './jxsBackdrops.js?v=59';
+import { POSES } from './poses.js?v=59';
+import { createGearRig } from './gear3d.js?v=59';
+import { createPetRig } from './pets3d.js?v=59';
 
 const BOX = new THREE.BoxGeometry(1, 1, 1);
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -459,7 +459,9 @@ function buildAura(aura, dummy, stage) {
     // JXS 는 공통 '거대한 무대'를 한 겹 더 (칭호마다 분신 거리 등만 조금씩 다름)
     if (aura.grade === 'JXS') {
         // JXS마다 자기만의 배경 세계 (없으면 예전 공통 무대)
-        const ctx = { group, tick: fn => updaters.push(fn), pick, dummy, kit: KIT };
+        // 배경 세계는 따로 묶어 둠 (레이드에선 이 묶음을 통째로 뺌)
+        const bdGroup = new THREE.Group(); bdGroup.userData.backdrop = true; group.add(bdGroup);
+        const ctx = { group: bdGroup, tick: fn => updaters.push(fn), pick, dummy, kit: KIT };
         const bd = JXS_BACKDROPS[fx.signature];
         if (bd) bd(ctx); else jxsGrand(ctx, JXS_GRAND[fx.signature] || {});
     }
@@ -653,12 +655,40 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
         [dummy.torso, dummy.legL, dummy.legR, dummy.armL, dummy.armR, dummy.head].forEach(pv => pv.scale.set(1, 1, 1));
         resetSkin();
         if (!current) return;
-        scene.remove(current.group);
+        current.group.parent?.remove(current.group);
         current.group.traverse(o => { if (o.material) o.material.dispose?.(); });
         for (const p of dummy.parts) {
             [...p.children].forEach(ch => { ch.material?.dispose?.(); p.remove(ch); });
         }
         current = null;
+    }
+
+    // 레이드: 캐릭터와 아우라를 보스 장면으로 옮김 (아우라 뒤 배경·바닥은 빼고)
+    let raid = null, raidPunch = 0, raidPunchKind = 'fast';
+    function stripBackdrop(group) {
+        const box = new THREE.Box3(), size = new THREE.Vector3(), c = new THREE.Vector3();
+        for (const ch of [...group.children]) {
+            if (ch.isLight) continue;
+            if (ch.userData.noFit || ch.userData.backdrop) { group.remove(ch); continue; }
+            box.setFromObject(ch);
+            if (!isFinite(box.min.x)) continue;
+            box.getSize(size); box.getCenter(c);
+            const big = Math.max(size.x, size.y, size.z) > 8;
+            const far = Math.hypot(c.x, c.z) > 4.5 || c.y > 8 || c.z < -2.2;
+            const ground = (c.y < 0.35 && size.y < 0.2) || (!ch.isInstancedMesh && c.y < 2.2 && Math.hypot(c.x, c.z) > 2.4);   // 바닥·주변 소품
+            if (big || far || ground) group.remove(ch);
+        }
+    }
+    function raidEnter(holder) {
+        raid = { holder };
+        holder.add(dummy.root);
+        if (current) { current.group.parent?.remove(current.group); stripBackdrop(current.group); holder.add(current.group); }
+    }
+    function raidExit() {
+        if (!raid) return;
+        raid = null;
+        clearAura();
+        scene.add(dummy.root);
     }
 
     function setAura(aura, { force = false } = {}) {
@@ -671,7 +701,8 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
         current = buildAura(aura, dummy, stageApi);
         current.id = aura.id;
         current.grade = aura.grade;
-        scene.add(current.group);
+        if (raid) { stripBackdrop(current.group); raid.holder.add(current.group); }
+        else scene.add(current.group);
         gapGlow.material.color.copy(current.color).multiplyScalar(0.35 + Math.min(1, current.glow) * 0.4);
         rim.color.copy(current.color);
         bloom.strength = 0.5 + Math.min(current.glow, 2) * 0.12 + (aura.grade === 'JXS' ? 0.08 : 0);
@@ -834,17 +865,6 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
         }
         const dt = Math.min(rawDt + pendingDt, 0.05);
         pendingDt = 0;
-        // 던전: 다른 장면(보스전)이 무대 렌더러를 잠시 빌려 씀
-        if (takeover) {
-            if (!document.hidden) adaptQuality(rawDt);
-            takeover.camera.aspect = W / H;
-            takeover.update(dt, W, H);
-            takeover.camera.updateProjectionMatrix();
-            mainPass.scene = takeover.scene; mainPass.camera = takeover.camera;
-            composer.render();
-            mainPass.scene = scene; mainPass.camera = camera;
-            return;
-        }
         if (!lowPower && !document.hidden) adaptQuality(rawDt);
         fxTimer -= rawDt;
         if (fxTimer <= 0) { fxTimer = 0.5; applyFxBudget(false); }
@@ -892,6 +912,27 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
         if (current?.pose) current.pose(t, dummy, rolling, current.sig);            // 칭호별 포즈
         gear.update(t, dt, speed);
         pet.update(t);
+        // 레이드 공격 동작 (오른팔 지르기 / 두 팔 내뻗기)
+        if (raid && raidPunch > 0) {
+            raidPunch = Math.max(0, raidPunch - dt);
+            if (raidPunchKind === 'fast') {
+                const k = Math.sin((1 - raidPunch / 0.28) * Math.PI);
+                dummy.armR.rotation.set(-1.6 * k, 0, 0.1); dummy.root.rotation.x += 0.12 * k;
+            } else {
+                const k = 1 - raidPunch / 0.9, up = k < 0.45 ? k / 0.45 : 1, fwd = k < 0.45 ? 0 : Math.sin((k - 0.45) / 0.55 * Math.PI);
+                dummy.armR.rotation.set(-2.9 * up + 1.3 * fwd, 0, 0.2); dummy.armL.rotation.set(-2.9 * up + 1.3 * fwd, 0, -0.2);
+                dummy.root.position.y += 0.5 * up; dummy.root.rotation.x += 0.25 * fwd;
+            }
+        }
+        if (takeover) {
+            takeover.camera.aspect = W / H;
+            takeover.update(dt, W, H);
+            takeover.camera.updateProjectionMatrix();
+            mainPass.scene = takeover.scene; mainPass.camera = takeover.camera;
+            composer.render();
+            mainPass.scene = scene; mainPass.camera = camera;
+            return;
+        }
         if (m.burst && current && !cine?.active) {
             burstAt -= dt;
             if (burstAt <= 0) { fireBurst(current.grade === 'JXS' ? 1.4 : 1); burstAt = m.burst; if (current.grade === 'JXS') shakeAmt = Math.max(shakeAmt, 0.12); }
@@ -942,6 +983,8 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
         setLowPower(v) { lowPower = v; },
         // 다른 장면에 화면을 넘김 ({ scene, camera, update(dt, W, H) } 또는 null)
         setTakeover(v) { takeover = v; },
+        raidEnter, raidExit,
+        raidPunch(kind = 'fast') { raidPunchKind = kind; raidPunch = kind === 'fast' ? 0.28 : 0.9; },
         // 효과 양: 'high' | 'mid' | 'low'
         setFxMode(mode) { fxMode = mode; applyFxBudget(true); },
         flash() { flash = 1; },
@@ -949,7 +992,7 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
         // 3D 컷씬 재생. cfg = { hit, hit2, total, tier }, getTime() = 지금 컷씬 몇 초인지
         async playCutscene(aura, cfg, getTime) {
             if (!cine) {
-                const { createCutscene } = await import('./cutscene3d.js?v=58');
+                const { createCutscene } = await import('./cutscene3d.js?v=59');
                 cine = createCutscene(cineCtx);
             }
             return cine.play(aura, cfg, getTime, { shake: a => { shakeAmt = Math.max(shakeAmt, a); } });
