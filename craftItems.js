@@ -61,65 +61,65 @@ export const CRAFT_ITEMS = [
         name: "시간 가속 건틀렛",
         desc: "영구적으로 속도 45%, 행운 80%가 증가합니다. 속도 특화.",
         luckBonus: 0.8, speedBonus: 0.45,
-        req: { "myth_time_minchae": 2, "legend_speed": 5, "ep_neon_gaeun": 6, "rare_train": 40 }
+        req: { "myth_time_minchae": 2, "legend_speed": 8, "ep_neon_gaeun": 40, "rare_train": 400, "unc_running": 3000 }
     },
     {
         id: "gear_thunderhunt", category: "gauntlet",
         name: "번개 사냥꾼 건틀렛",
         desc: "영구적으로 행운 150%, 속도 20%가 증가합니다. (행운의 주사위 건틀렛 급)",
         luckBonus: 1.5, speedBonus: 0.2,
-        req: { "leg_ninja_jisung": 4, "leg_storm_gaeun": 3, "myth_thunderbeast_minchae": 1, "ep_fire_jisung": 12, "rare_relay_gunwoo": 30 }
+        req: { "myth_thunderbeast_minchae": 1, "leg_ninja_jisung": 6, "leg_storm_gaeun": 4, "ep_fire_jisung": 50, "rare_relay_gunwoo": 300, "com_sleepy_jisung": 5000 }
     },
     {
         id: "gear_abyssking", category: "gauntlet",
         name: "심해 군주의 건틀렛",
         desc: "영구적으로 행운 350%, 속도 12%가 증가합니다. (잭팟 건틀렛 급)",
         luckBonus: 3.5, speedBonus: 0.12,
-        req: { "anc_dragonking_jisung": 1, "myth_abyss_byungeun": 3, "myth_aurora_gaeun": 2, "leg_pirate_byungeun": 5, "rare_fishing_gunwoo": 60 }
+        req: { "anc_dragonking_jisung": 1, "myth_abyss_byungeun": 3, "myth_aurora_gaeun": 2, "leg_pirate_byungeun": 8, "ep_swim_gaeun": 60, "rare_fishing_gunwoo": 600, "unc_walk_byungeun": 4000 }
     },
     {
         id: "gear_sunforge", category: "gauntlet",
         name: "태양 대장간 건틀렛",
         desc: "영구적으로 행운 650%, 속도 15%가 증가합니다. (별똥별 건틀렛 바로 아래 급)",
         luckBonus: 6.5, speedBonus: 0.15,
-        req: { "abs_sunking_gunwoo": 1, "anc_pharaoh_minchae": 3, "myth_midas_gaeun": 4, "leg_desert_tv": 8 }
+        req: { "abs_sunking_gunwoo": 1, "anc_pharaoh_minchae": 3, "myth_midas_gaeun": 4, "leg_desert_tv": 15, "ep_lava_tv": 100, "rare_cvs_jisung": 800, "com_gunwoo": 8000 }
     },
 
     // 🆕 UPDATE 3 제작 부적 (배수 말고 새로운 능력)
     {
         id: "amu_hourglass", category: "amulet", abil: "streak",
         name: "인내의 모래시계 부적",
-        desc: "롤마다 행운이 +1%씩 쌓입니다 (최대 +150%). EPIC 이상이 나오면 다시 0부터.",
-        luckBonus: 0, speedBonus: 0, streakRate: 0.01, streakMax: 1.5,
-        req: { "legend_speed": 2, "ep_magician_gunwoo": 8, "rare_relay_gunwoo": 30, "unc_walk_byungeun": 200 }
+        desc: "롤마다 행운이 +1%씩 쌓입니다 (최대 +150%). LEGEND 이상이 나오면 다시 0부터.",
+        luckBonus: 0, speedBonus: 0, streakRate: 0.01, streakMax: 1.5, streakReset: "LEGEND",
+        req: { "legend_speed": 4, "ep_magician_gunwoo": 30, "rare_relay_gunwoo": 300, "unc_walk_byungeun": 3000 }
     },
     {
         id: "amu_twinstar", category: "amulet", abil: "twin",
         name: "쌍둥이 별 부적",
         desc: "3% 확률로 뽑은 칭호를 하나 더 받습니다.",
         luckBonus: 0, speedBonus: 0, twinChance: 0.03,
-        req: { "anc_nebula_jisung": 1, "gemini_basic": 3, "leg_mechangel_minchae": 4, "ep_sakura_gaeun": 12 }
+        req: { "anc_nebula_jisung": 1, "gemini_basic": 3, "leg_mechangel_minchae": 6, "ep_sakura_gaeun": 50, "rare_karaoke_minchae": 500, "com_hungry_gaeun": 6000 }
     },
     {
         id: "amu_scale", category: "amulet", abil: "sell",
         name: "연금 저울 부적",
         desc: "칭호 판매가가 +25% (자동 판매 포함), 신전 수입이 +15% 늘어납니다.",
         luckBonus: 0, speedBonus: 0, sellMult: 1.25, showMult: 1.15,
-        req: { "myth_midas_gaeun": 3, "leg_alchemist_gaeun": 5, "ep_miner_byungeun": 10, "rare_cvs_jisung": 50 }
+        req: { "myth_midas_gaeun": 3, "leg_alchemist_gaeun": 8, "ep_miner_byungeun": 50, "rare_cvs_jisung": 600, "com_phone_tv": 5000 }
     },
     {
         id: "amu_cradle", category: "amulet", abil: "hatch",
         name: "생명의 요람 부적",
         desc: "알 부화 시간이 20% 줄고, 함께하는 펫 효과가 +10% 커집니다.",
         luckBonus: 0, speedBonus: 0, hatchCut: 0.2, petMult: 1.1,
-        req: { "myth_phoenix_gaeun": 3, "leg_chef_gunwoo": 4, "ep_balloon_minchae": 10, "rare_fishing_gunwoo": 50 }
+        req: { "myth_phoenix_gaeun": 3, "leg_chef_gunwoo": 6, "ep_balloon_minchae": 50, "rare_fishing_gunwoo": 600, "unc_lunch_gunwoo": 4000 }
     },
     {
         id: "amu_brewer", category: "amulet", abil: "brew",
         name: "물약 장인의 부적",
         desc: "배수 물약을 쓸 때 15% 확률로 횟수가 안 줄고, 시간 물약 지속시간이 +25% 늘어납니다.",
         luckBonus: 0, speedBonus: 0, brewSave: 0.15, brewTime: 1.25,
-        req: { "myth_time_minchae": 2, "leg_alchemist_gaeun": 4, "ep_mushroom_tv": 12, "rare_cupramen_gaeun": 50 }
+        req: { "myth_time_minchae": 2, "leg_alchemist_gaeun": 6, "ep_mushroom_tv": 50, "rare_cupramen_gaeun": 600, "unc_tvideo": 4000 }
     },
 
     // 📜 부적 (10롤마다 다음 1롤 행운 배수)

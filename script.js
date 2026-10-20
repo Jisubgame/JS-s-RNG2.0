@@ -1,8 +1,8 @@
-import { AURA_DATA } from './auras.js?v=52';
-import { CRAFT_ITEMS } from './craftItems.js?v=52';
-import { createMusicPlayer, coverArt } from './music.js?v=52';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=52';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=52';
+import { AURA_DATA } from './auras.js?v=53';
+import { CRAFT_ITEMS } from './craftItems.js?v=53';
+import { createMusicPlayer, coverArt } from './music.js?v=53';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=53';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=53';
 
 /* =========================================================
    📦 게임 데이터
@@ -511,7 +511,7 @@ const amu = () => gearOf(gameState.amulet) || {};
 const sellMult = () => amu().sellMult || 1;
 function streakMult() { const a = amu(); return a.abil === 'streak' ? 1 + Math.min(a.streakMax, (gameState.streak || 0) * a.streakRate) : 1; }
 function abilText(g) {
-    if (g.abil === 'streak') return `롤마다 행운 +${Math.round(g.streakRate * 100)}% 누적 (최대 +${Math.round(g.streakMax * 100)}%) · EPIC↑ 나오면 초기화`;
+    if (g.abil === 'streak') return `롤마다 행운 +${Math.round(g.streakRate * 100)}% 누적 (최대 +${Math.round(g.streakMax * 100)}%) · ${g.streakReset || 'LEGEND'}↑ 나오면 초기화`;
     if (g.abil === 'twin') return `${Math.round(g.twinChance * 100)}% 확률로 칭호 하나 더`;
     if (g.abil === 'sell') return `판매가 +${Math.round((g.sellMult - 1) * 100)}% · 신전 수입 +${Math.round((g.showMult - 1) * 100)}%`;
     if (g.abil === 'hatch') return `부화 시간 -${Math.round(g.hatchCut * 100)}% · 펫 효과 +${Math.round((g.petMult - 1) * 100)}%`;
@@ -720,7 +720,7 @@ async function finishRoll() {
         if (twins > 1) soldHtml = `<div class="result-sold">✨ 쌍둥이 별! 하나 더 받았어요</div>`;
     }
     // 인내의 모래시계: EPIC 이상이면 초기화, 아니면 쌓임
-    if (amu().abil === 'streak') gameState.streak = GRADES.indexOf(rolled.grade) >= 2 ? 0 : (gameState.streak || 0) + 1;
+    if (amu().abil === 'streak') gameState.streak = GRADES.indexOf(rolled.grade) >= GRADES.indexOf(amu().streakReset || 'LEGEND') ? 0 : (gameState.streak || 0) + 1;
     saveGame();
     renderStats();
 
@@ -1054,7 +1054,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=52').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=53').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -3834,7 +3834,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=52')
+import('./aura3d.js?v=53')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {
