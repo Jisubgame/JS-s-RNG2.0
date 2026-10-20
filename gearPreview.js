@@ -5,9 +5,9 @@
    ========================================================= */
 
 import * as THREE from 'three';
-import { buildGearModel } from './gear3d.js?v=53';
-import { buildPetModel } from './pets3d.js?v=53';
-import { buildNestModel } from './nest3d.js?v=53';
+import { buildGearModel } from './gear3d.js?v=54';
+import { buildPetModel } from './pets3d.js?v=54';
+import { buildNestModel } from './nest3d.js?v=54';
 
 export function createGearPreviews(renderer) {
     const SIZE = 160;

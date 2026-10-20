@@ -1,8 +1,8 @@
-import { AURA_DATA } from './auras.js?v=53';
-import { CRAFT_ITEMS } from './craftItems.js?v=53';
-import { createMusicPlayer, coverArt } from './music.js?v=53';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=53';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=53';
+import { AURA_DATA } from './auras.js?v=54';
+import { CRAFT_ITEMS } from './craftItems.js?v=54';
+import { createMusicPlayer, coverArt } from './music.js?v=54';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=54';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=54';
 
 /* =========================================================
    📦 게임 데이터
@@ -1054,7 +1054,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=53').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=54').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -3268,7 +3268,7 @@ const PASS_PRO = Array.from({ length: 50 }, (_, i) => {
     return ROT[i % ROT.length];
 });
 const PASS_MAX = PASS_BASIC.length;
-const PASS_REQ = Array.from({ length: PASS_MAX }, (_, i) => Math.round(1500 * Math.pow(1.09, i) / 100) * 100);   // i레벨 → i+1레벨에 필요한 XP
+const PASS_REQ = Array.from({ length: PASS_MAX }, (_, i) => Math.round(1000 * Math.pow(1.06, i) / 100) * 100);   // i레벨 → i+1레벨에 필요한 XP (50레벨까지 약 29만)
 const PASS_CUM = PASS_REQ.reduce((a, r) => (a.push((a[a.length - 1] || 0) + r), a), []);                     // 누적
 function passState() {
     const g = gameState;
@@ -3834,7 +3834,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=53')
+import('./aura3d.js?v=54')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {
