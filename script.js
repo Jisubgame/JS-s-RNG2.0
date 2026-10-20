@@ -1,8 +1,8 @@
-import { AURA_DATA } from './auras.js?v=54';
-import { CRAFT_ITEMS } from './craftItems.js?v=54';
-import { createMusicPlayer, coverArt } from './music.js?v=54';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=54';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=54';
+import { AURA_DATA } from './auras.js?v=55';
+import { CRAFT_ITEMS } from './craftItems.js?v=55';
+import { createMusicPlayer, coverArt } from './music.js?v=55';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=55';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=55';
 
 /* =========================================================
    📦 게임 데이터
@@ -668,7 +668,9 @@ function pickAura() {
         return AURA_DATA[0];
     }
     for (let i = AURA_DATA.length - 1; i >= 0; i--) {
-        if (Math.random() < totalLuck / effIn(AURA_DATA[i])) return AURA_DATA[i];
+        // 행운은 RARE 이상에만 적용 → 행운이 높아도 커먼 칭호가 사라지지 않음
+        const L = AURA_DATA[i].grade === 'COMMON' ? 1 : totalLuck;
+        if (Math.random() < L / effIn(AURA_DATA[i])) return AURA_DATA[i];
     }
     return AURA_DATA[0];
 }
@@ -1054,7 +1056,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=54').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=55').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -3834,7 +3836,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=54')
+import('./aura3d.js?v=55')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {
