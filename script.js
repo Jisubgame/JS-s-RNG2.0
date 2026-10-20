@@ -1,8 +1,8 @@
-import { AURA_DATA } from './auras.js?v=42';
-import { CRAFT_ITEMS } from './craftItems.js?v=42';
-import { createMusicPlayer, coverArt } from './music.js?v=42';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=42';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=42';
+import { AURA_DATA } from './auras.js?v=43';
+import { CRAFT_ITEMS } from './craftItems.js?v=43';
+import { createMusicPlayer, coverArt } from './music.js?v=43';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=43';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=43';
 
 /* =========================================================
    📦 게임 데이터
@@ -108,20 +108,20 @@ const QUEST_DATA = [
         desc: "빠른 롤을 쓸 자격을 증명하세요.",
         rewardDesc: "빠른 롤 해금 + 천상의 물약 5개",
         reward: { unlockQuickRoll: true, items: { heaven_potion: 5 } },
-        targets: { rolls: 2500, legend: 8, mythic: 3, jc: 1500000, shopPurchases: 10 }
+        targets: { rolls: 2500, legend: 8, mythic: 3, jc: 750000, shopPurchases: 10 }
     },
     {
         id: "quest_repeat_overcome", name: "극복의 시련", repeatable: true,
         desc: "지속적인 시련을 극복하고 성장의 기반을 다지세요.",
-        rewardDesc: "🧪 극복의 물약 1개 + 🪙 100,000 JC",
-        reward: { items: { overcome_potion: 1 }, jc: 100000 },
+        rewardDesc: "🧪 극복의 물약 1개 + 🪙 70,000 JC",
+        reward: { items: { overcome_potion: 1 }, jc: 70000 },
         targets: { rolls: 500, legend: 5, mythic: 3 }
     },
     {
         id: "quest_repeat_heaven", name: "천상의 시련", repeatable: true,
         desc: "천상에 도달하기 위한 극한의 운명을 테스트하세요.",
-        rewardDesc: "🧪 천상의 물약 1개 + 🪙 200,000 JC",
-        reward: { items: { heaven_potion: 1 }, jc: 200000 },
+        rewardDesc: "🧪 천상의 물약 1개 + 🪙 140,000 JC",
+        reward: { items: { heaven_potion: 1 }, jc: 140000 },
         targets: { rolls: 1000, legend: 7, mythic: 5 }
     }
 ];
@@ -239,8 +239,20 @@ function creatorDeco() {
     for (let i = 0; i < 6; i++) b += `<rect class="cb" style="--d:${1 + i * 0.25}s" x="${30 + i * 7}" y="3" width="4" height="3" fill="${cols[(i + 2) % 6]}"/>`;
     return `<svg class="fr-deco" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${b}</svg>`;
 }
+function worldTreeDeco() {
+    // 아래에서 덩굴이 자라 올라오고 잎이 하나씩 피어남
+    let b = '';
+    for (let i = 0; i < 10; i++) {
+        const x = 3 + i * 10.5;
+        b += `<rect class="wv" style="--d:${i * 0.22}s" x="${x}" y="84" width="1.6" height="13" fill="#3a7a3a"/>`;
+        b += `<rect class="wl" style="--d:${0.6 + i * 0.22}s" x="${x - 2}" y="${84 + (i % 3) * 3}" width="4" height="3" fill="${i % 2 ? '#7dff9a' : '#ffe27a'}"/>`;
+    }
+    for (let i = 0; i < 5; i++) b += `<rect class="wl" style="--d:${1.4 + i * 0.3}s" x="${12 + i * 18}" y="2" width="5" height="3" fill="#7dff9a"/>`;
+    return `<svg class="fr-deco" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${b}</svg>`;
+}
 function frameDeco(grade, unique) {
     if (unique === 'creator') return creatorDeco();
+    if (unique === 'worldtree') return worldTreeDeco();
     if (unique === 'admin') return adminDeco();
     if (unique === 'pumpkin') return pumpkinDeco();
     if (unique === 'void') return voidCracks();
@@ -363,6 +375,7 @@ let nextRollOverride = null;
 
 function saveGame() {
     if (backupGameState !== null) return;
+    gameState.savedAt = Date.now();
     localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
 }
 
@@ -470,11 +483,23 @@ document.body.addEventListener('click', e => {
    🍀 행운 / 속도 계산
    ========================================================= */
 
-function getGear() { return gameState.gear ? CRAFT_BY_ID[gameState.gear] : null; }
+// 뽑기 장비 강화: 중복으로 나오면 +1 (최대 +5), 강화마다 효과 +10%
+const GEAR_LV_MAX = 5;
+const gearLv = id => (gameState.gearLv || {})[id] || 0;
+function gearOf(id) {
+    const g = CRAFT_BY_ID[id];
+    if (!g) return null;
+    const lv = gearLv(id);
+    if (!lv) return g;
+    const k = 1 + 0.1 * lv, r1 = v => v ? Math.round(v * k * 100) / 100 : v;
+    return { ...g, lv, luckBonus: r1(g.luckBonus), speedBonus: r1(g.speedBonus), amuletMult: r1(g.amuletMult), biomeBoost: r1(g.biomeBoost), jcBonusMax: g.jcBonusMax ? Math.round(g.jcBonusMax * k) : g.jcBonusMax };
+}
+const lvTag = g => g?.lv ? ` <span class="gear-lv">+${g.lv}</span>` : '';
+function getGear() { return gameState.gear ? gearOf(gameState.gear) : null; }
 function getAmuletMult() {
     if (gameState.amulet === "amulet_drum") return 2;
     if (gameState.amulet === "amulet_commander") return 5;
-    return CRAFT_BY_ID[gameState.amulet]?.amuletMult || 0;
+    return gearOf(gameState.amulet)?.amuletMult || 0;
 }
 // 부적이 몇 롤마다 터지는지
 function getAmuletEvery() { return CRAFT_BY_ID[gameState.amulet]?.amuletEvery || 10; }
@@ -654,7 +679,7 @@ async function finishRoll() {
 
     let soldHtml = "";
     const jcBonus = CRAFT_BY_ID[gameState.amulet]?.jcBonus;
-    if (jcBonus) gameState.jc += Math.min(CRAFT_BY_ID[gameState.amulet].jcBonusMax || Infinity, Math.max(1, Math.floor(rolled.jcValue * jcBonus)));
+    if (jcBonus) gameState.jc += Math.min(gearOf(gameState.amulet).jcBonusMax || Infinity, Math.max(1, Math.floor(rolled.jcValue * jcBonus)));
     if (gameState.autoDelete[rolled.grade]) {
         gameState.jc += rolled.jcValue;
         soldHtml = `<div class="result-sold">자동 판매 +${fmt(rolled.jcValue)} JC</div>`;
@@ -1000,7 +1025,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=42').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=43').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -1405,14 +1430,14 @@ function renderBagGear() {
     const el = $('gear-grid');
     const cat = bagTab === 'amulet' ? 'amulet' : 'gauntlet';
     const word = cat === 'amulet' ? '부적' : '건틀렛';
-    const owned = CRAFT_ITEMS.filter(g => (g.category || 'gauntlet') === cat && gameState.craftedGears.includes(g.id)).sort((a, b) => gearPower(b) - gearPower(a));
+    const owned = CRAFT_ITEMS.filter(g => (g.category || 'gauntlet') === cat && gameState.craftedGears.includes(g.id)).map(g => gearOf(g.id)).sort((a, b) => gearPower(b) - gearPower(a));
     el.classList.remove('list');
     if (!owned.length) {
         el.innerHTML = `<div class="empty">${word}이 없습니다.<br>제작하거나 상점 뽑기에서 얻을 수 있어요.</div>`;
         return;
     }
     const onId = cat === 'amulet' ? gameState.amulet : gameState.gear;
-    const on = CRAFT_BY_ID[onId];
+    const on = gearOf(onId);
     const rest = owned.filter(g => g.id !== onId);
     el.innerHTML = `
         <div class="bg-slot ${on ? '' : 'empty-slot'}">
@@ -1421,7 +1446,7 @@ function renderBagGear() {
             <div class="bg-slot-card">
                 <div class="bg-slot-view"><canvas data-gear="${on.id}" aria-hidden="true"></canvas></div>
                 <div class="bg-slot-info">
-                    <div class="bg-name">${on.name}</div>
+                    <div class="bg-name">${on.name}${lvTag(on)}</div>
                     <div class="bg-eff">${gearEffectHtml(on)}</div>
                     <button class="btn btn-sm bg-off" data-unequip="${on.id}">해제</button>
                 </div>
@@ -1431,7 +1456,7 @@ function renderBagGear() {
         <div class="bg-list">${rest.map(g => `
             <button type="button" class="bg-row" data-equip="${g.id}">
                 <div class="bg-row-view"><canvas data-gear="${g.id}" aria-hidden="true"></canvas></div>
-                <div class="bg-row-info"><div class="bg-name">${g.name}</div><div class="bg-eff">${gearEffectHtml(g)}</div></div>
+                <div class="bg-row-info"><div class="bg-name">${g.name}${lvTag(g)}</div><div class="bg-eff">${gearEffectHtml(g)}</div></div>
                 <span class="bg-row-go">장착</span>
             </button>`).join('')}</div>` : ''}`;
     attachGearPreviews(el);
@@ -1478,6 +1503,7 @@ $('game-start-btn').addEventListener('click', () => {
         applyBiome(false);   // 저장된 바이옴이 남아 있으면 이어서
         updateAttendDot(); updatePetDot(); setInterval(updatePetDot, 60000);
         startAdminEvents();
+        cloudPull();   // 다른 기기에서 하던 기록이 더 많으면 불러옴
         if (!gameState.tutorialDone && !(gameState.rolls > 0)) setTimeout(() => startTutorial(true), 900);   // 처음 온 사람은 튜토리얼부터
         else if (canAttend()) setTimeout(() => openSheet('sheet-attend'), 900);   // 오늘 출석 안 했으면 바로 띄움
     }, 420);
@@ -1887,8 +1913,8 @@ function renderGacha() {
         <div class="gpity ${pityHelpOpen ? 'open' : ''}">
             <div class="gpity-top"><span>장비 천장 <button class="gpity-help" data-pityhelp aria-label="천장 확률 보기">?</button></span><span><b>${pity}</b> / ${B.pity}</span></div>
             <div class="gpity-bar"><div style="width:${pity / B.pity * 100}%"></div></div>
-            <div class="gpity-note">${B.pity}번 안에 장비가 안 나오면 ${B.pity}번째에 장비 하나가 확정으로 나와요</div>
-            <div class="gpity-odds">${gears.map(e => `<span style="--c:${TIER_COL[e.tier]}"><i></i>${CRAFT_BY_ID[e.id].name.replace(/ (건틀렛|부적)$/, '')}<b>${gachaPct(e.pw ?? e.w, B.gearW)}</b></span>`).join('')}</div>
+            <div class="gpity-note">${B.pity}번 안에 <b>새 장비</b>가 안 나오면 ${B.pity}번째에 아직 없는 장비 하나가 확정! (이미 있는 장비가 나오면 강화되고 천장은 그대로)</div>
+            <div class="gpity-odds">${gears.map(e => `<span style="--c:${TIER_COL[e.tier]}"><i></i>${CRAFT_BY_ID[e.id].name.replace(/ (건틀렛|부적)$/, '')}<b>${pityPct(B, e)}</b></span>`).join('')}</div>
         </div>
         <div class="gbtns">
             <button class="gbtn" data-pull="1" ${ended || gameState.jc < B.cost ? 'disabled' : ''}><span>1회 뽑기</span><b>${fmt(B.cost)} JC</b></button>
@@ -1898,7 +1924,7 @@ function renderGacha() {
         <div class="ggears">${gears.map(e => {
             const g = CRAFT_BY_ID[e.id], own = gameState.craftedGears.includes(e.id);
             return `<div class="ggear ${own ? 'own' : ''}" style="--c:${TIER_COL[e.tier]}" data-ggear="${e.id}" role="button">
-                <div class="ggear-view"><canvas data-gear="${e.id}" aria-hidden="true"></canvas>${own ? '<span class="ggear-own">보유</span>' : ''}</div>
+                <div class="ggear-view"><canvas data-gear="${e.id}" aria-hidden="true"></canvas>${own ? `<span class="ggear-own">${gearLv(e.id) ? `+${gearLv(e.id)}` : '보유'}</span>` : ''}</div>
                 <div class="ggear-name">${g.name}</div>
                 <div class="ggear-tier">${e.tier} · ${gachaPct(e.w, B.total)}</div>
             </div>`;
@@ -1912,20 +1938,32 @@ function renderGacha() {
             </div>`).join('')}</div>
         <details class="godds"><summary>전체 확률 보기</summary>${B.pool.slice().sort((a, b) => b.w - a.w).map(e => `
             <div class="godd"><i style="background:${TIER_COL[e.tier]}"></i><span>${gachaEntryName(e)}${e.kind === 'jc' ? ` (${fmt(e.min)}~${fmt(e.max)})` : ''}</span><b>${gachaPct(e.w, B.total)}</b></div>`).join('')}
-            <div class="godd-note">이미 가진 장비가 또 나오면 JC로 바꿔 줘요</div>
+            <div class="godd-note">이미 가진 장비가 또 나오면 강화 +1 (최대 +5, 강화마다 효과 +10%) · MAX면 JC로 바꿔 줘요</div>
         </details>`;
     attachGearPreviews(el.querySelector('.ggears'));
 }
 
+// 천장 때 나올 수 있는 장비: 아직 없는 장비만 (다 모았으면 전부)
+function pityPool(B) {
+    const gears = B.pool.filter(e => e.kind === 'gear');
+    const fresh = gears.filter(e => !gameState.craftedGears.includes(e.id));
+    return fresh.length ? fresh : gears;
+}
+function pityPct(B, e) {
+    const pool = pityPool(B);
+    if (!pool.includes(e)) return '보유 · 제외';
+    return gachaPct(e.pw ?? e.w, pool.reduce((s, x) => s + (x.pw ?? x.w), 0));
+}
+// 천장은 '새 장비'가 나올 때만 초기화 (이미 있는 장비가 나오면 강화만 되고 천장은 그대로)
 function gachaPick(B) {
     gameState[B.pityKey] = (gameState[B.pityKey] || 0) + 1;
     const pity = gameState[B.pityKey] >= B.pity;
-    const pool = pity ? B.pool.filter(e => e.kind === 'gear') : B.pool;
+    const pool = pity ? pityPool(B) : B.pool;
     const wOf = e => pity ? (e.pw ?? e.w) : e.w;
     let r = Math.random() * pool.reduce((s, e) => s + wOf(e), 0);
     let pick = pool[pool.length - 1];
     for (const e of pool) { r -= wOf(e); if (r <= 0) { pick = e; break; } }
-    if (pick.kind === 'gear') gameState[B.pityKey] = 0;
+    if (pick.kind === 'gear' && (pity || !gameState.craftedGears.includes(pick.id))) gameState[B.pityKey] = 0;
     return pick;
 }
 
@@ -1953,8 +1991,16 @@ function gachaGrant(e) {
         res.icon = `<canvas data-gear="${e.id}" aria-hidden="true"></canvas>`;
         res.gear = true;
         if (gameState.craftedGears.includes(e.id)) {
-            gameState.jc += e.dupe;
-            res.sub = `이미 있음 → +${fmt(e.dupe)} JC`;
+            const lv = gearLv(e.id);
+            if (lv < GEAR_LV_MAX) {
+                gameState.gearLv = gameState.gearLv || {};
+                gameState.gearLv[e.id] = lv + 1;
+                res.sub = `⚒ 강화 +${lv} → +${lv + 1} (효과 +10%)`;
+                applyGear();
+            } else {
+                gameState.jc += e.dupe;
+                res.sub = `강화 MAX → +${fmt(e.dupe)} JC`;
+            }
         } else {
             gameState.craftedGears.push(e.id);
             res.sub = 'NEW · 가방에서 장착';
@@ -2014,9 +2060,10 @@ function showGachaResult(results) {
 }
 $('gacha-result').addEventListener('click', e => {
     if (!e.target.closest('.gr-ok')) return;
+    const hatch = box_isHatch();
     $('gacha-result').classList.add('hidden');
     $('gacha-result').classList.remove('egg-mode');
-    if (box_isHatch()) renderPets(); else renderGacha();
+    if (hatch) { renderPets(); stagger($('pet-panel')); } else renderGacha();
 });
 
 /* =========================================================
@@ -2160,6 +2207,7 @@ function rollPetFromEgg(egg) {
 }
 function showHatch(egg, got) {
     saveGame(); renderStats(); applyGear(); updatePetDot();
+    renderPets();   // 둥지·알 칸 바로 갱신
     // 같은 펫은 한 장으로 묶음
     const cards = [];
     for (const g of got) {
@@ -2277,27 +2325,28 @@ function openGearDetail(id) {
     if (!gear || !found) return;
     const B = found[1], e = B.pool.find(x => x.id === id);
     const own = gameState.craftedGears.includes(id);
+    const gEn = gearOf(id), lv = gearLv(id);
     const chips = [];
-    if (gear.luckBonus) chips.push(`<span class="chip luck">행운 +${Math.round(gear.luckBonus * 100)}%</span>`);
-    if (gear.speedBonus) chips.push(`<span class="chip speed">속도 +${Math.round(gear.speedBonus * 100)}%</span>`);
-    if (gear.amuletMult) chips.push(`<span class="chip amulet">${gear.amuletEvery || 10}롤마다 행운 ×${gear.amuletMult}</span>`);
-    if (gear.biomeBoost) chips.push(`<span class="chip biome">바이옴 ×${gear.biomeBoost} · 지속 ×${gear.biomeTime}</span>`);
-    if (gear.jcBonus) chips.push(`<span class="chip amulet">롤마다 판매가 ${Math.round(gear.jcBonus * 100)}% JC (최대 ${fmt(gear.jcBonusMax)})</span>`);
+    if (gEn.luckBonus) chips.push(`<span class="chip luck">행운 +${Math.round(gEn.luckBonus * 100)}%</span>`);
+    if (gEn.speedBonus) chips.push(`<span class="chip speed">속도 +${Math.round(gEn.speedBonus * 100)}%</span>`);
+    if (gEn.amuletMult) chips.push(`<span class="chip amulet">${gear.amuletEvery || 10}롤마다 행운 ×${gEn.amuletMult}</span>`);
+    if (gEn.biomeBoost) chips.push(`<span class="chip biome">바이옴 ×${gEn.biomeBoost} · 지속 ×${gear.biomeTime}</span>`);
+    if (gear.jcBonus) chips.push(`<span class="chip amulet">롤마다 판매가 ${Math.round(gear.jcBonus * 100)}% JC (최대 ${fmt(gEn.jcBonusMax)})</span>`);
     const box = $('gear-detail');
     box.style.setProperty('--c', TIER_COL[e.tier]);
     box.querySelector('.gd-card').innerHTML = `
         <button class="gd-close" data-gdclose aria-label="닫기">✕</button>
         <div class="gd-view"><canvas data-gear="${id}" aria-hidden="true"></canvas></div>
         <div class="gd-tier">${e.tier}</div>
-        <div class="gd-name">${gear.name}</div>
+        <div class="gd-name">${gear.name}${lvTag(gEn)}</div>
         <div class="chips gd-chips">${chips.join('')}</div>
         <div class="gd-desc">${gear.desc}<br><span>${gear.category === 'amulet' ? '왼팔에 매다는 부적' : '오른팔에 끼는 건틀렛'}</span></div>
         <div class="gd-odds">
             <div><span>뽑기 1회</span><b>${gachaPct(e.w, B.total)}</b></div>
-            <div><span>천장 때</span><b>${gachaPct(e.pw ?? e.w, B.gearW)}</b></div>
-            <div><span>중복이면</span><b>+${fmt(e.dupe)} JC</b></div>
+            <div><span>천장 때</span><b>${pityPct(B, e)}</b></div>
+            <div><span>중복이면</span><b>${lv < GEAR_LV_MAX ? `강화 +1 (효과 +10%)` : `+${fmt(e.dupe)} JC`}</b></div>
         </div>
-        <div class="gd-own ${own ? 'on' : ''}">${own ? '보유 중 · 가방에서 장착' : '아직 없음'}</div>`;
+        <div class="gd-own ${own ? 'on' : ''}">${own ? `보유 중 · 강화 ${lv} / ${GEAR_LV_MAX}${lv >= GEAR_LV_MAX ? ' MAX' : ''}` : '아직 없음'}</div>`;
     box.classList.remove('hidden');
     attachGearPreviews(box);
 }
@@ -2485,6 +2534,36 @@ const SESSION_KEY = 'js_rng_session';
 let session = null;
 try { session = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (e) {}
 let cloudSavedAt = 0, cloudLastRolls = -1, cloudBusy = false;
+// 이 기기가 마지막으로 서버와 맞춘 서버 저장 시각 (다른 기기가 그 뒤에 저장했는지 보는 용도)
+const syncKey = () => `js_rng_sync_${session?.uid}`;
+const syncedAt = () => { try { return +localStorage.getItem(syncKey()) || 0; } catch (e) { return 0; } };
+const setSynced = t => { try { localStorage.setItem(syncKey(), String(t)); } catch (e) {} };
+function adoptCloud(cloud) {
+    const base = createInitialGameState();
+    gameState = { ...base, ...cloud, activeBuffs: { ...base.activeBuffs, ...(cloud.activeBuffs || {}) } };
+    if (backupGameState === null) localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+    renderAll(); applyEquippedAura(); applyBiome(false); applyGear(); updateAttendDot(); updatePetDot();
+    cloudLastRolls = gameState.rolls;
+}
+// 다른 기기에서 더 많이 한 기록이 서버에 있으면 자동으로 불러옴 (불러왔으면 true)
+async function cloudPull() {
+    if (!session || backupGameState !== null || cloudBusy) return false;
+    try {
+        const rows = await userFetch(`saves?select=updated_at,r:data->rolls&id=eq.${session.uid}`);
+        const row = rows?.[0];
+        if (!row) return false;
+        const at = Date.parse(row.updated_at);
+        if (!(at > syncedAt())) return false;                 // 내가 마지막으로 맞춘 뒤로 아무도 저장 안 함
+        if ((+row.r || 0) < (gameState.rolls || 0)) return false;   // 이 기기가 더 많이 함 → 이 기기 걸로 덮어씀
+        const full = await userFetch(`saves?select=data,updated_at&id=eq.${session.uid}`);
+        if (!full?.[0]?.data) return false;
+        adoptCloud(full[0].data);
+        setSynced(Date.parse(full[0].updated_at));
+        cloudSavedAt = Date.now();
+        toast('☁️ 다른 기기 기록을 불러왔어요', 'good');
+        return true;
+    } catch (e) { console.warn('클라우드 확인 실패', e); return false; }
+}
 const saveSession = () => { try { session ? localStorage.setItem(SESSION_KEY, JSON.stringify(session)) : localStorage.removeItem(SESSION_KEY); } catch (e) {} };
 
 async function nickEmail(nick) {
@@ -2551,19 +2630,19 @@ async function logIn(nick, pw) {
             okText: '서버 기록 불러오기'
         });
         if (useCloud) {
-            gameState = { ...createInitialGameState(), ...cloud, activeBuffs: { ...createInitialGameState().activeBuffs, ...(cloud.activeBuffs || {}) } };
-            saveGame(); renderAll(); applyEquippedAura(); applyBiome(false);
-            cloudLastRolls = gameState.rolls;
+            adoptCloud(cloud);
+            setSynced(Date.parse(rows[0].updated_at));
             toast('☁️ 서버 기록을 불러왔어요', 'good');
             return;
         }
     }
-    await cloudUpload(true);
+    await cloudUpload(true, true);   // 이 기기 기록으로 서버 덮어쓰기
 }
 async function logOut() {
     await cloudUpload(true);
     if (cloudSavedAt < Date.now() - 10000) throw new Error('서버에 저장을 못 해서 로그아웃을 멈췄어요. 인터넷을 확인해 주세요');
     try { await authCall('logout', {}, session?.access); } catch (e) {}
+    try { localStorage.removeItem(syncKey()); } catch (e) {}
     session = null; saveSession();
     myAvatar = null; try { localStorage.removeItem(AVATAR_KEY); } catch (e) {}
     // 이 폰은 새 게임으로 (기록은 서버에 있어서 다시 로그인하면 돌아옴)
@@ -2579,21 +2658,30 @@ function profileStats() {
     for (const id of found) { const a = AURA_BY_ID[id]; if (a && (!best || a.in > best.in)) best = a; }
     return { rolls: gameState.rolls || 0, jc: Math.floor(gameState.jc || 0), found: AURA_DATA.filter(a => found.has(a.id)).length, best_aura: best?.id || null, best_in: best?.in || 0, equipped: gameState.equippedAura || null, attend: gameState.attend?.total || 0 };
 }
-async function cloudUpload(force) {
+async function cloudUpload(force, overwrite = false) {
     if (!session || backupGameState !== null || cloudBusy) return;
-    if (!force && gameState.rolls === cloudLastRolls) return;
+    if (!force && (gameState.savedAt || 0) <= cloudSavedAt) return;   // 바뀐 게 없으면 안 올림
     cloudBusy = true;
     try {
+        // 올리기 전에: 다른 기기가 더 많이 한 기록을 올려놨으면 덮어쓰지 않음
+        const rows = await userFetch(`saves?select=updated_at,r:data->rolls&id=eq.${session.uid}`);
+        const row = rows?.[0];
+        if (!overwrite && row && Date.parse(row.updated_at) > syncedAt() && (+row.r || 0) > (gameState.rolls || 0)) {
+            cloudBusy = false;
+            await cloudPull();
+            return;
+        }
         const now = new Date().toISOString();
         await userFetch('saves?on_conflict=id', { method: 'POST', headers: { 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ id: session.uid, data: gameState, updated_at: now }) });
         await userFetch(`profiles?id=eq.${session.uid}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify({ ...profileStats(), updated_at: now }) });
         cloudSavedAt = Date.now(); cloudLastRolls = gameState.rolls;
+        setSynced(Date.parse(now));
         if (!$('sheet-settings').classList.contains('hidden') && setTab === 'account') renderAccount();
     } catch (e) { console.warn('클라우드 저장 실패', e); }
     finally { cloudBusy = false; }
 }
-setInterval(() => cloudUpload(false), 180000);
-document.addEventListener('visibilitychange', () => { if (document.hidden) cloudUpload(false); });
+setInterval(async () => { if (!document.hidden && !(await cloudPull())) cloudUpload(false); }, 180000);
+document.addEventListener('visibilitychange', () => { document.hidden ? cloudUpload(false) : cloudPull(); });
 
 /* ---------- 설정 → 계정 탭 ---------- */
 let accMode = 'login';
@@ -2612,7 +2700,7 @@ function renderAccount() {
                 <button class="btn btn-block" data-acc="save">지금 서버에 저장</button>
                 <button class="btn btn-block btn-red" data-acc="logout">로그아웃</button>
             </div>
-            <div class="set-note">저장은 3분마다, 그리고 게임을 내릴 때 자동으로 돼요.</div>`;
+            <div class="set-note">저장은 3분마다, 그리고 게임을 내릴 때 자동으로 돼요.<br>폰·컴 같은 계정이면 게임을 켤 때 더 많이 한 쪽 기록으로 자동으로 맞춰져요.</div>`;
     } else {
         el.innerHTML = `
             <div class="acc-hero"><b>로그인하면</b><span>☁️ 폰을 바꿔도 기록 유지 · 🏆 랭킹 · 🪪 프로필</span></div>
@@ -2962,7 +3050,7 @@ function getBiome() {
     return b && b.until > Date.now() ? BIOME_BY_ID[b.id] || null : null;
 }
 function startBiome(b) {
-    const am = CRAFT_BY_ID[gameState.amulet];
+    const am = gearOf(gameState.amulet);
     gameState.biome = { id: b.id, until: Date.now() + b.duration * (am?.biomeTime || 1) * 1000 };
     saveGame();
     applyBiome(true);
@@ -3009,7 +3097,7 @@ function biomeTick() {
     }
     if (Date.now() < nextBiomeCheck) return;
     nextBiomeCheck = Date.now() + BIOME_CHECK_MS;
-    const b = rollBiome(CRAFT_BY_ID[gameState.amulet]?.biomeBoost || 1, activeEvents());
+    const b = rollBiome(gearOf(gameState.amulet)?.biomeBoost || 1, activeEvents());
     if (b) startBiome(b);
 }
 $('biome-badge').addEventListener('click', () => {
@@ -3143,7 +3231,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=42')
+import('./aura3d.js?v=43')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {

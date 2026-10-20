@@ -1774,3 +1774,5 @@ body.cine-on #biome-fx { opacity: 0; }
 .merge-wait span { font-size: 11px; padding: 4px 8px; border: 1px solid color-mix(in srgb, var(--c) 35%, transparent); }
 .merge-wait b { color: var(--dim, #aaa); font-weight: normal; margin-left: 3px; }
 #pet-panel { display: flex; flex-direction: column; gap: 10px; }
+
+.gear-lv { font-family: var(--mono, monospace); font-size: 10.5px; padding: 0 5px; margin-left: 4px; background: rgba(255, 140, 60, 0.15); color: #ffb070; border: 1px solid rgba(255, 140, 60, 0.4); vertical-align: middle; }

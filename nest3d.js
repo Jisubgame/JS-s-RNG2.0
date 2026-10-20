@@ -6,7 +6,7 @@
    ========================================================= */
 
 import * as THREE from 'three';
-import { EGG_BY_ID } from './petsData.js?v=42';
+import { EGG_BY_ID } from './petsData.js?v=43';
 
 // 위아래가 다른 달걀 모양 (깎은 보석처럼 각지게)
 const EGG_GEO = (() => {

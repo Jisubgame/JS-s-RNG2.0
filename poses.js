@@ -642,6 +642,51 @@ export const POSES = {
         set(d.legL, 0, 0, -0.08); set(d.legR, 0, 0, 0.08);
     },
     // 시간을 멈춘 자 공병은: 멈출 때 손바닥을 앞으로 쭉
+    // 연금술사 김가은: 플라스크를 눈높이로 들어 살펴보고, 끓어오를 땐 몸을 살짝 뒤로
+    leg_alchemist_gaeun(t, d, _r, sig) {
+        const b = sig?.brew ?? 0;
+        set(d.armR, -1.5 - b * 0.3, 0, 0.35); set(d.armL, -0.4 + S(t * 1.5) * 0.1, 0, -0.35);
+        d.head.rotation.x = 0.1 - b * 0.2; d.head.rotation.y = 0.25; d.root.rotation.x = -b * 0.08;
+        set(d.legL, 0.05, 0, -0.06); set(d.legR, -0.05, 0, 0.06);
+    },
+    // 서커스 단장 김건우: 지팡이를 짚고 반대 팔을 활짝, 저글링 박자에 맞춰 까딱
+    leg_ringmaster_gunwoo(t, d, _r, sig) {
+        const k = sig?.toss ?? 0;
+        set(d.armL, -0.35, 0, -0.25); set(d.armR, -0.3 - k * 0.3, 0, 1.7);
+        d.head.rotation.x = -0.15 - k * 0.05; d.head.rotation.z = S(t * 2.8) * 0.08;
+        d.root.position.y += k * 0.08;
+        set(d.legL, 0, 0, -0.12); set(d.legR, 0, 0, 0.12);
+    },
+    // 등대지기 김티비: 랜턴을 앞으로 들어 바다를 비추고 먼 곳을 바라봄
+    myth_lighthouse_tv(t, d, _r, sig) {
+        const w = sig?.sweep ?? 0;
+        set(d.armR, -1.25, 0, 0.15); set(d.armL, -0.15, 0, -0.2);
+        d.head.rotation.y = -0.35 + w * 0.2; d.head.rotation.x = -0.1;
+        d.root.rotation.z = S(t * 0.9) * 0.05;   // 배 위처럼 살짝 흔들
+        set(d.legL, 0, 0, -0.1); set(d.legR, 0, 0, 0.1);
+    },
+    // 사막의 파라오 김민채: 앙크를 가슴에, 때때로 하늘 높이 치켜듦
+    anc_pharaoh_minchae(t, d, _r, sig) {
+        const k = sig?.raise ?? 0;
+        set(d.armR, mix(-1.1, -0.2, k), 0, mix(-0.6, 2.8, k)); set(d.armL, -1.0, 0, 0.55);
+        d.head.rotation.x = mix(0.05, -0.3, k); d.root.position.y += 0.15 + k * 0.4;
+        set(d.legL, 0, 0, -0.04); set(d.legR, 0, 0, 0.04);
+    },
+    // 거울 세계 김건우: 거울을 향해 손을 뻗고, 깨질 때 고개를 젖힘
+    abs_mirror_gunwoo(t, d, _r, sig) {
+        const k = sig?.shatter ?? 0;
+        set(d.armL, -1.4 + S(t * 0.8) * 0.1, 0, -0.1); set(d.armR, -0.2, 0, 0.3 + k * 0.8);
+        d.head.rotation.x = -k * 0.35; d.head.rotation.y = S(t * 0.5) * 0.15;
+        d.root.position.y += 0.15 + S(t * 1.2) * 0.08;
+        set(d.legL, -0.05, 0, -0.06); set(d.legR, 0.05, 0, 0.06);
+    },
+    // 세계수 김건우: 씨앗을 두 손으로 받쳐 들고, 덩굴이 자랄수록 팔을 넓게 펼침
+    jxs_worldtree_gunwoo(t, d, _r, sig) {
+        const g = sig?.grow ?? 0;
+        set(d.armR, mix(-1.2, -0.4, g), 0, mix(0.2, 1.3, g)); set(d.armL, mix(-1.2, -0.4, g), 0, mix(-0.2, -1.3, g));
+        d.head.rotation.x = mix(0.2, -0.25, g); d.root.position.y += 0.3 + g * 0.5 + S(t * 0.9) * 0.08;
+        set(d.legL, 0, 0, -0.05); set(d.legR, 0, 0, 0.05);
+    },
     abs_timestop_byungeun(t, d, _r, sig) {
         const k = sig?.stop ?? 0;
         set(d.armL, mix(-0.3, -1.6, k), 0, mix(-0.15, 0, k)); set(d.armR, -0.35, 0, 0.2);

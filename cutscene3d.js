@@ -14,7 +14,7 @@
      hit2 : JXS만. 두 번째 클라이맥스. hit~hit2 동안은 각성 직전 단계
    ========================================================= */
 
-import { buildLocomotive } from './auraSignatures.js?v=42';
+import { buildLocomotive } from './auraSignatures.js?v=43';
 
 export function createCutscene(ctx) {
     const { THREE, scene, camera, dummy, floor, stars, kit, bloom, stageApi } = ctx;
@@ -146,6 +146,74 @@ export function createCutscene(ctx) {
        update(time, phase, k, dt)  phase: 'build' | 'phase2' | 'reveal'
        ========================================================= */
     const MOTIFS = {
+
+        // 🏜 파라오: 별 아래로 피라미드가 솟아오르고 꼭대기의 금 캡스톤이 별과 맞닿음
+        pharaoh({ g, colors }) {
+            const sand = new THREE.MeshStandardMaterial({ color: 0xd9a95a, roughness: 0.9, flatShading: true });
+            const gold = new THREE.MeshStandardMaterial({ color: 0xffc94d, metalness: 0.8, roughness: 0.25, emissive: 0x6a4a00, emissiveIntensity: 0.8 });
+            const pyr = new THREE.Group(); pyr.position.set(0, -14, -6); g.add(pyr);
+            const n = 10;
+            for (let i = 0; i < n; i++) { const m = new THREE.Mesh(BOX, sand); m.scale.set((n - i) * 2, 1.4, (n - i) * 2); m.position.y = i * 1.4; pyr.add(m); }
+            const cap = new THREE.Mesh(BOX, gold); cap.scale.set(1.6, 1.4, 1.6); cap.position.y = n * 1.4; pyr.add(cap);
+            const rays = new THREE.Group(); rays.position.y = n * 1.4 + 0.7; pyr.add(rays);
+            for (let i = 0; i < 8; i++) { const r = new THREE.Mesh(BOX, glowMat(colors[0], 0.35)); r.scale.set(0.3, 14, 0.1); r.position.y = 7; const pv = new THREE.Group(); pv.rotation.z = (i / 8) * Math.PI * 2; pv.add(r); rays.add(pv); }
+            return {
+                bloom: 0.7,
+                update(time, phase, k) {
+                    const vis = phase === 'build';
+                    g.visible = vis;
+                    if (!vis) return;
+                    pyr.position.y = THREE.MathUtils.lerp(-22, -12.5, ease.out(clamp01(k / 0.7)));
+                    rays.rotation.z = time * 0.3;
+                    rays.scale.setScalar(0.2 + clamp01((k - 0.6) / 0.4) * 1);
+                }
+            };
+        },
+
+        // 🪞 거울 세계: 별을 둘러싼 거울 판들이 다가오며 별을 수십 개로 비추다가 터지기 직전 산산조각
+        mirror({ g, colors }) {
+            const glass = new THREE.MeshStandardMaterial({ color: 0xcfe8ff, metalness: 1, roughness: 0.05, emissive: colors[0], emissiveIntensity: 0.3 });
+            const panes = [];
+            for (let i = 0; i < 10; i++) {
+                const p = new THREE.Group();
+                const m = new THREE.Mesh(BOX, glass); m.scale.set(3, 4.4, 0.08); p.add(m);
+                const fr = square(3.6, 0.12, glowMat(colors[0], 0.9)); fr.rotation.x = Math.PI / 2; fr.scale.set(1, 1, 1.3); p.add(fr);
+                g.add(p); panes.push({ p, a: (i / 10) * Math.PI * 2 });
+            }
+            const shards = [];
+            for (let i = 0; i < 60; i++) { const m = new THREE.Mesh(BOX, glass); m.scale.set(0.5, 0.8, 0.05); m.visible = false; g.add(m); shards.push({ m, v: new THREE.Vector3((Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30, (Math.random() - 0.5) * 20) }); }
+            return {
+                bloom: 0.6,
+                update(time, phase, k) {
+                    const vis = phase === 'build';
+                    g.visible = vis;
+                    if (!vis) return;
+                    const broke = k > 0.9, bk = clamp01((k - 0.9) / 0.1);
+                    const r = THREE.MathUtils.lerp(16, 7, ease.inOut(clamp01(k / 0.85)));
+                    panes.forEach(({ p, a }, i) => { const aa = a + time * 0.4; p.visible = !broke; p.position.set(Math.cos(aa) * r, 3.5 + Math.sin(aa * 2) * 1.5, Math.sin(aa) * r * 0.6 - 3); p.lookAt(0, 3.5, -3); });
+                    shards.forEach(({ m, v }, i) => { m.visible = broke; if (!broke) return; const pp = panes[i % panes.length].p.position; m.position.set(pp.x + v.x * bk, pp.y + v.y * bk, pp.z + v.z * bk); m.rotation.set(time * 5 + i, time * 3, 0); });
+                }
+            };
+        },
+
+        // 🌳 세계수: 별이 씨앗이 되어 아래에서 줄기가 자라 올라오고, 가지와 잎이 하늘을 덮음
+        worldTree({ g, colors }) {
+            const bark = new THREE.MeshStandardMaterial({ color: 0x5a3a20, roughness: 0.95, flatShading: true });
+            const leaf = new THREE.MeshStandardMaterial({ color: colors[0], emissive: colors[0], emissiveIntensity: 0.6, flatShading: true });
+            const trunk = [], leaves = [];
+            for (let i = 0; i < 14; i++) { const m = new THREE.Mesh(BOX, bark); const w = 3.6 - i * 0.18; m.scale.set(w, 1.6, w); m.position.set(Math.sin(i * 0.5) * 0.4, -10 + i * 1.3, -6); m.rotation.y = i * 0.15; g.add(m); trunk.push(m); }
+            for (let i = 0; i < 40; i++) { const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * 12; const m = new THREE.Mesh(BOX, leaf); m.scale.setScalar(1.4 + Math.random() * 1.6); m.userData.home = new THREE.Vector3(Math.cos(a) * r, 8 + Math.random() * 6 - r * 0.2, Math.sin(a) * r * 0.5 - 6); g.add(m); leaves.push(m); }
+            return {
+                bloom: 0.65,
+                update(time, phase, k) {
+                    const vis = phase === 'build';
+                    g.visible = vis;
+                    if (!vis) return;
+                    trunk.forEach((m, i) => { const kk = clamp01(k * 2.2 - i / 14); m.visible = kk > 0; m.scale.y = 1.6 * kk; });
+                    leaves.forEach((m, i) => { const kk = ease.out(clamp01((k - 0.45 - i * 0.008) / 0.35)); m.visible = kk > 0; m.position.copy(m.userData.home).multiplyScalar(kk); m.position.y = THREE.MathUtils.lerp(4, m.userData.home.y, kk); m.rotation.set(time * 0.3 + i, time * 0.2, 0); });
+                }
+            };
+        },
 
         // 🐉 용왕: 사방에서 용이 몸을 휘감으며 별을 조여 들고, 터지기 직전 머리가 별 앞에서 포효
         dragonKing({ g, colors }) {

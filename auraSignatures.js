@@ -14,6 +14,289 @@
 
 export const SIGNATURES = {
 
+    /* =================== 🆕 새 칭호 (v43) =================== */
+
+    /* 연금술사 김가은 — 손 위에서 끓는 플라스크, 주위를 도는 약병, 바닥의 변환진 */
+    alchemist({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, BOX, glowMat, square, rand } = kit;
+        const owned = [];
+        const attach = (parent, obj) => { parent.add(obj); owned.push([parent, obj]); };
+        stage.onClear(() => owned.forEach(([p, o]) => p.remove(o)));
+        const box = (m, w, h, d, x, y, z, p = group) => { const b = new THREE.Mesh(BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
+        // 고글 + 망토
+        const brass = new THREE.MeshStandardMaterial({ color: 0xc9a24a, metalness: 0.7, roughness: 0.3 });
+        const goggle = new THREE.Group(); goggle.position.set(0, 0.35, 0.62);
+        box(brass, 1.3, 0.14, 0.1, 0, 0, 0, goggle);
+        for (const x of [-0.3, 0.3]) box(glowMat(pick(1), 0.9), 0.36, 0.3, 0.12, x, 0, 0.04, goggle);
+        attach(dummy.head, goggle);
+        const coat = new THREE.MeshStandardMaterial({ color: 0x3a2a5a, roughness: 0.7 });
+        attach(dummy.torso, (() => { const b = new THREE.Mesh(BOX, coat); b.scale.set(2.14, 2.12, 1.14); return b; })());
+        // 손 위 플라스크 (왼손 = armR)
+        const flask = new THREE.Group(); flask.position.set(0, -2.4, 0.2);
+        const glass = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, roughness: 0.1 });
+        box(glass, 0.7, 0.6, 0.7, 0, 0, 0, flask); box(glass, 0.25, 0.4, 0.25, 0, 0.5, 0, flask);
+        const liquid = box(glowMat(pick(0), 0.9), 0.6, 0.35, 0.6, 0, -0.1, 0, flask);
+        attach(dummy.armR, flask);
+        const bub = [];
+        for (let i = 0; i < 8; i++) bub.push(box(glowMat(pick(0), 0.8), 0.1, 0.1, 0.1, 0, 0, 0, flask));
+        // 주위를 도는 약병들
+        const vials = [0, 1, 2, 3, 4].map(i => {
+            const v = new THREE.Group(); group.add(v);
+            box(glass, 0.36, 0.6, 0.36, 0, 0, 0, v); box(glowMat(pick(i % 3), 0.9), 0.28, 0.36, 0.28, 0, -0.1, 0, v);
+            box(new THREE.MeshStandardMaterial({ color: 0x8a5a2a }), 0.22, 0.14, 0.22, 0, 0.36, 0, v);
+            return v;
+        });
+        // 변환진: 사각+삼각 무늬 회전
+        const circle = new THREE.Group(); circle.position.y = 0.06; group.add(circle);
+        const rings = [3.2, 4.6].map((s, i) => { const r = square(s, 0.07, glowMat(pick(i), 0.6)); circle.add(r); return r; });
+        for (let i = 0; i < 3; i++) { const l = box(glowMat(pick(1), 0.5), 0.06, 0.04, 3.9, 0, 0, 0, circle); l.rotation.y = (i / 3) * Math.PI; l.position.set(Math.cos(i / 3 * Math.PI * 2) * 1.1, 0, Math.sin(i / 3 * Math.PI * 2) * 1.1); }
+        const runes = [];
+        for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; runes.push(box(glowMat(pick(2), 0.8), 0.25, 0.04, 0.25, Math.cos(a) * 2.2, 0, Math.sin(a) * 2.2, circle)); }
+        sig.brew = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            const c = (t % 5) / 5; sig.brew = c > 0.7 ? Math.sin((c - 0.7) / 0.3 * Math.PI) : 0;
+            liquid.scale.y = 0.35 + Math.sin(t * 6) * 0.05 + sig.brew * 0.2;
+            bub.forEach((b, i) => { const k = (t * 1.5 + i / 8) % 1; b.position.set(Math.sin(i * 2.3) * 0.2, -0.1 + k * (1.4 + sig.brew * 2), Math.cos(i * 2.3) * 0.2); b.scale.setScalar(0.1 * (1 - k) + 0.03); });
+            vials.forEach((v, i) => { const a = t * 0.8 + (i / 5) * Math.PI * 2; v.position.set(Math.cos(a) * 2.6, 2.8 + Math.sin(t * 1.6 + i) * 0.4 + lift, Math.sin(a) * 2.6); v.rotation.set(Math.sin(t + i) * 0.3, -a, Math.sin(t * 1.3 + i) * 0.3); });
+            circle.rotation.y = t * 0.3 * (1 + sig.brew * 3);
+            rings.forEach((r, i) => { r.rotation.y = t * (i ? -0.5 : 0.4); });
+            runes.forEach((r, i) => { r.material.opacity = 0.4 + Math.max(0, Math.sin(t * 3 - i)) * 0.6; });
+        });
+    },
+
+    /* 서커스 단장 김건우 — 실크햇과 지팡이, 줄무늬 천막 무대, 위에서 저글링 공이 돌고 스포트라이트 */
+    ringmaster({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, BOX, glowMat, rand } = kit;
+        stage.setSky('#120612');
+        const owned = [];
+        const attach = (parent, obj) => { parent.add(obj); owned.push([parent, obj]); };
+        stage.onClear(() => owned.forEach(([p, o]) => p.remove(o)));
+        const box = (m, w, h, d, x, y, z, p = group) => { const b = new THREE.Mesh(BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
+        const black = new THREE.MeshStandardMaterial({ color: 0x111116, roughness: 0.5 });
+        const red = new THREE.MeshStandardMaterial({ color: 0xd8203a, roughness: 0.6 });
+        const gold = new THREE.MeshStandardMaterial({ color: 0xffc94d, metalness: 0.6, roughness: 0.3 });
+        // 실크햇
+        const hat = new THREE.Group(); hat.position.y = 0.62;
+        box(black, 1.6, 0.1, 1.6, 0, 0, 0, hat); box(black, 1.0, 1.0, 1.0, 0, 0.55, 0, hat); box(red, 1.02, 0.18, 1.02, 0, 0.15, 0, hat);
+        attach(dummy.head, hat);
+        // 빨간 연미복 + 금단추
+        const coat = new THREE.Group(); coat.add(box(red, 2.14, 2.12, 1.14, 0, 0, 0, coat));
+        for (let i = 0; i < 3; i++) coat.add(box(gold, 0.16, 0.16, 0.06, 0, 0.6 - i * 0.5, 0.6, coat));
+        attach(dummy.torso, coat);
+        // 지팡이 (오른손 = armL)
+        const cane = new THREE.Group(); cane.position.set(0, -2.1, 0.3);
+        box(black, 0.12, 2.6, 0.12, 0, -0.4, 0, cane); box(gold, 0.26, 0.26, 0.26, 0, 0.95, 0, cane);
+        attach(dummy.armL, cane);
+        // 줄무늬 천막 (뒤쪽 반원)
+        const tent = new THREE.Group(); tent.position.z = -6; group.add(tent);
+        for (let i = 0; i < 14; i++) {
+            const a = Math.PI * (i / 13), x = Math.cos(a) * 10, z = -Math.sin(a) * 4;
+            const s = box(i % 2 ? red : new THREE.MeshStandardMaterial({ color: 0xf6efe6, roughness: 0.7 }), 2.4, 12, 0.3, x, 6, z, tent);
+            s.rotation.y = a - Math.PI / 2;
+        }
+        // 동그란 무대 테두리 (블록)
+        for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; box(i % 2 ? red : gold, 0.6, 0.3, 0.6, Math.cos(a) * 3.6, 0.15, Math.sin(a) * 3.6); }
+        // 저글링 공
+        const balls = [0, 1, 2, 3, 4].map(i => box(new THREE.MeshStandardMaterial({ color: pick(i % 3), emissive: pick(i % 3), emissiveIntensity: 0.5 }), 0.4, 0.4, 0.4, 0, 0, 0));
+        // 스포트라이트 두 개
+        const spots = [-1, 1].map(s => { const g = new THREE.Group(); g.position.set(s * 6, 12, -2); group.add(g); const b = box(glowMat(0xfff2c0, 0.1), 2, 13, 2, 0, -6.5, 0, g); return { g, s }; });
+        sig.toss = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            balls.forEach((b, i) => {
+                const k = (t * 0.9 + i / 5) % 1, side = Math.floor(t * 0.9 + i / 5) % 2 ? 1 : -1;
+                b.position.set(side * (1 - 2 * k) * 1.6, 6.3 + Math.sin(k * Math.PI) * 2.4 + lift, 0.8);
+                b.rotation.set(t * 3, t * 2, 0);
+            });
+            sig.toss = Math.sin(t * 5.65) * 0.5 + 0.5;
+            spots.forEach(({ g, s }, i) => { g.rotation.z = s * 0.45 + Math.sin(t * 0.9 + i * 2) * 0.12; });
+        });
+    },
+
+    /* 등대지기 김티비 — 등 뒤 바다 위 등대가 빛을 돌리고, 파도 블록이 출렁 */
+    lighthouse({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, BOX, glowMat, rand, TMP } = kit;
+        stage.setSky('#030a16');
+        const owned = [];
+        const attach = (parent, obj) => { parent.add(obj); owned.push([parent, obj]); };
+        stage.onClear(() => owned.forEach(([p, o]) => p.remove(o)));
+        const box = (m, w, h, d, x, y, z, p = group) => { const b = new THREE.Mesh(BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
+        // 비옷 + 손전등 랜턴
+        const yellow = new THREE.MeshStandardMaterial({ color: 0xffc928, roughness: 0.5 });
+        attach(dummy.torso, (() => { const b = new THREE.Mesh(BOX, yellow); b.scale.set(2.14, 2.12, 1.14); return b; })());
+        const hood = new THREE.Group(); hood.position.y = 0.55; box(yellow, 1.4, 0.3, 1.4, 0, 0, 0, hood); box(yellow, 1.7, 0.08, 1.7, 0, -0.1, 0.1, hood);
+        attach(dummy.head, hood);
+        const lantern = new THREE.Group(); lantern.position.set(0, -2.4, 0.2);
+        box(new THREE.MeshStandardMaterial({ color: 0x2a2a30 }), 0.5, 0.08, 0.5, 0, 0.35, 0, lantern);
+        const flame = box(glowMat(0xffe7a0, 1), 0.34, 0.5, 0.34, 0, 0, 0, lantern);
+        attach(dummy.armR, lantern);
+        // 등대
+        const lh = new THREE.Group(); lh.position.set(-7, 0, -9); lh.userData.noFit = true; group.add(lh);
+        for (let i = 0; i < 8; i++) box(new THREE.MeshStandardMaterial({ color: i % 2 ? 0xd8203a : 0xf4f0ea, roughness: 0.6 }), 2.2 - i * 0.12, 1.4, 2.2 - i * 0.12, 0, 0.7 + i * 1.4, 0, lh);
+        box(new THREE.MeshStandardMaterial({ color: 0x222222 }), 1.8, 0.2, 1.8, 0, 11.4, 0, lh);
+        const lamp = box(glowMat(0xfff2c0, 1), 0.9, 0.9, 0.9, 0, 12.1, 0, lh);
+        box(new THREE.MeshStandardMaterial({ color: 0x222222 }), 1.4, 0.5, 1.4, 0, 12.9, 0, lh);
+        const beam = new THREE.Group(); beam.position.set(0, 12.1, 0); lh.add(beam);
+        box(glowMat(0xfff2c0, 0.18), 24, 1.2, 1.2, 12, 0, 0, beam); box(glowMat(0xfff2c0, 0.32), 24, 0.4, 0.4, 12, 0, 0, beam);
+        // 파도 (블록 바다)
+        const W = 18, D = 7, N = W * D;
+        const sea = new THREE.InstancedMesh(BOX, new THREE.MeshStandardMaterial({ color: 0x1a5ab0, roughness: 0.3, emissive: 0x0a2a5a, emissiveIntensity: 0.6 }), N);
+        sea.userData.noFit = true; group.add(sea);
+        sig.sweep = 0;
+        tick(t => {
+            beam.rotation.y = t * 0.9;
+            const fwd = Math.cos(t * 0.9 + 0.5);
+            sig.sweep = Math.max(0, fwd);
+            lamp.material.opacity = 0.7 + sig.sweep * 0.3;
+            flame.scale.set(0.34, 0.5 + Math.sin(t * 13) * 0.06, 0.34);
+            let i = 0;
+            for (let x = 0; x < W; x++) for (let z = 0; z < D; z++) {
+                const px = -17 + x * 2, pz = -8 - z * 2;
+                const h = 0.6 + Math.sin(t * 1.6 + x * 0.6 + z * 0.9) * 0.4;
+                TMP.p.set(px, h / 2 - 0.3, pz); TMP.q.identity(); TMP.sc.set(1.95, h, 1.95);
+                sea.setMatrixAt(i++, TMP.m4.compose(TMP.p, TMP.q, TMP.sc));
+            }
+            sea.instanceMatrix.needsUpdate = true;
+        });
+    },
+
+    /* 사막의 파라오 김민채 — 황금 네메스 두건, 뒤로 솟은 피라미드, 손의 앙크, 모래 회오리 */
+    pharaoh({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, BOX, glowMat, rand, TMP } = kit;
+        stage.setSky('#1a0c04');
+        const owned = [];
+        const attach = (parent, obj) => { parent.add(obj); owned.push([parent, obj]); };
+        stage.onClear(() => owned.forEach(([p, o]) => p.remove(o)));
+        const box = (m, w, h, d, x, y, z, p = group) => { const b = new THREE.Mesh(BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
+        const gold = new THREE.MeshStandardMaterial({ color: 0xffc94d, metalness: 0.8, roughness: 0.25, emissive: 0x5a3a00, emissiveIntensity: 0.5 });
+        const lapis = new THREE.MeshStandardMaterial({ color: 0x1f4ab8, metalness: 0.4, roughness: 0.35 });
+        // 네메스 두건 (금·청 줄무늬) + 뱀 장식
+        const nemes = new THREE.Group();
+        for (let i = 0; i < 5; i++) box(i % 2 ? lapis : gold, 1.36, 0.22, 1.36, 0, 0.62 - i * 0.24, -0.02, nemes);
+        for (const s of [-1, 1]) for (let i = 0; i < 4; i++) box(i % 2 ? lapis : gold, 0.38, 0.3, 0.5, s * 0.72, -0.2 - i * 0.3, 0.1, nemes);
+        box(gold, 0.18, 0.4, 0.14, 0, 0.75, 0.7, nemes);
+        attach(dummy.head, nemes);
+        // 금 목걸이 (넓은 칼라)
+        const collar = new THREE.Group(); collar.position.y = 0.85;
+        for (let i = 0; i < 3; i++) box(i % 2 ? lapis : gold, 2.2 - i * 0.2, 0.18, 1.2, 0, -i * 0.18, 0.02, collar);
+        attach(dummy.torso, collar);
+        // 앙크 (왼손 = armR)
+        const ankh = new THREE.Group(); ankh.position.set(0, -2.5, 0.2);
+        box(gold, 0.16, 1.1, 0.16, 0, -0.3, 0, ankh); box(gold, 0.7, 0.16, 0.16, 0, 0.25, 0, ankh);
+        box(gold, 0.5, 0.12, 0.16, 0, 0.75, 0, ankh); box(gold, 0.12, 0.5, 0.16, -0.22, 0.55, 0, ankh); box(gold, 0.12, 0.5, 0.16, 0.22, 0.55, 0, ankh);
+        const glowAnkh = box(glowMat(pick(0), 0.5), 0.9, 1.7, 0.1, 0, 0.1, -0.05, ankh);
+        attach(dummy.armR, ankh);
+        // 피라미드 셋 (계단식 블록)
+        const sand = new THREE.MeshStandardMaterial({ color: 0xd9a95a, roughness: 0.9, flatShading: true });
+        const pyr = new THREE.Group(); pyr.userData.noFit = true; group.add(pyr);
+        [[0, -16, 9], [-11, -20, 6], [10, -19, 7]].forEach(([x, z, n]) => {
+            for (let i = 0; i < n; i++) box(sand, (n - i) * 2.2, 1.2, (n - i) * 2.2, x, 0.6 + i * 1.2, z, pyr);
+            box(gold, 1, 0.8, 1, x, n * 1.2 + 0.3, z, pyr);
+        });
+        // 모래 회오리
+        const N = 90, dust = new THREE.InstancedMesh(BOX, glowMat(0xffd08a, 0.7), N); group.add(dust);
+        const dp = Array.from({ length: N }, () => ({ a: rand(0, 6.28), h: Math.random(), r: rand(2.2, 3.4), s: rand(0.08, 0.2) }));
+        // 떠오르는 스카라브 (금 풍뎅이)
+        const scar = [0, 1, 2].map(i => { const g = new THREE.Group(); box(gold, 0.6, 0.2, 0.8, 0, 0, 0, g); box(glowMat(pick(1), 0.9), 0.9, 0.06, 0.4, 0, 0.12, -0.05, g); group.add(g); return g; });
+        sig.raise = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            dp.forEach((p, i) => { const h = (p.h + t * 0.15) % 1, a = p.a + t * 2.2 + h * 3; TMP.p.set(Math.cos(a) * p.r * (0.6 + h * 0.6), h * 7, Math.sin(a) * p.r * (0.6 + h * 0.6)); TMP.q.identity(); TMP.sc.setScalar(p.s); dust.setMatrixAt(i, TMP.m4.compose(TMP.p, TMP.q, TMP.sc)); });
+            dust.instanceMatrix.needsUpdate = true;
+            const c = (t % 6) / 6; sig.raise = c > 0.6 ? Math.sin((c - 0.6) / 0.4 * Math.PI) : 0;
+            glowAnkh.material.opacity = 0.3 + sig.raise * 0.7;
+            scar.forEach((g, i) => { const a = t * 0.6 + i * 2.1; g.position.set(Math.cos(a) * 3.2, 4.2 + Math.sin(t * 1.4 + i) * 0.5 + lift, Math.sin(a) * 3.2); g.rotation.y = -a; });
+        });
+    },
+
+    /* 거울 세계 김건우 — 앞뒤에 반대로 움직이는 거울 분신, 주위를 도는 거울 조각, 7초마다 와장창 */
+    mirror({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, BOX, glowMat, rand, mini } = kit;
+        stage.setSky('#05060c');
+        const box = (m, w, h, d, x, y, z, p = group) => { const b = new THREE.Mesh(BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
+        const glassM = new THREE.MeshStandardMaterial({ color: 0xcfe8ff, metalness: 1, roughness: 0.05, emissive: pick(0), emissiveIntensity: 0.15 });
+        // 거울 분신 (좌우 반전된 포즈, 반투명 크롬)
+        const twin = mini(0xffffff, { scale: 1 });
+        const chrome = new THREE.MeshStandardMaterial({ color: 0xbfd8ff, metalness: 1, roughness: 0.15, transparent: true, opacity: 0.6, emissive: pick(0), emissiveIntensity: 0.25 });
+        twin.root.traverse(o => { if (o.isMesh) o.material = chrome; });
+        twin.root.position.set(0, 0, -3.2); twin.root.rotation.y = Math.PI;
+        group.add(twin.root);
+        // 분신과 나 사이의 거울 판 (테두리만)
+        const frame = new THREE.Group(); frame.position.set(0, 3, -1.6); group.add(frame);
+        const fm = glowMat(pick(0), 0.85);
+        box(fm, 4.6, 0.14, 0.1, 0, 3.2, 0, frame); box(fm, 4.6, 0.14, 0.1, 0, -3.2, 0, frame);
+        box(fm, 0.14, 6.4, 0.1, -2.3, 0, 0, frame); box(fm, 0.14, 6.4, 0.1, 2.3, 0, 0, frame);
+        const pane = box(new THREE.MeshStandardMaterial({ color: 0x9ac8ff, transparent: true, opacity: 0.12, metalness: 1, roughness: 0 }), 4.5, 6.3, 0.04, 0, 0, 0, frame);
+        // 거울 조각 (도는 파편)
+        const N = 22, shards = [];
+        const shardG = new THREE.Group(); shardG.userData.noFit = true; group.add(shardG);   // 터질 때 멀리 날아가도 카메라는 그대로
+        for (let i = 0; i < N; i++) { const s = box(glassM, rand(0.3, 0.8), rand(0.5, 1.2), 0.05, 0, 0, 0, shardG); shards.push({ s, a: rand(0, 6.28), r: rand(3, 5.5), y: rand(0.5, 7), sp: rand(0.3, 0.8) }); }
+        // 바닥: 반사되는 검은 거울 타일
+        const floorG = new THREE.Group(); floorG.userData.noFit = true; group.add(floorG);
+        const floorM = new THREE.MeshStandardMaterial({ color: 0x0a0c14, metalness: 1, roughness: 0.1 });
+        for (let x = -3; x <= 3; x++) for (let z = -3; z <= 1; z++) box(floorM, 1.9, 0.04, 1.9, x * 2, 0.02, z * 2, floorG);
+        const parts = ['legL', 'legR', 'armL', 'armR', 'head', 'torso'];
+        sig.shatter = 0;
+        tick(t => {
+            // 분신은 내 포즈를 좌우 바꿔서 따라함
+            parts.forEach(k => { const src = k.endsWith('L') ? dummy[k.slice(0, -1) + 'R'] : k.endsWith('R') ? dummy[k.slice(0, -1) + 'L'] : dummy[k]; twin[k].rotation.set(src.rotation.x, -src.rotation.y, -src.rotation.z); });
+            twin.root.position.y = dummy.root.position.y;
+            const c = (t % 7) / 7;
+            const burst = c > 0.85 ? (c - 0.85) / 0.15 : 0;   // 와장창
+            sig.shatter = burst > 0 ? 1 - burst : 0;
+            pane.material.opacity = burst > 0 ? 0.12 * (1 - burst) : 0.12;
+            shards.forEach((p, i) => {
+                const a = p.a + t * p.sp, r = p.r + burst * 6;
+                p.s.position.set(Math.cos(a) * r, p.y + Math.sin(t + i) * 0.3 + dummy.root.position.y, Math.sin(a) * r);
+                p.s.rotation.set(t * p.sp, -a, Math.sin(t + i) * 0.5);
+            });
+        });
+    },
+
+    /* 세계수 김건우 — 나무껍질 갑옷, 머리에 잎사귀 관, 발밑에서 자라나는 덩굴 (뒤 배경은 jxsBackdrops) */
+    worldTree({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, BOX, glowMat, rand } = kit;
+        stage.setSky('#030a06');
+        const owned = [];
+        const attach = (parent, obj) => { parent.add(obj); owned.push([parent, obj]); };
+        stage.onClear(() => owned.forEach(([p, o]) => p.remove(o)));
+        const box = (m, w, h, d, x, y, z, p = group) => { const b = new THREE.Mesh(BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
+        const bark = new THREE.MeshStandardMaterial({ color: 0x5a3a20, roughness: 0.95, flatShading: true });
+        const leafM = new THREE.MeshStandardMaterial({ color: new THREE.Color(pick(0)), emissive: pick(0), emissiveIntensity: 0.5, roughness: 0.6 });
+        // 나무껍질 갑옷 (판 여러 장)
+        const armor = new THREE.Group();
+        for (let i = 0; i < 4; i++) box(bark, 2.16, 0.48, 1.16, 0, 0.75 - i * 0.5, 0, armor).rotation.z = (i % 2 ? 1 : -1) * 0.03;
+        attach(dummy.torso, armor);
+        // 잎사귀 관 + 작은 뿔가지
+        const crown = new THREE.Group(); crown.position.y = 0.7;
+        for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2; box(leafM, 0.36, 0.3, 0.36, Math.cos(a) * 0.7, 0.05 + (i % 2) * 0.12, Math.sin(a) * 0.7, crown); }
+        for (const s of [-1, 1]) { box(bark, 0.14, 0.8, 0.14, s * 0.45, 0.45, 0, crown).rotation.z = -s * 0.4; box(leafM, 0.3, 0.3, 0.3, s * 0.72, 0.85, 0, crown); }
+        attach(dummy.head, crown);
+        // 발밑에서 자라나는 덩굴 (블록이 차례로 자람)
+        const vines = [];
+        for (let k = 0; k < 6; k++) {
+            const a = k / 6 * Math.PI * 2, segs = [];
+            for (let i = 0; i < 9; i++) segs.push(box(i % 3 ? new THREE.MeshStandardMaterial({ color: 0x2f7a3a, roughness: 0.7 }) : leafM, 0.3, 0.3, 0.3, Math.cos(a + i * 0.25) * (0.9 + i * 0.32), 0.15 + Math.sin(i * 0.8) * 0.12, Math.sin(a + i * 0.25) * (0.9 + i * 0.32)));
+            vines.push(segs);
+        }
+        // 손 위의 작은 씨앗 빛 (왼손 = armR)
+        const seed = new THREE.Group(); seed.position.set(0, -2.5, 0.2);
+        const seedCore = box(glowMat(0xffffff, 0.9), 0.35, 0.35, 0.35, 0, 0, 0, seed);
+        const seedHalo = box(glowMat(pick(0), 0.4), 0.8, 0.8, 0.8, 0, 0, 0, seed);
+        attach(dummy.armR, seed);
+        sig.grow = 0;
+        tick(t => {
+            const c = (t % 9) / 9;
+            const grow = c < 0.5 ? c / 0.5 : c < 0.85 ? 1 : 1 - (c - 0.85) / 0.15;
+            sig.grow = grow;
+            vines.forEach(segs => segs.forEach((s, i) => { const k = Math.min(1, Math.max(0, grow * 10 - i)); s.scale.setScalar(0.3 * k + 0.001); }));
+            seedCore.rotation.set(t, t * 1.4, 0); seedHalo.rotation.set(-t * 0.7, t, 0);
+            seedHalo.scale.setScalar(0.8 + Math.sin(t * 3) * 0.15);
+            crown.rotation.y = Math.sin(t * 0.6) * 0.1;
+        });
+    },
+
     /* =================== 🆕 새 칭호 (v36) =================== */
 
     /* 스케이트보더 박지성 — 보드를 타고 3.5초마다 킥플립, 바닥엔 그래피티 타일 */

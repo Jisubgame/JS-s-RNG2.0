@@ -9,10 +9,11 @@ import { EffectComposer } from './lib/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from './lib/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from './lib/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from './lib/jsm/postprocessing/OutputPass.js';
-import { SIGNATURES, jxsGrand } from './auraSignatures.js?v=42';
-import { POSES } from './poses.js?v=42';
-import { createGearRig } from './gear3d.js?v=42';
-import { createPetRig } from './pets3d.js?v=42';
+import { SIGNATURES, jxsGrand } from './auraSignatures.js?v=43';
+import { JXS_BACKDROPS } from './jxsBackdrops.js?v=43';
+import { POSES } from './poses.js?v=43';
+import { createGearRig } from './gear3d.js?v=43';
+import { createPetRig } from './pets3d.js?v=43';
 
 const BOX = new THREE.BoxGeometry(1, 1, 1);
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -456,9 +457,14 @@ function buildAura(aura, dummy, stage) {
         SIGNATURES[fx.signature]({ group, tick: fn => updaters.push(fn), colors, pick, c0, dummy, kit: KIT, stage, sig });
     }
     // JXS 는 공통 '거대한 무대'를 한 겹 더 (칭호마다 분신 거리 등만 조금씩 다름)
-    if (aura.grade === 'JXS') jxsGrand({ group, tick: fn => updaters.push(fn), pick, dummy, kit: KIT }, JXS_GRAND[fx.signature] || {});
+    if (aura.grade === 'JXS') {
+        // JXS마다 자기만의 배경 세계 (없으면 예전 공통 무대)
+        const ctx = { group, tick: fn => updaters.push(fn), pick, dummy, kit: KIT };
+        const bd = JXS_BACKDROPS[fx.signature];
+        if (bd) bd(ctx); else jxsGrand(ctx, JXS_GRAND[fx.signature] || {});
+    }
 
-    return { group, updaters, color: c0, glow, sig, pose: POSES[aura.id] || null };
+    return { group, updaters, color: c0, glow, sig, grade: aura.grade, pose: POSES[aura.id] || null };
 }
 
 /* =========================================================
@@ -840,7 +846,7 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
         }
         // 크기를 다 잰 다음에만 카메라를 움직임 (재는 도중에 움직이면 뽑을 때마다 확대→축소가 반복돼 보임)
         if (!current || fitSamples >= 12) {
-            const wantDist = fitDistance();
+            const wantDist = fitDistance() * (current?.grade === 'JXS' ? 1.15 : 1);   // JXS는 뒤 배경 세계가 보이게 한 발 물러섬
             dist += (wantDist - dist) * Math.min(1, dt * 2.5);
             const wantY = (bounds.minY + bounds.maxY) / 2;
             target.y += (wantY - target.y) * Math.min(1, dt * 2.5);
@@ -929,7 +935,7 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
         // 3D 컷씬 재생. cfg = { hit, hit2, total, tier }, getTime() = 지금 컷씬 몇 초인지
         async playCutscene(aura, cfg, getTime) {
             if (!cine) {
-                const { createCutscene } = await import('./cutscene3d.js?v=42');
+                const { createCutscene } = await import('./cutscene3d.js?v=43');
                 cine = createCutscene(cineCtx);
             }
             return cine.play(aura, cfg, getTime, { shake: a => { shakeAmt = Math.max(shakeAmt, a); } });
