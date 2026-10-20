@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Orbit&display=swap" rel="stylesheet">
     <!-- 업데이트할 때: 아래 ?v= 숫자 3곳과 version.json 숫자를 똑같이 올리기 -->
-    <link rel="stylesheet" href="style.css?v=47">
-    <link rel="stylesheet" href="rarity.css?v=47">
+    <link rel="stylesheet" href="style.css?v=48">
+    <link rel="stylesheet" href="rarity.css?v=48">
     <script type="importmap">{ "imports": { "three": "./lib/three.module.js" } }</script>
 </head>
 <body>
@@ -295,12 +295,19 @@
                 <div class="section">
                     <div class="section-title">재생목록</div>
                     <div id="queue-list" class="queue"></div>
-                    <label class="btn btn-block add-music">＋ 내 음악 추가 (mp3 등)<input type="file" id="music-file" accept="audio/*" multiple hidden></label>
-                    <p class="hint-small">추가한 곡은 이 기기에만 저장돼요. 메인 화면에선 고른 곡이 계속 나와요.</p>
+                    <div class="yt-add">
+                        <input type="url" id="yt-url" placeholder="유튜브 · 유튜브 뮤직 링크 붙여넣기" autocomplete="off">
+                        <button id="yt-add-btn" class="btn btn-primary">추가</button>
+                    </div>
+                    <label class="btn btn-block add-music">＋ 내 음악 파일 추가 (mp3 등)<input type="file" id="music-file" accept="audio/*" multiple hidden></label>
+                    <p class="hint-small">▶ 유튜브 곡은 한 번 넣으면 계속 남고, 로그인하면 다른 기기에서도 그대로 나와요. 재생목록 링크를 넣으면 곡이 한꺼번에 들어가요.<br>유튜브 곡이 나올 땐 작은 영상 창이 떠요 (광고가 나올 수 있고, 화면을 끄면 멈춰요).<br>📁 파일로 넣은 곡은 이 기기에만 저장돼요.</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- ▶ 유튜브 곡 재생 중일 때 뜨는 작은 영상 창 -->
+    <div id="yt-pip" class="yt-pip hidden"><div class="yt-frame"><div id="yt-host"></div></div><div class="yt-pip-bar"><span>▶ YouTube</span><button class="yt-pip-x" aria-label="멈추기">❚❚</button></div></div>
 
     <!-- 스포트라이트 튜토리얼 -->
     <div id="tut" class="tut hidden" aria-live="polite">
@@ -537,6 +544,6 @@
 
     <div id="toast-wrap"></div>
 
-    <script type="module" src="script.js?v=47"></script>
+    <script type="module" src="script.js?v=48"></script>
 </body>
 </html>

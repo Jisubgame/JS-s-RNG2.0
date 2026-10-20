@@ -2,7 +2,37 @@
    🎧 JS RNG 2.0 뮤직 플레이어
    - 기본 곡은 BGM_TRACKS 에 추가하면 됨 (mp3 파일을 레포에 넣고 한 줄 추가)
    - '내 음악 추가'로 폰에 있는 곡을 넣으면 IndexedDB 에 저장돼서 다음에도 남음
+   - 유튜브 / 유튜브 뮤직 링크를 넣으면 공식 유튜브 플레이어(작은 화면)로 재생
+     (링크 목록은 게임 저장에 들어가서 로그인하면 다른 기기에서도 그대로)
    ========================================================= */
+
+/* ---------- 유튜브 링크 해석 ---------- */
+export function parseYouTube(text) {
+    const s = String(text || '').trim();
+    let u;
+    try { u = new URL(/^https?:/i.test(s) ? s : 'https://' + s); } catch (e) { return null; }
+    const host = u.hostname.replace(/^www\.|^m\./, '');
+    const ok = ['youtube.com', 'music.youtube.com', 'youtu.be', 'youtube-nocookie.com'].includes(host);
+    if (!ok) return null;
+    const idOk = id => /^[\w-]{11}$/.test(id || '');
+    let v = u.searchParams.get('v');
+    if (host === 'youtu.be') v = u.pathname.slice(1, 12);
+    const m = u.pathname.match(/\/(shorts|embed|live)\/([\w-]{11})/);
+    if (m) v = m[2];
+    const list = u.searchParams.get('list');
+    if (idOk(v)) return { video: v, list };
+    if (list) return { list };
+    return null;
+}
+const ytThumb = id => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+async function ytTitle(id) {
+    try {
+        const r = await fetch(`https://noembed.com/embed?url=${encodeURIComponent('https://www.youtube.com/watch?v=' + id)}`);
+        const j = await r.json();
+        if (j && j.title) return { title: j.title, author: j.author_name || 'YouTube' };
+    } catch (e) {}
+    return null;
+}
 
 export const BGM_TRACKS = [
     { id: 'main', title: 'Abyss Drift', artist: 'JS RNG OST', src: 'main_bgm.mp3' },
@@ -63,6 +93,7 @@ function hash(str) {
     return h >>> 0;
 }
 export function coverArt(track) {
+    if (track.yt) return ytThumb(track.yt);
     if (coverCache.has(track.id)) return coverCache.get(track.id);
     let seed = hash(track.id + track.title);
     const rnd = () => { seed = Math.imul(seed ^ (seed >>> 15), 2246822507) >>> 0; seed ^= seed >>> 13; return (seed % 10000) / 10000; };
@@ -90,7 +121,7 @@ export function coverArt(track) {
 }
 
 /* ---------- 플레이어 ---------- */
-export function createMusicPlayer({ getVolume, isEnabled }) {
+export function createMusicPlayer({ getVolume, isEnabled, onYtChange, onYtError, pip }) {
     const el = new Audio();
     el.preload = 'auto';
     const listeners = new Set();
@@ -113,10 +144,60 @@ export function createMusicPlayer({ getVolume, isEnabled }) {
     };
 
     const cur = () => st.tracks.find(t => t.id === st.currentId) || st.tracks[0];
-    const volume = () => { el.volume = isEnabled() ? Math.max(0, Math.min(1, getVolume())) : 0; };
+    const volume = () => {
+        const v = isEnabled() ? Math.max(0, Math.min(1, getVolume())) : 0;
+        el.volume = v;
+        try { yt?.setVolume(Math.round(v * 100)); } catch (e) {}
+    };
+
+    /* ---------- 유튜브 플레이어 (공식 IFrame API) ---------- */
+    let yt = null, ytReady = null, ytState = -1, ytWant = null;
+    const isYtCur = () => !!cur()?.yt;
+    function ensureYt() {
+        if (ytReady) return ytReady;
+        ytReady = new Promise(res => {
+            const make = () => {
+                yt = new window.YT.Player(pip.host, {
+                    width: '100%', height: '100%',
+                    playerVars: { playsinline: 1, controls: 0, disablekb: 1, rel: 0, modestbranding: 1, iv_load_policy: 3, origin: location.origin },
+                    events: {
+                        onReady: () => { volume(); res(yt); },
+                        onStateChange: e => {
+                            ytState = e.data;
+                            if (e.data === 0 && isYtCur()) step(1, true);
+                            if (e.data === 1) { const d = yt.getVideoData?.(); const t = cur(); if (t?.yt && d?.title && t.title.startsWith('YouTube')) { t.title = d.title; t.artist = d.author || 'YouTube'; saveYt(); } }
+                            showPip(); emit();
+                        },
+                        onError: e => { onYtError?.(e.data, cur()); if (isYtCur()) setTimeout(() => step(1, false), 400); }
+                    }
+                });
+            };
+            if (window.YT?.Player) return make();
+            const prev = window.onYouTubeIframeAPIReady;
+            window.onYouTubeIframeAPIReady = () => { prev?.(); make(); };
+            const sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(sc);
+        });
+        return ytReady;
+    }
+    // 유튜브 곡이 재생 중일 때만 작은 영상 창을 보여 줌 (가려진 채로 재생하지 않음)
+    function showPip() { pip.box.classList.toggle('hidden', !(isYtCur() && (ytState === 1 || ytState === 3))); }
+    const ytTracks = () => st.tracks.filter(t => t.yt);
+    const saveYt = () => onYtChange?.(ytTracks().map(t => ({ v: t.yt, t: t.title, a: t.artist })));
+    setInterval(() => { if (isYtCur() && ytState === 1) listeners.forEach(fn => fn('time')); }, 500);
 
     function load(track, autoplay) {
         st.currentId = track.id;
+        if (track.yt) {
+            el.pause(); el.dataset.id = '';
+            const go = autoplay && isEnabled() && !st.ducked;
+            if (go) st.userPaused = false;
+            ensureYt().then(p => { volume(); go ? p.loadVideoById(track.yt) : p.cueVideoById(track.yt); });
+            if (st.context === 'main') persist();
+            updateMediaSession(); emit();
+            return;
+        }
+        try { yt?.pauseVideo(); } catch (e) {}
+        showPip();
         if (el.dataset.id !== track.id) {
             el.dataset.id = track.id;
             el.src = track.src;
@@ -135,7 +216,7 @@ export function createMusicPlayer({ getVolume, isEnabled }) {
     function step(dir, fromEnded) {
         const list = order();
         if (!list.length) return;
-        if (fromEnded && st.repeat === 'one') { el.currentTime = 0; el.play().catch(() => {}); return; }
+        if (fromEnded && st.repeat === 'one') { if (isYtCur()) { yt.seekTo(0, true); yt.playVideo(); } else { el.currentTime = 0; el.play().catch(() => {}); } return; }
         let i = list.findIndex(t => t.id === st.currentId);
         if (st.shuffle && list.length > 1) {
             let j;
@@ -143,7 +224,7 @@ export function createMusicPlayer({ getVolume, isEnabled }) {
             i = j;
         } else {
             i += dir;
-            if (i >= list.length) { if (fromEnded && st.repeat === 'off') { el.pause(); emit(); return; } i = 0; }
+            if (i >= list.length) { if (fromEnded && st.repeat === 'off') { el.pause(); try { yt?.pauseVideo(); } catch (e) {} emit(); return; } i = 0; }
             if (i < 0) i = list.length - 1;
         }
         load(list[i], true);
@@ -169,7 +250,11 @@ export function createMusicPlayer({ getVolume, isEnabled }) {
         el,
         get state() { return st; },
         get current() { return cur(); },
-        get playing() { return !el.paused; },
+        get playing() { return isYtCur() ? ytState === 1 || ytState === 3 : !el.paused; },
+        time() {
+            if (isYtCur() && yt?.getDuration) return { cur: yt.getCurrentTime() || 0, dur: yt.getDuration() || 0 };
+            return { cur: el.currentTime || 0, dur: el.duration || 0 };
+        },
         on(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
         // 로비/메인 전환
@@ -184,15 +269,21 @@ export function createMusicPlayer({ getVolume, isEnabled }) {
                 load(want, true);
             }
         },
-        stop() { el.pause(); emit(); },
+        stop() { el.pause(); try { yt?.pauseVideo(); } catch (e) {} emit(); },
         // 컷씬 동안 잠깐 꺼두기
-        duck() { st.ducked = true; el.pause(); },
+        duck() { st.ducked = true; el.pause(); try { yt?.pauseVideo(); } catch (e) {} },
         unduck() {
             st.ducked = false;
             volume();
-            if (!st.userPaused && isEnabled() && el.src) el.play().catch(() => {});
+            if (st.userPaused || !isEnabled()) return;
+            if (isYtCur()) { try { yt?.playVideo(); } catch (e) {} }
+            else if (el.src) el.play().catch(() => {});
         },
-        unlock() { if (!st.userPaused && !st.ducked && isEnabled() && el.src && el.paused) el.play().catch(() => {}); },
+        unlock() {
+            if (st.userPaused || st.ducked || !isEnabled()) return;
+            if (isYtCur()) { if (ytState !== 1) ensureYt().then(p => { if (p.getVideoData?.()?.video_id !== cur().yt) p.loadVideoById(cur().yt); else p.playVideo(); }); }
+            else if (el.src && el.paused) el.play().catch(() => {});
+        },
         updateVolume: volume,
 
         play(id) {
@@ -202,6 +293,16 @@ export function createMusicPlayer({ getVolume, isEnabled }) {
             load(t, true);
         },
         toggle(force) {
+            if (isYtCur()) {
+                const want = force ?? !api.playing;
+                st.userPaused = !want;
+                ensureYt().then(p => {
+                    if (!want) { p.pauseVideo(); return; }
+                    if (p.getVideoData?.()?.video_id !== cur().yt) p.loadVideoById(cur().yt); else p.playVideo();
+                });
+                emit();
+                return;
+            }
             const want = force ?? el.paused;
             if (want) {
                 st.userPaused = false;
@@ -212,11 +313,15 @@ export function createMusicPlayer({ getVolume, isEnabled }) {
         },
         next() { step(1, false); },
         prev() {
-            if (el.currentTime > 3) { el.currentTime = 0; return; }
+            if (api.time().cur > 3) { api.seek(0); return; }
             if (st.shuffle) { step(1, false); return; }
             step(-1, false);
         },
-        seek(frac) { if (isFinite(el.duration)) el.currentTime = Math.max(0, Math.min(1, frac)) * el.duration; },
+        seek(frac) {
+            frac = Math.max(0, Math.min(1, frac));
+            if (isYtCur()) { const d = yt?.getDuration?.(); if (d) yt.seekTo(frac * d, true); return; }
+            if (isFinite(el.duration)) el.currentTime = frac * el.duration;
+        },
         setShuffle(v) { st.shuffle = v ?? !st.shuffle; persist(); emit(); },
         cycleRepeat() { st.repeat = st.repeat === 'all' ? 'one' : st.repeat === 'one' ? 'off' : 'all'; persist(); emit(); },
 
@@ -234,12 +339,60 @@ export function createMusicPlayer({ getVolume, isEnabled }) {
             emit();
             return added;
         },
+        // 유튜브 링크 추가 (영상 하나 또는 재생목록) → 추가된 곡 수
+        async addYouTube(text) {
+            const info = parseYouTube(text);
+            if (!info) return { added: 0, error: 'bad' };
+            let ids = [];
+            if (info.video) ids = [info.video];
+            else {
+                // 재생목록: 플레이어에 목록을 올려서 영상 번호들을 받아옴
+                const p = await ensureYt();
+                ids = await new Promise(res => {
+                    let done = false;
+                    const finish = v => { if (!done) { done = true; res(v); } };
+                    const check = () => { const l = p.getPlaylist?.(); if (l && l.length) finish(l); };
+                    p.addEventListener('onStateChange', check);
+                    try { p.cuePlaylist({ list: info.list, listType: 'playlist' }); } catch (e) { finish([]); }
+                    const iv = setInterval(check, 500);
+                    setTimeout(() => { clearInterval(iv); finish(p.getPlaylist?.() || []); }, 9000);
+                });
+                ids = ids.slice(0, 60);
+            }
+            const have = new Set(ytTracks().map(t => t.yt));
+            const fresh = ids.filter(id => !have.has(id));
+            const added = fresh.map((id, k) => {
+                const tr = { id: 'yt_' + id, yt: id, title: `YouTube 영상${fresh.length > 1 ? ' ' + (k + 1) : ''}`, artist: 'YouTube', builtin: false };
+                st.tracks.push(tr);
+                return tr;
+            });
+            saveYt(); emit();
+            // 제목은 천천히 채움
+            (async () => {
+                for (const tr of added) {
+                    const meta = await ytTitle(tr.yt);
+                    if (meta) { tr.title = meta.title; tr.artist = meta.author; emit(); }
+                }
+                saveYt();
+            })();
+            return { added: added.length, dup: ids.length - fresh.length };
+        },
+        // 저장된 유튜브 목록으로 바꿔 끼움 (불러오기/로그인/로그아웃)
+        importYt(list) {
+            const keep = st.tracks.filter(t => !t.yt);
+            const yts = (list || []).filter(x => x && /^[\w-]{11}$/.test(x.v)).map(x => ({ id: 'yt_' + x.v, yt: x.v, title: x.t || 'YouTube 영상', artist: x.a || 'YouTube', builtin: false }));
+            const curWasYt = isYtCur();
+            st.tracks = [...keep, ...yts];
+            if (curWasYt && !st.tracks.some(t => t.id === st.currentId)) load(st.tracks[0], api.playing);
+            emit();
+        },
         async remove(id) {
             const t = st.tracks.find(x => x.id === id);
             if (!t || t.builtin) return;
             const wasCurrent = st.currentId === id;
             if (wasCurrent) step(1, false);
             st.tracks = st.tracks.filter(x => x.id !== id);
+            if (t.yt) { saveYt(); emit(); return; }
             try { URL.revokeObjectURL(t.src); await dbDel(id); } catch (e) {}
             if (st.currentId === id) load(st.tracks[0], !el.paused);
             emit();

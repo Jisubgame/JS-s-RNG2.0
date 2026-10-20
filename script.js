@@ -1,8 +1,8 @@
-import { AURA_DATA } from './auras.js?v=47';
-import { CRAFT_ITEMS } from './craftItems.js?v=47';
-import { createMusicPlayer, coverArt } from './music.js?v=47';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=47';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=47';
+import { AURA_DATA } from './auras.js?v=48';
+import { CRAFT_ITEMS } from './craftItems.js?v=48';
+import { createMusicPlayer, coverArt } from './music.js?v=48';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=48';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=48';
 
 /* =========================================================
    📦 게임 데이터
@@ -423,7 +423,11 @@ const audioFiles = {
 };
 const music = createMusicPlayer({
     getVolume: () => soundSettings.master * soundSettings.bgm,
-    isEnabled: () => soundSettings.enabled
+    isEnabled: () => soundSettings.enabled,
+    // 유튜브 곡 목록은 게임 저장에 넣음 → 로그인하면 다른 기기에서도 그대로
+    onYtChange: list => { gameState.ytTracks = list; saveGame(); },
+    onYtError: (code, t) => toast(code === 101 || code === 150 ? `▶ 「${t?.title || '영상'}」은(는) 유튜브에서 다른 사이트 재생을 막아 둔 영상이에요` : '▶ 유튜브 영상을 못 틀었어요', 'bad'),
+    pip: { box: document.getElementById('yt-pip'), host: 'yt-host' }
 });
 function updateBgmVolume() { music.updateVolume(); }
 function playBgm(type) { music.start(type); }
@@ -1030,7 +1034,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=47').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=48').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -2621,6 +2625,7 @@ function adoptCloud(cloud) {
     gameState = { ...base, ...cloud, activeBuffs: { ...base.activeBuffs, ...(cloud.activeBuffs || {}) } };
     if (backupGameState === null) localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
     renderAll(); applyEquippedAura(); applyBiome(false); applyGear(); updateAttendDot(); updatePetDot();
+    music.importYt(gameState.ytTracks);
     cloudLastRolls = gameState.rolls;
 }
 // 다른 기기에서 더 많이 한 기록이 서버에 있으면 자동으로 불러옴 (불러왔으면 true)
@@ -2726,6 +2731,7 @@ async function logOut() {
     // 이 폰은 새 게임으로 (기록은 서버에 있어서 다시 로그인하면 돌아옴)
     gameState = createInitialGameState();
     cloudLastRolls = -1; cloudSavedAt = 0;
+    music.importYt([]);
     saveGame(); renderAll(); applyEquippedAura(); applyBiome(false); updateAttendDot(); updatePetDot();
 }
 
@@ -3699,7 +3705,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=47')
+import('./aura3d.js?v=48')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {
@@ -3741,6 +3747,7 @@ fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' })
    ========================================================= */
 
 loadGame();
+music.importYt(gameState.ytTracks);
 renderSoundUI();
 /* =========================================================
    🎧 뮤직 플레이어 UI
@@ -3752,17 +3759,18 @@ const fmtTime = sec => {
 };
 let seeking = false;
 function renderMusic(kind) {
-    const t = music.current, el = music.el;
-    const frac = el.duration ? el.currentTime / el.duration : 0;
+    const t = music.current, tm = music.time();
+    const frac = tm.dur ? tm.cur / tm.dur : 0;
     $('mp-progress-fill').style.transform = `scaleX(${frac})`;
     if (!seeking) $('np-seek').value = Math.round(frac * 1000);
-    $('np-cur').textContent = fmtTime(el.currentTime);
-    $('np-dur').textContent = fmtTime(el.duration);
+    $('np-cur').textContent = fmtTime(tm.cur);
+    $('np-dur').textContent = fmtTime(tm.dur);
     $('np-seek').style.setProperty('--p', `${frac * 100}%`);
     if (kind === 'time') return;
 
     const cover = coverArt(t);
     for (const id of ['mp-cover', 'np-cover']) if ($(id).getAttribute('src') !== cover) $(id).src = cover;
+    for (const id of ['mp-cover', 'np-cover']) $(id).classList.toggle('yt', !!t.yt);
     $('mp-title').textContent = t.title; $('mp-artist').textContent = t.artist;
     $('np-title').textContent = t.title; $('np-artist').textContent = t.artist;
     // 제목이 길면 흘러가게
@@ -3778,8 +3786,8 @@ function renderMusic(kind) {
     const q = $('queue-list');
     q.innerHTML = music.state.tracks.map(tr => `
         <div class="q-item ${tr.id === t.id ? 'current' : ''}" data-id="${tr.id}">
-            <img class="q-cover" src="${coverArt(tr)}" alt="">
-            <div class="q-meta"><div class="q-title">${escapeHtml(tr.title)}</div><div class="q-artist">${escapeHtml(tr.artist)}</div></div>
+            <img class="q-cover ${tr.yt ? 'yt' : ''}" src="${coverArt(tr)}" alt="">
+            <div class="q-meta"><div class="q-title">${tr.yt ? '<span class="yt-badge">YouTube</span>' : ''}${escapeHtml(tr.title)}</div><div class="q-artist">${escapeHtml(tr.artist)}</div></div>
             ${tr.id === t.id ? `<div class="mp-eq ${playing ? '' : 'stop'}"><i></i><i></i><i></i><i></i></div>` : ''}
             ${tr.builtin ? '' : `<button class="q-del" data-del="${tr.id}" aria-label="삭제">✕</button>`}
         </div>`).join('');
@@ -3804,8 +3812,7 @@ $('np-repeat').addEventListener('click', () => {
 });
 $('np-seek').addEventListener('input', e => {
     seeking = true;
-    const el = music.el;
-    $('np-cur').textContent = fmtTime((e.target.value / 1000) * (el.duration || 0));
+    $('np-cur').textContent = fmtTime((e.target.value / 1000) * (music.time().dur || 0));
     $('np-seek').style.setProperty('--p', `${e.target.value / 10}%`);
 });
 $('np-seek').addEventListener('change', e => { music.seek(e.target.value / 1000); seeking = false; });
@@ -3822,6 +3829,22 @@ $('music-file').addEventListener('change', async e => {
     const n = await music.addFiles(files);
     toast(n ? `🎵 ${n}곡 추가됨` : '오디오 파일만 추가할 수 있어요');
 });
+// 유튜브 / 유튜브 뮤직 링크 추가
+async function addYtFromInput() {
+    const inp = $('yt-url'), v = inp.value.trim();
+    if (!v) { toast('유튜브 링크를 붙여 넣어 주세요', 'bad'); return; }
+    const btn = $('yt-add-btn');
+    btn.disabled = true; btn.textContent = '…';
+    try {
+        const r = await music.addYouTube(v);
+        if (r.error) toast('유튜브 / 유튜브 뮤직 링크만 넣을 수 있어요', 'bad');
+        else if (!r.added) toast(r.dup ? '이미 재생목록에 있어요' : '재생목록을 못 불러왔어요 (공개 목록인지 확인해 주세요)', 'bad');
+        else { toast(`▶ 유튜브 ${r.added}곡 추가됨${r.dup ? ` · 이미 있던 ${r.dup}곡은 뺐어요` : ''}`, 'good'); inp.value = ''; }
+    } finally { btn.disabled = false; btn.textContent = '추가'; }
+}
+$('yt-add-btn').addEventListener('click', addYtFromInput);
+$('yt-url').addEventListener('keydown', e => { if (e.key === 'Enter') addYtFromInput(); });
+$('yt-pip').addEventListener('click', e => { if (e.target.closest('.yt-pip-x')) music.toggle(false); else openSheet('sheet-music'); });
 $('open-music-btn').addEventListener('click', () => { closeSheet('sheet-settings'); setTimeout(() => openSheet('sheet-music'), 220); });
 renderMusic();
 
