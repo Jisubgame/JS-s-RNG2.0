@@ -1,9 +1,9 @@
-import { AURA_DATA } from './auras.js?v=57';
-import { CRAFT_ITEMS } from './craftItems.js?v=57';
-import { createMusicPlayer, coverArt } from './music.js?v=57';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=57';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=57';
-import { createDungeon, auraSkill } from './dungeon.js?v=57';
+import { AURA_DATA } from './auras.js?v=58';
+import { CRAFT_ITEMS } from './craftItems.js?v=58';
+import { createMusicPlayer, coverArt } from './music.js?v=58';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=58';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=58';
+import { createDungeon, raidInfo } from './dungeon.js?v=58';
 
 /* =========================================================
    📦 게임 데이터
@@ -1206,7 +1206,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=57').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=58').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -1755,7 +1755,7 @@ function openAuraDialog(id) {
         <div class="ad-grade ${gradeCol(a.grade)}">${a.grade}</div>
         <div class="ad-name">${auraNameHtml(a)}</div>
         ${a.line ? `<div class="ad-line">${a.line}</div>` : ''}
-    </div>${(sk => sk ? `<div class="ad-skill" style="--sc:#${sk.color.toString(16).padStart(6, '0')}"><b>🌀 던전 스킬 · ${sk.icon} ${sk.name}</b><small>${sk.desc(sk.g, sk.tier)} · 재사용 ${sk.cd}초</small></div>` : '')(auraSkill(a))}`;
+    </div>${(r => r ? `<div class="ad-skill" style="--sc:${r.E.color}"><b>⚔ 레이드 칭호 · ${r.E.icon} ${r.E.name} 속성</b><small>공격 ${fmt(r.atk)} · 체력 ${fmt(r.hp)} · ${r.E.fast.name} / ${r.E.charged.name}${r.eff > 1 ? ' · 균열의 군주 약점!' : ''}</small></div>` : '')(raidInfo(a))}`;
     $('ad-odds').textContent = `1 in ${fmt(a.in)}`;
     $('ad-have').textContent = `×${fmt(gameState.inventory[id])}`;
     $('ad-value').textContent = `${fmt(a.jcValue)} JC`;
@@ -4003,7 +4003,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=57')
+import('./aura3d.js?v=58')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {
