@@ -1,8 +1,8 @@
-import { AURA_DATA } from './auras.js?v=48';
-import { CRAFT_ITEMS } from './craftItems.js?v=48';
-import { createMusicPlayer, coverArt } from './music.js?v=48';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=48';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=48';
+import { AURA_DATA } from './auras.js?v=49';
+import { CRAFT_ITEMS } from './craftItems.js?v=49';
+import { createMusicPlayer, coverArt } from './music.js?v=49';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=49';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=49';
 
 /* =========================================================
    📦 게임 데이터
@@ -1034,7 +1034,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=48').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=49').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -3705,7 +3705,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=48')
+import('./aura3d.js?v=49')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {

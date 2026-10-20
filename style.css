@@ -2244,3 +2244,4 @@ img.yt { image-rendering: auto !important; }
 /* 영상 창은 왼쪽 메뉴 바로 아래 (ROLL 버튼을 가리지 않게) */
 .yt-pip { left: 8px; bottom: auto; top: 306px; width: 136px; }
 .sheet-backdrop:not(.hidden) ~ .yt-pip, body:has(.sheet-backdrop:not(.hidden)) .yt-pip { top: 8px; left: auto; right: 8px; }
+.yt-login { display: block; text-align: center; text-decoration: none; margin-bottom: 8px; font-size: 12.5px; --ec: rgba(255, 210, 58, 0.5); border-color: rgba(255, 210, 58, 0.5); color: #ffd24a; }
