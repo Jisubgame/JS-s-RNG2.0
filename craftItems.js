@@ -55,6 +55,73 @@ export const CRAFT_ITEMS = [
         req: { "mythic_heart": 1, "epic_monkey": 2, "gemini_basic": 2, "legend_wizard": 4 }
     },
 
+    // 🆕 UPDATE 3 제작 건틀렛 (뽑기 장비와 비슷한 급, 대신 칭호를 모아야 함)
+    {
+        id: "gear_timewarp", category: "gauntlet",
+        name: "시간 가속 건틀렛",
+        desc: "영구적으로 속도 45%, 행운 80%가 증가합니다. 속도 특화.",
+        luckBonus: 0.8, speedBonus: 0.45,
+        req: { "myth_time_minchae": 1, "legend_speed": 3, "rare_train": 15 }
+    },
+    {
+        id: "gear_thunderhunt", category: "gauntlet",
+        name: "번개 사냥꾼 건틀렛",
+        desc: "영구적으로 행운 150%, 속도 20%가 증가합니다. (행운의 주사위 건틀렛 급)",
+        luckBonus: 1.5, speedBonus: 0.2,
+        req: { "leg_ninja_jisung": 2, "leg_storm_gaeun": 1, "ep_fire_jisung": 5, "rare_relay_gunwoo": 10 }
+    },
+    {
+        id: "gear_abyssking", category: "gauntlet",
+        name: "심해 군주의 건틀렛",
+        desc: "영구적으로 행운 350%, 속도 12%가 증가합니다. (잭팟 건틀렛 급)",
+        luckBonus: 3.5, speedBonus: 0.12,
+        req: { "myth_abyss_byungeun": 1, "myth_aurora_gaeun": 1, "leg_pirate_byungeun": 2, "rare_fishing_gunwoo": 20 }
+    },
+    {
+        id: "gear_sunforge", category: "gauntlet",
+        name: "태양 대장간 건틀렛",
+        desc: "영구적으로 행운 650%, 속도 15%가 증가합니다. (별똥별 건틀렛 바로 아래 급)",
+        luckBonus: 6.5, speedBonus: 0.15,
+        req: { "abs_sunking_gunwoo": 1, "anc_pharaoh_minchae": 2, "myth_midas_gaeun": 2, "leg_desert_tv": 3 }
+    },
+
+    // 🆕 UPDATE 3 제작 부적 (배수 말고 새로운 능력)
+    {
+        id: "amu_hourglass", category: "amulet", abil: "streak",
+        name: "인내의 모래시계 부적",
+        desc: "롤마다 행운이 +5%씩 쌓입니다 (최대 +500%). EPIC 이상이 나오면 다시 0부터.",
+        luckBonus: 0, speedBonus: 0, streakRate: 0.05, streakMax: 5,
+        req: { "ep_magician_gunwoo": 3, "rare_relay_gunwoo": 10, "unc_walk_byungeun": 50 }
+    },
+    {
+        id: "amu_twinstar", category: "amulet", abil: "twin",
+        name: "쌍둥이 별 부적",
+        desc: "8% 확률로 뽑은 칭호를 하나 더 받습니다.",
+        luckBonus: 0, speedBonus: 0, twinChance: 0.08,
+        req: { "gemini_basic": 1, "leg_mechangel_minchae": 1, "ep_sakura_gaeun": 4 }
+    },
+    {
+        id: "amu_scale", category: "amulet", abil: "sell",
+        name: "연금 저울 부적",
+        desc: "칭호 판매가가 +60% (자동 판매 포함), 신전 수입이 +30% 늘어납니다.",
+        luckBonus: 0, speedBonus: 0, sellMult: 1.6, showMult: 1.3,
+        req: { "myth_midas_gaeun": 1, "leg_alchemist_gaeun": 2, "rare_cvs_jisung": 15 }
+    },
+    {
+        id: "amu_cradle", category: "amulet", abil: "hatch",
+        name: "생명의 요람 부적",
+        desc: "알 부화 시간이 40% 줄고, 함께하는 펫 효과가 +25% 커집니다.",
+        luckBonus: 0, speedBonus: 0, hatchCut: 0.4, petMult: 1.25,
+        req: { "myth_phoenix_gaeun": 1, "leg_chef_gunwoo": 1, "rare_fishing_gunwoo": 10 }
+    },
+    {
+        id: "amu_brewer", category: "amulet", abil: "brew",
+        name: "물약 장인의 부적",
+        desc: "배수 물약을 쓸 때 35% 확률로 횟수가 안 줄고, 시간 물약 지속시간이 +50% 늘어납니다.",
+        luckBonus: 0, speedBonus: 0, brewSave: 0.35, brewTime: 1.5,
+        req: { "leg_alchemist_gaeun": 1, "ep_mushroom_tv": 4, "rare_cupramen_gaeun": 15 }
+    },
+
     // 📜 부적 (10롤마다 다음 1롤 행운 배수)
     {
         id: "amulet_drum",

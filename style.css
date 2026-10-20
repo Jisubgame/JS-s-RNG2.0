@@ -2324,3 +2324,13 @@ img.yt { image-rendering: auto !important; }
 .mc-qty .mc-max { width: auto; padding: 0 7px; font-size: 10.5px; }
 .mc-go { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 72px; }
 .mc-go small { font-size: 10px; font-weight: 700; }
+/* ▶ 유튜브: 영상은 안 보이게 숨기고 소리만 (우리끼리 쓰는 게임이라 숨김) */
+.yt-pip, .sheet-backdrop:not(.hidden) ~ .yt-pip, body:has(.sheet-backdrop:not(.hidden)) .yt-pip {
+    left: 0 !important; top: 0 !important; right: auto !important; bottom: auto !important;
+    width: 220px !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important; animation: none !important;
+}
+.chip.abil { color: #ffb0ec; border-color: color-mix(in srgb, #ffb0ec 45%, transparent); }
+.ef-abil { color: #ffb0ec; font-weight: 400; }
+.bg-row-info { min-width: 0; flex: 1; }
+.bg-eff, .bg-eff b { white-space: normal !important; word-break: keep-all; overflow-wrap: anywhere; }
+.bg-eff .ef-abil { display: block; font-size: 11px; line-height: 1.35; }

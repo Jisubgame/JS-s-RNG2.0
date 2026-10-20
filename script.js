@@ -1,8 +1,8 @@
-import { AURA_DATA } from './auras.js?v=50';
-import { CRAFT_ITEMS } from './craftItems.js?v=50';
-import { createMusicPlayer, coverArt } from './music.js?v=50';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=50';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=50';
+import { AURA_DATA } from './auras.js?v=51';
+import { CRAFT_ITEMS } from './craftItems.js?v=51';
+import { createMusicPlayer, coverArt } from './music.js?v=51';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=51';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=51';
 
 /* =========================================================
    📦 게임 데이터
@@ -506,6 +506,18 @@ function gearOf(id) {
     return { ...g, lv, luckBonus: r1(g.luckBonus), speedBonus: r1(g.speedBonus), amuletMult: r1(g.amuletMult), biomeBoost: r1(g.biomeBoost), jcBonusMax: g.jcBonusMax ? Math.round(g.jcBonusMax * k) : g.jcBonusMax };
 }
 const lvTag = g => g?.lv ? ` <span class="gear-lv">+${g.lv}</span>` : '';
+// 🆕 능력 부적 (장착한 부적의 값)
+const amu = () => gearOf(gameState.amulet) || {};
+const sellMult = () => amu().sellMult || 1;
+function streakMult() { const a = amu(); return a.abil === 'streak' ? 1 + Math.min(a.streakMax, (gameState.streak || 0) * a.streakRate) : 1; }
+function abilText(g) {
+    if (g.abil === 'streak') return `롤마다 행운 +${Math.round(g.streakRate * 100)}% 누적 (최대 +${Math.round(g.streakMax * 100)}%) · EPIC↑ 나오면 초기화`;
+    if (g.abil === 'twin') return `${Math.round(g.twinChance * 100)}% 확률로 칭호 하나 더`;
+    if (g.abil === 'sell') return `판매가 +${Math.round((g.sellMult - 1) * 100)}% · 신전 수입 +${Math.round((g.showMult - 1) * 100)}%`;
+    if (g.abil === 'hatch') return `부화 시간 -${Math.round(g.hatchCut * 100)}% · 펫 효과 +${Math.round((g.petMult - 1) * 100)}%`;
+    if (g.abil === 'brew') return `배수 물약 ${Math.round(g.brewSave * 100)}% 확률로 안 닳음 · 시간 물약 ×${g.brewTime}`;
+    return '';
+}
 function getGear() { return gameState.gear ? gearOf(gameState.gear) : null; }
 function getAmuletMult() {
     if (gameState.amulet === "amulet_drum") return 2;
@@ -540,7 +552,7 @@ const petOn = () => petState().petList.find(p => p.u === gameState.pet) || null;
 function getPetBonus() {
     const on = petOn(), p = on && PET_BY_ID[on.id];
     if (!p) return { luck: 0, speed: 0 };
-    const m = starMult(on.s);
+    const m = starMult(on.s) * (amu().petMult || 1);
     return { luck: (p.luck || 0) * m, speed: (p.speed || 0) * m };
 }
 function petEffectText(p, star) {
@@ -551,7 +563,7 @@ function getSpeedBonus() {
     return (gameState.activeBuffs.speedBonus || 0) + (getGear()?.speedBonus || 0) + getSetBonus().speed + getPetBonus().speed;
 }
 function getBaseLuck() {
-    return (gameState.luck + (getGear()?.luckBonus || 0) + (gameState.activeBuffs.luckBonus || 0) + getSetBonus().luck + getPetBonus().luck) * getEnvLuck();
+    return (gameState.luck + (getGear()?.luckBonus || 0) + (amu().luckBonus || 0) + (gameState.activeBuffs.luckBonus || 0) + getSetBonus().luck + getPetBonus().luck) * getEnvLuck() * streakMult();
 }
 // 바이옴 배수 + 관리자 배수는 곱하지 않고 더함 (×10 바이옴 + ×10 관리자 = ×20)
 function getEnvLuck() {
@@ -672,7 +684,8 @@ async function finishRoll() {
     if (gi >= 2) trackQuestProgress("epic");
 
     if (gameState.activeMultBuffs.length) {
-        gameState.activeMultBuffs.forEach(b => b.uses--);
+        const save = amu().abil === 'brew' ? amu().brewSave : 0;
+        gameState.activeMultBuffs.forEach(b => { if (!(save && Math.random() < save)) b.uses--; });
         gameState.activeMultBuffs = gameState.activeMultBuffs.filter(b => b.uses > 0);
     }
 
@@ -696,12 +709,18 @@ async function finishRoll() {
     let soldHtml = "";
     const jcBonus = CRAFT_BY_ID[gameState.amulet]?.jcBonus;
     if (jcBonus) gameState.jc += Math.min(gearOf(gameState.amulet).jcBonusMax || Infinity, Math.max(1, Math.floor(rolled.jcValue * jcBonus)));
+    // 쌍둥이 별 부적: 가끔 하나 더
+    const twins = amu().abil === 'twin' && Math.random() < amu().twinChance ? 2 : 1;
     if (gameState.autoDelete[rolled.grade]) {
-        gameState.jc += rolled.jcValue;
-        soldHtml = `<div class="result-sold">자동 판매 +${fmt(rolled.jcValue)} JC</div>`;
+        const got = Math.floor(rolled.jcValue * sellMult()) * twins;
+        gameState.jc += got;
+        soldHtml = `<div class="result-sold">자동 판매 +${fmt(got)} JC${twins > 1 ? ' · ✨ 쌍둥이!' : ''}</div>`;
     } else {
-        gameState.inventory[rolled.id] = (gameState.inventory[rolled.id] || 0) + 1;
+        gameState.inventory[rolled.id] = (gameState.inventory[rolled.id] || 0) + twins;
+        if (twins > 1) soldHtml = `<div class="result-sold">✨ 쌍둥이 별! 하나 더 받았어요</div>`;
     }
+    // 인내의 모래시계: EPIC 이상이면 초기화, 아니면 쌓임
+    if (amu().abil === 'streak') gameState.streak = GRADES.indexOf(rolled.grade) >= 2 ? 0 : (gameState.streak || 0) + 1;
     saveGame();
     renderStats();
 
@@ -1034,7 +1053,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=50').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=51').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -1073,6 +1092,7 @@ function renderCraft() {
         if (gear.biomeBoost) chips.push(`<span class="chip biome">바이옴 ×${gear.biomeBoost} · 지속 ×${gear.biomeTime}</span>`);
         if (gear.gacha) chips.push(`<span class="chip gacha">${gear.gacha === 'halloween' ? '🎃 할로윈 한정' : gear.gacha === 'pass' ? '🎫 시즌 패스 PRO' : '뽑기 전용'}</span>`);
         if (gear.jcBonus) chips.push(`<span class="chip amulet">롤마다 판매가 ${Math.round(gear.jcBonus * 100)}% JC (최대 ${fmt(gear.jcBonusMax)})</span>`);
+        if (gear.abil) chips.push(`<span class="chip abil">✦ ${abilText(gear)}</span>`);
         const state = equipped ? '<span class="cstate on">장착 중</span>' : owned ? '<span class="cstate owned">보유</span>' : gear.gacha ? '<span class="cstate">미보유</span>' : `<span class="cstate">${metN}/${reqN}</span>`;
         const btn = owned
             ? `<button class="btn btn-block" data-gotobag="${gear.category}">가방에서 ${equipped ? '해제' : '장착'}</button>`
@@ -1452,9 +1472,10 @@ function gearEffectHtml(gear) {
     if (gear.amuletMult) parts.push(`<b class="ef-amu">${gear.amuletEvery || 10}롤마다 ×${gear.amuletMult}</b>`);
     if (gear.biomeBoost) parts.push(`<b class="ef-biome">바이옴 ×${gear.biomeBoost} · 지속 ×${gear.biomeTime}</b>`);
     if (gear.jcBonus) parts.push(`<b class="ef-amu">롤마다 판매가 ${Math.round(gear.jcBonus * 100)}% JC (최대 ${fmt(gear.jcBonusMax)})</b>`);
+    if (gear.abil) parts.push(`<b class="ef-abil">✦ ${abilText(gear)}${gear.abil === 'streak' && gameState.amulet === gear.id ? ` · 지금 +${Math.round((streakMult() - 1) * 100)}%` : ''}</b>`);
     return parts.join('');
 }
-function gearPower(g) { return (g.luckBonus || 0) * 10 + (g.speedBonus || 0) + (g.amuletMult || AMULET_MULT[g.id] || 0) * 10 / (g.amuletEvery || 10) + (g.biomeBoost || 0) + (g.jcBonus || 0); }
+function gearPower(g) { return (g.luckBonus || 0) * 10 + (g.speedBonus || 0) + (g.amuletMult || AMULET_MULT[g.id] || 0) * 10 / (g.amuletEvery || 10) + (g.biomeBoost || 0) + (g.jcBonus || 0) + (g.abil ? 12 : 0); }
 function renderBagGear() {
     const el = $('gear-grid');
     const cat = bagTab === 'amulet' ? 'amulet' : 'gauntlet';
@@ -1608,7 +1629,7 @@ function sellAura(id) {
         title: `${a.name}`,
         sub: `${a.grade} 칭호 판매 (보유 ${fmt(count)}개)`,
         max: count, initial: count,
-        priceEach: a.jcValue, totalLabel: '받는 금액',
+        priceEach: Math.floor(a.jcValue * sellMult()), totalLabel: '받는 금액',
         okText: '판매',
         onConfirm: async n => {
             if (HIGH_GRADES.includes(a.grade)) {
@@ -1620,9 +1641,9 @@ function sellAura(id) {
                 delete gameState.inventory[id];
                 if (gameState.equippedAura === id) { gameState.equippedAura = null; applyEquippedAura(); }
             }
-            gameState.jc += a.jcValue * n;
+            gameState.jc += Math.floor(a.jcValue * sellMult()) * n;
             saveGame(); renderStats(); renderInventory();
-            toast(`${fmt(n)}개 판매  +${fmt(a.jcValue * n)} JC`, 'gold');
+            toast(`${fmt(n)}개 판매  +${fmt(Math.floor(a.jcValue * sellMult()) * n)} JC`, 'gold');
         }
     });
 }
@@ -1682,7 +1703,7 @@ ui.potionGrid.addEventListener('click', e => {
                 gameState.activeBuffs[`${k}Bonus`] = item.value;
                 gameState.activeBuffs[`${k}Level`] = item.level;
                 const expire = gameState.activeBuffs[`${k}ExpireTime`];
-                gameState.activeBuffs[`${k}ExpireTime`] = Math.max(now, expire || 0) + item.duration * 1000 * n;
+                gameState.activeBuffs[`${k}ExpireTime`] = Math.max(now, expire || 0) + item.duration * 1000 * n * (amu().abil === 'brew' ? amu().brewTime : 1);
             } else if (item.type === 'luck_mult') {
                 gameState.activeMultBuffs.push({ name: item.name, bonus: item.value, uses: item.maxUses * n });
             } else if (item.type === 'dice') {
@@ -2436,7 +2457,8 @@ $('sheet-pet').addEventListener('click', e => {
         const egg = EGG_BY_ID[pe.dataset.putegg];
         st.eggs[egg.id]--;
         if (st.eggs[egg.id] <= 0) delete st.eggs[egg.id];
-        st.nests[i] = { egg: egg.id, start: Date.now(), end: Date.now() + egg.hours * 3600000 };
+        const cut = amu().abil === 'hatch' ? amu().hatchCut : 0;
+        st.nests[i] = { egg: egg.id, start: Date.now(), end: Date.now() + egg.hours * 3600000 * (1 - cut) };
         petPickNest = -1;
         saveGame(); renderPets(); updatePetDot();
         toast(`🪺 ${egg.name}을(를) 둥지에 넣었어요 · ${egg.hours}시간 뒤 부화`, 'good');
@@ -3111,7 +3133,7 @@ function rewardChips(r) {
    ========================================================= */
 const SHOW_CAP_H = 12;
 const SHOW_SLOTS = 3;   // 신전 받침대는 3개
-const showIncome = a => a ? Math.round(Math.pow(a.in, 0.35) * 30) : 0;   // 시간당 JC
+const showIncome = a => a ? Math.round(Math.pow(a.in, 0.35) * 30 * (amu().showMult || 1)) : 0;   // 시간당 JC
 function showState() {
     const g = gameState;
     if (!g.show) g.show = { slots: [null, null, null], at: Date.now(), bank: 0 };
@@ -3808,7 +3830,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=50')
+import('./aura3d.js?v=51')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {

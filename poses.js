@@ -701,6 +701,34 @@ export const POSES = {
         d.head.rotation.x = -0.12; d.root.position.y += 0.1 + S(t * 1.1) * 0.05;
         set(d.legL, 0, 0, -0.14); set(d.legR, 0, 0, 0.14);
     },
+    // 카우보이 박지성: 한 팔을 높이 들어 올가미를 돌리고 짝다리
+    leg_cowboy_jisung(t, d) {
+        set(d.armL, -0.3 + S(t * 6) * 0.15, 0, -2.7); set(d.armR, -0.2, 0, 0.35);
+        d.root.rotation.z = 0.05; d.head.rotation.y = -0.2;
+        set(d.legL, 0, 0, -0.12); set(d.legR, -0.15, 0, 0.18);
+    },
+    // 마법소녀 김민채: 지팡이를 앞으로 내밀고 살짝 뜸, 변신 빛 때 두 팔 활짝
+    leg_magical_minchae(t, d, _r, sig) {
+        const k = sig?.cast ?? 0;
+        set(d.armR, mix(-1.5, -0.4, k), 0, mix(0.2, 1.6, k)); set(d.armL, mix(-0.4, -0.4, k), 0, mix(-0.4, -1.6, k));
+        d.root.position.y += 0.4 + S(t * 2) * 0.1; d.head.rotation.z = S(t * 1.4) * 0.08;
+        set(d.legL, -0.3, 0, -0.05); set(d.legR, 0.1, 0, 0.05);
+    },
+    // 불꽃놀이 공병은: 폭죽 막대를 들고 하늘을 올려다봄, 펑 할 때 움찔
+    myth_fireworks_byungeun(t, d, _r, sig) {
+        const b = sig?.boom ?? 0;
+        set(d.armR, -1.1, 0, 0.3); set(d.armL, -0.2 - b * 0.4, 0, -0.3);
+        d.head.rotation.x = -0.45 - b * 0.1; d.root.position.y += b * 0.1;
+        set(d.legL, 0, 0, -0.05); set(d.legR, 0, 0, 0.05);
+    },
+    // 만월의 늑대 김가은: 웅크렸다가 하울링 때 고개를 젖히고 포효
+    anc_moonwolf_gaeun(t, d, _r, sig) {
+        const h = sig?.howl ?? 0;
+        set(d.armL, mix(-0.6, -0.2, h), 0, mix(-0.3, -0.9, h)); set(d.armR, mix(-0.6, -0.2, h), 0, mix(0.3, 0.9, h));
+        d.head.rotation.x = mix(0.15, -0.8, h); d.root.rotation.x = mix(0.12, -0.08, h);
+        d.root.position.y += mix(-0.15, 0.1, h);
+        set(d.legL, mix(-0.4, 0, h), 0, -0.1); set(d.legR, mix(-0.4, 0, h), 0, 0.1);
+    },
     abs_timestop_byungeun(t, d, _r, sig) {
         const k = sig?.stop ?? 0;
         set(d.armL, mix(-0.3, -1.6, k), 0, mix(-0.15, 0, k)); set(d.armR, -0.35, 0, 0.2);

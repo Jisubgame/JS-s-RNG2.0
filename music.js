@@ -180,7 +180,8 @@ export function createMusicPlayer({ getVolume, isEnabled, onYtChange, onYtError,
         return ytReady;
     }
     // 유튜브 곡이 재생 중일 때만 작은 영상 창을 보여 줌 (가려진 채로 재생하지 않음)
-    function showPip() { pip.box.classList.toggle('hidden', !(isYtCur() && (ytState === 1 || ytState === 3))); }
+    // 영상 창은 투명하게 숨겨 두고 소리만 (display:none 이면 재생이 막힐 수 있어서 항상 깔아 둠)
+    function showPip() { pip.box.classList.remove('hidden'); }
     const ytTracks = () => st.tracks.filter(t => t.yt);
     const saveYt = () => onYtChange?.(ytTracks().map(t => ({ v: t.yt, t: t.title, a: t.artist })));
     setInterval(() => { if (isYtCur() && ytState === 1) listeners.forEach(fn => fn('time')); }, 500);

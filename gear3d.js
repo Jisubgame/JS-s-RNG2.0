@@ -32,6 +32,53 @@ function shell(g, mat, { top = -0.95, bottom = -1.98, grow = 0.12 } = {}) {
 
 /* ---------- 건틀렛 ---------- */
 const GAUNTLETS = {
+    // ⏩ 시간 가속: 은색 + 시계 문자판, 바늘이 빠르게 돌고 잔상 고리
+    gear_timewarp(g, up, side) {
+        const silver = std('#cfd6e6', { metal: 0.9, rough: 0.2 });
+        const blue = std('#2a5aff', { emissive: '#1a3aff', ei: 0.7, metal: 0.4 });
+        shell(g, silver, { top: -0.8 });
+        box(g, blue, 1.18, 0.1, 1.18, 0, -0.85, 0); box(g, blue, 1.18, 0.1, 1.18, 0, -1.92, 0);
+        const dial = new THREE.Group(); dial.position.set(0, -1.38, 0.6); g.add(dial);
+        box(dial, std('#f4f6ff', { emissive: '#9ab0ff', ei: 0.3 }), 0.5, 0.5, 0.04, 0, 0, 0);
+        for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; box(dial, std('#1a2040'), 0.03, i % 3 ? 0.04 : 0.08, 0.02, Math.sin(a) * 0.2, Math.cos(a) * 0.2, 0.03, 0, 0, -a); }
+        const hand = new THREE.Group(); dial.add(hand); box(hand, glow('#2a8cff', 1), 0.03, 0.2, 0.02, 0, 0.1, 0.04);
+        const rings = [0, 1, 2].map(i => box(g, glow('#7ab0ff', 0.4), 1.3 + i * 0.12, 0.03, 1.3 + i * 0.12, 0, -1.0 - i * 0.35, 0));
+        up.push(t => { hand.rotation.z = -t * 9; rings.forEach((r, i) => { r.rotation.y = t * (2 + i); r.material.opacity = 0.2 + Math.sin(t * 6 + i) * 0.15; }); });
+    },
+    // ⚡ 번개 사냥꾼: 검은 가죽 + 노란 번개 문양, 손등 위로 전기가 튐
+    gear_thunderhunt(g, up, side) {
+        const leather = std('#1a1a22', { rough: 0.6 });
+        const volt = glow('#ffe14d', 1);
+        shell(g, leather, { top: -0.8 });
+        box(g, std('#ffd23a', { metal: 0.8, rough: 0.3 }), 1.2, 0.07, 1.2, 0, -0.84, 0);
+        [[0, -1.1], [0.12, -1.3], [-0.06, -1.5], [0.08, -1.7]].forEach(([x, y], i) => box(g, volt, 0.22, 0.06, 0.03, x, y, 0.585, 0, 0, i % 2 ? 0.7 : -0.7));
+        for (const s2 of [-1, 1]) box(g, std('#3a3a48', { metal: 0.7 }), 0.1, 0.5, 0.3, s2 * 0.62, -1.4, 0);
+        const sparks = Array.from({ length: 5 }, () => box(g, volt, 0.04, 0.16, 0.04, 0, 0, 0));
+        up.push(t => sparks.forEach((b, i) => { const k = (t * 3 + i * 0.2) % 1; b.visible = k < 0.5; b.position.set(Math.sin(i * 7 + t * 20) * 0.4, -1.0 - k * 0.6, 0.64); b.rotation.z = Math.sin(t * 30 + i) * 1.2; }));
+    },
+    // 🌊 심해 군주: 청록 비늘 + 산호 뿔, 주위를 도는 물방울
+    gear_abyssking(g, up, side) {
+        const scale = std('#1a6a7a', { metal: 0.5, rough: 0.3, emissive: '#0a3a4a', ei: 0.4 });
+        shell(g, scale, { top: -0.75, grow: 0.16 });
+        for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) box(g, std('#2a9aaa', { metal: 0.6, rough: 0.25 }), 0.28, 0.16, 0.03, (c - 1) * 0.32 + (r % 2) * 0.12, -0.95 - r * 0.24, 0.6);
+        const coral = std('#ff6a8a', { emissive: '#ff2a5a', ei: 0.4 });
+        for (let i = 0; i < 3; i++) box(g, coral, 0.08, 0.3 + i * 0.08, 0.08, side * (0.62 + i * 0.04), -0.9 - i * 0.12, (i - 1) * 0.25, 0, 0, side * 0.5);
+        const drops = Array.from({ length: 6 }, () => box(g, glow('#7af0ff', 0.85), 0.08, 0.1, 0.08, 0, 0, 0));
+        up.push(t => drops.forEach((d, i) => { const a = t * 1.4 + i / 6 * Math.PI * 2; d.position.set(Math.cos(a) * 0.85, -1.3 + Math.sin(t * 2 + i) * 0.35, Math.sin(a) * 0.85); }));
+    },
+    // ☀ 태양 대장간: 붉게 달아오른 금속 + 손등의 작은 태양, 불꽃이 위로
+    gear_sunforge(g, up, side) {
+        const iron = std('#3a2a20', { metal: 0.8, rough: 0.35, emissive: '#ff4a10', ei: 0.25 });
+        const gold = std('#ffcf4a', { metal: 0.95, rough: 0.15, emissive: '#7a4a00', ei: 0.5 });
+        shell(g, iron, { top: -0.75, grow: 0.18 });
+        box(g, gold, 1.24, 0.1, 1.24, 0, -0.78, 0); box(g, gold, 1.24, 0.1, 1.24, 0, -1.95, 0);
+        for (let i = 0; i < 4; i++) box(g, glow('#ff7a1a', 0.9), 1.22, 0.03, 0.03, 0, -1.05 - i * 0.22, 0.6);
+        const sun = new THREE.Group(); sun.position.set(0, -1.38, 0.68); g.add(sun);
+        box(sun, std('#fff3c0', { emissive: '#ffb02e', ei: 1.6 }), 0.24, 0.24, 0.1, 0, 0, 0);
+        const rays = Array.from({ length: 8 }, (_, i) => { const r = new THREE.Group(); r.rotation.z = i / 8 * Math.PI * 2; sun.add(r); box(r, glow('#ffd23a', 0.9), 0.04, 0.14, 0.03, 0, 0.22, 0); return r; });
+        const fl = Array.from({ length: 6 }, () => box(g, glow('#ff8a2a', 0.9), 0.07, 0.07, 0.07, 0, 0, 0));
+        up.push(t => { sun.rotation.z = t * 0.8; fl.forEach((f, i) => { const k = (t * 0.9 + i / 6) % 1; f.position.set(Math.sin(i * 3) * 0.45, -1.9 + k * 1.3, 0.3 + Math.cos(i * 2) * 0.2); f.scale.setScalar(0.07 * (1 - k) + 0.01); }); });
+    },
     // 초보자의 운수대통: 갈색 가죽 + 금 징 + 손등에 네모 네잎클로버
     gear_beginner(g, up, side) {
         const leather = std('#7a4a2a', { rough: 0.85 });
@@ -509,6 +556,71 @@ function talismanTexture(paper, ink, title) {
 }
 
 const AMULETS = {
+    // ⏳ 인내의 모래시계: 띠에 매달린 금빛 모래시계, 모래가 떨어지고 4초마다 뒤집힘
+    amu_hourglass(g, up, side) {
+        box(g, std('#5a3a22', { rough: 0.8 }), 1.1, 0.26, 1.1, 0, -0.42, 0);
+        const gold = std('#e8b84a', { metal: 0.9, rough: 0.25 });
+        const hg = new THREE.Group(); hg.position.set(0, -0.82, 0.62); g.add(hg);
+        box(hg, gold, 0.34, 0.05, 0.2, 0, 0.26, 0); box(hg, gold, 0.34, 0.05, 0.2, 0, -0.26, 0);
+        for (const x of [-0.15, 0.15]) box(hg, gold, 0.03, 0.5, 0.03, x, 0, 0.08);
+        const glass = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.1 });
+        box(hg, glass, 0.22, 0.2, 0.14, 0, 0.12, 0); box(hg, glass, 0.22, 0.2, 0.14, 0, -0.12, 0);
+        const top = box(hg, std('#ffd98a', { emissive: '#ffb02e', ei: 0.6 }), 0.16, 0.12, 0.1, 0, 0.12, 0);
+        const bot = box(hg, std('#ffd98a', { emissive: '#ffb02e', ei: 0.6 }), 0.16, 0.02, 0.1, 0, -0.2, 0);
+        const fall = box(hg, glow('#ffe7a0', 1), 0.02, 0.18, 0.02, 0, 0, 0);
+        up.push(t => {
+            const c = (t % 4) / 4, k = Math.min(1, c / 0.85);
+            top.scale.y = Math.max(0.05, 1 - k); top.position.y = 0.06 + 0.06 * (1 - k);
+            bot.scale.y = 0.2 + k * 5; bot.position.y = -0.21 + k * 0.05;
+            fall.visible = k < 1;
+            hg.rotation.z = c > 0.85 ? (c - 0.85) / 0.15 * Math.PI : 0;
+        });
+    },
+    // ✨ 쌍둥이 별: 남색 띠 + 서로 도는 두 별 (하늘/분홍)
+    amu_twinstar(g, up, side) {
+        box(g, std('#1a1f3a', { metal: 0.5, rough: 0.35 }), 1.1, 0.26, 1.1, 0, -0.42, 0);
+        box(g, glow('#c08bff', 0.9), 1.12, 0.04, 1.12, 0, -0.32, 0);
+        const pivot = new THREE.Group(); pivot.position.set(0, -0.82, 0.62); g.add(pivot);
+        const mk = c => { const st = new THREE.Group(); const m = std(c, { emissive: c, ei: 1.2 }); box(st, m, 0.14, 0.14, 0.06, 0, 0, 0); box(st, m, 0.14, 0.14, 0.06, 0, 0, 0, 0, 0, Math.PI / 4); pivot.add(st); return st; };
+        const a = mk('#7ae8ff'), b = mk('#ff8ad8');
+        const link = box(pivot, glow('#ffffff', 0.5), 0.3, 0.02, 0.02, 0, 0, 0);
+        up.push(t => { const r = t * 2; a.position.set(Math.cos(r) * 0.16, Math.sin(r) * 0.16, 0); b.position.set(-Math.cos(r) * 0.16, -Math.sin(r) * 0.16, 0); a.rotation.z = b.rotation.z = t * 3; link.rotation.z = r; });
+    },
+    // ⚖ 연금 저울: 금 저울 양쪽 접시에 금화, 천천히 기울며 균형
+    amu_scale(g, up, side) {
+        box(g, std('#3a2a5a', { rough: 0.6 }), 1.1, 0.26, 1.1, 0, -0.42, 0);
+        const gold = std('#ffcf4a', { metal: 0.95, rough: 0.2 });
+        const sc = new THREE.Group(); sc.position.set(0, -0.62, 0.62); g.add(sc);
+        box(sc, gold, 0.04, 0.4, 0.04, 0, -0.2, 0);
+        const beam = new THREE.Group(); beam.position.y = -0.04; sc.add(beam);
+        box(beam, gold, 0.56, 0.03, 0.03, 0, 0, 0);
+        const pans = [-1, 1].map(s2 => { const p = new THREE.Group(); p.position.x = s2 * 0.26; beam.add(p); box(p, gold, 0.01, 0.16, 0.01, 0, -0.08, 0); box(p, gold, 0.18, 0.02, 0.14, 0, -0.17, 0); box(p, std('#fff0a0', { emissive: '#ffb02e', ei: 0.5, metal: 0.8 }), 0.08, 0.04, 0.08, 0, -0.14, 0); return p; });
+        up.push(t => { beam.rotation.z = Math.sin(t * 1.2) * 0.25; pans.forEach(p => { p.rotation.z = -beam.rotation.z; }); });
+    },
+    // 🥚 생명의 요람: 초록 잎 띠 + 잎사귀 요람 속에 빛나는 작은 알
+    amu_cradle(g, up, side) {
+        box(g, std('#2f6a3a', { rough: 0.7 }), 1.1, 0.26, 1.1, 0, -0.42, 0);
+        const leaf = std('#4ad65a', { emissive: '#22a040', ei: 0.4 });
+        const cr = new THREE.Group(); cr.position.set(0, -0.76, 0.62); g.add(cr);
+        for (let i = 0; i < 5; i++) { const a = (i / 4 - 0.5) * 2.2; box(cr, leaf, 0.08, 0.2, 0.05, Math.sin(a) * 0.16, -Math.cos(a) * 0.1, 0, 0, 0, a); }
+        const egg = box(cr, std('#fff3e0', { emissive: '#ffd98a', ei: 0.7 }), 0.13, 0.17, 0.12, 0, 0.0, 0.02);
+        const motes = Array.from({ length: 4 }, () => box(g, glow('#b6ffcb', 1), 0.04, 0.04, 0.04, 0, 0, 0));
+        up.push(t => { egg.rotation.z = Math.sin(t * 2.4) * 0.15; motes.forEach((m, i) => { const k = (t * 0.6 + i / 4) % 1; m.position.set(Math.sin(i * 2 + t) * 0.2, -0.85 + k * 0.5, 0.66); m.scale.setScalar(0.04 * (1 - k) + 0.005); }); });
+    },
+    // ⚗ 물약 장인: 가죽 띠에 꽂힌 작은 물약 세 병, 거품이 올라옴
+    amu_brewer(g, up, side) {
+        box(g, std('#6a4a2a', { rough: 0.8 }), 1.1, 0.26, 1.1, 0, -0.42, 0);
+        const glass = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, roughness: 0.1 });
+        const cols = ['#ff5a8a', '#7dff6a', '#5ab0ff'];
+        const bub = [];
+        cols.forEach((c, i) => {
+            const v = new THREE.Group(); v.position.set((i - 1) * 0.24, -0.55, 0.6); g.add(v);
+            box(v, glass, 0.16, 0.24, 0.12, 0, -0.12, 0); box(v, std(c, { emissive: c, ei: 0.8 }), 0.13, 0.15, 0.09, 0, -0.16, 0);
+            box(v, std('#8a5a2a'), 0.08, 0.05, 0.06, 0, 0.02, 0);
+            bub.push(box(v, glow('#ffffff', 0.9), 0.03, 0.03, 0.03, 0, 0, 0));
+        });
+        up.push(t => bub.forEach((b, i) => { const k = (t * 1.2 + i * 0.33) % 1; b.position.set(Math.sin(t * 3 + i) * 0.03, -0.22 + k * 0.2, 0.05); b.scale.setScalar(0.03 * (1 - k) + 0.005); }));
+    },
     // 평범함의 부적: 회색 천 띠 + 누런 종이 부적 한 장
     amulet_drum(g, up, side) {
         const band = std('#6c6e78', { rough: 0.9 });

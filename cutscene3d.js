@@ -14,7 +14,7 @@
      hit2 : JXS만. 두 번째 클라이맥스. hit~hit2 동안은 각성 직전 단계
    ========================================================= */
 
-import { buildLocomotive } from './auraSignatures.js?v=50';
+import { buildLocomotive } from './auraSignatures.js?v=51';
 
 export function createCutscene(ctx) {
     const { THREE, scene, camera, dummy, floor, stars, kit, bloom, stageApi } = ctx;
@@ -146,6 +146,31 @@ export function createCutscene(ctx) {
        update(time, phase, k, dt)  phase: 'build' | 'phase2' | 'reveal'
        ========================================================= */
     const MOTIFS = {
+
+        // 🐺 만월의 늑대: 별 뒤로 보름달이 차오르고, 늑대 그림자들이 사방에서 달려와 별을 에워쌈
+        moonWolf({ g, colors }) {
+            const moon = new THREE.Mesh(new THREE.CircleGeometry(7, 40), new THREE.MeshBasicMaterial({ color: 0xeef4ff, toneMapped: false, transparent: true, opacity: 0 }));
+            moon.position.set(0, 4, -12); g.add(moon);
+            const m = glowMat(colors[0], 0.6);
+            const wolves = Array.from({ length: 8 }, (_, i) => {
+                const w = new THREE.Group(); g.add(w);
+                const part = (sx, sy, sz, x, y, z) => { const b = new THREE.Mesh(BOX, m); b.scale.set(sx, sy, sz); b.position.set(x, y, z); w.add(b); };
+                part(1.2, 1, 2.6, 0, 1.2, 0); part(0.9, 0.9, 1, 0, 1.7, 1.6); part(0.25, 0.45, 0.2, 0.3, 2.3, 1.5); part(0.25, 0.45, 0.2, -0.3, 2.3, 1.5); part(0.35, 0.35, 1.2, 0, 1.5, -1.7);
+                return { w, a: (i / 8) * Math.PI * 2 };
+            });
+            return {
+                bloom: 0.6,
+                update(time, phase, k) {
+                    const vis = phase === 'build';
+                    g.visible = vis;
+                    if (!vis) return;
+                    moon.material.opacity = Math.min(0.9, k * 1.4);
+                    moon.scale.setScalar(0.4 + ease.out(clamp01(k / 0.6)) * 0.6);
+                    const r = THREE.MathUtils.lerp(26, 7, ease.inOut(clamp01(k / 0.9)));
+                    wolves.forEach(({ w, a }, i) => { const aa = a + time * 0.6; w.position.set(Math.cos(aa) * r, Math.abs(Math.sin(time * 8 + i)) * 0.4, Math.sin(aa) * r * 0.6 - 3); w.lookAt(0, 0, -3); });
+                }
+            };
+        },
 
         // 🏜 파라오: 별 아래로 피라미드가 솟아오르고 꼭대기의 금 캡스톤이 별과 맞닿음
         pharaoh({ g, colors }) {
