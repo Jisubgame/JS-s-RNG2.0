@@ -1,8 +1,8 @@
-import { AURA_DATA } from './auras.js?v=55';
-import { CRAFT_ITEMS } from './craftItems.js?v=55';
-import { createMusicPlayer, coverArt } from './music.js?v=55';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=55';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=55';
+import { AURA_DATA } from './auras.js?v=56';
+import { CRAFT_ITEMS } from './craftItems.js?v=56';
+import { createMusicPlayer, coverArt } from './music.js?v=56';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=56';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=56';
 
 /* =========================================================
    📦 게임 데이터
@@ -598,7 +598,118 @@ document.addEventListener('visibilitychange', () => {
     if (!document.hidden && isAutoRolling && !isRolling) startRoll();
 });
 
+/* =========================================================
+   📅 일일 미션: 매일 쉬움·보통·어려움 1개씩 (친구들 모두 같은 미션)
+   보상 = 시즌 패스 XP + JC, 3개 다 깨면 보너스
+   ========================================================= */
+const DAILY_POOL = [
+    [   // 쉬움
+        { key: 'rolls', need: 800, label: n => `롤 ${fmt(n)}번 하기` },
+        { key: 'rare', need: 25, label: n => `RARE 이상 ${n}개 뽑기` },
+        { key: 'potion', need: 2, label: n => `물약 ${n}번 사용하기` },
+        { key: 'sell', need: 30, label: n => `칭호 ${n}개 판매하기` }
+    ],
+    [   // 보통
+        { key: 'rolls', need: 2000, label: n => `롤 ${fmt(n)}번 하기` },
+        { key: 'epic', need: 6, label: n => `EPIC 이상 ${n}개 뽑기` },
+        { key: 'gacha', need: 3, label: n => `행운 뽑기 ${n}번 하기` },
+        { key: 'hatch', need: 1, label: n => `알 ${n}개 부화시키기` }
+    ],
+    [   // 어려움
+        { key: 'rolls', need: 5000, label: n => `롤 ${fmt(n)}번 하기` },
+        { key: 'legend', need: 1, label: n => `LEGEND 이상 ${n}개 뽑기` },
+        { key: 'epic', need: 15, label: n => `EPIC 이상 ${n}개 뽑기` },
+        { key: 'gacha', need: 10, label: n => `행운 뽑기 ${n}번 하기` }
+    ]
+];
+const DAILY_TIER = [
+    { name: '쉬움', color: 'var(--mint)', xp: 1500, jc: 20000 },
+    { name: '보통', color: 'var(--gold)', xp: 3000, jc: 50000 },
+    { name: '어려움', color: '#ff5a8a', xp: 5000, jc: 120000 }
+];
+const DAILY_BONUS = { xp: 1500, tickets: 1 };
+function dailyMissions() {
+    const day = todayKey();
+    let h = 0; for (const c of day) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return DAILY_POOL.map((pool, t) => ({ ...pool[(h >>> (t * 4)) % pool.length], tier: t }));
+}
+function dailyState() {
+    const day = todayKey();
+    if (!gameState.daily || gameState.daily.day !== day) gameState.daily = { day, p: {}, c: [], bonus: false };
+    return gameState.daily;
+}
+function dailyTrack(key, n = 1) {
+    const st = dailyState();
+    const before = dailyMissions().filter(m => !st.c.includes(m.tier) && (st.p[m.key] || 0) >= m.need).length;
+    st.p[key] = (st.p[key] || 0) + n;
+    const ms = dailyMissions(), ready = ms.filter(m => !st.c.includes(m.tier) && (st.p[m.key] || 0) >= m.need);
+    if (ready.length > before) toast(`📅 일일 미션 달성! 퀘스트에서 보상을 받으세요`, 'gold');
+    updateDailyDot();
+}
+function dailyClaimable() {
+    const st = dailyState(), ms = dailyMissions();
+    return ms.filter(m => !st.c.includes(m.tier) && (st.p[m.key] || 0) >= m.need).length + (!st.bonus && st.c.length === 3 ? 1 : 0);
+}
+function updateDailyDot() {
+    document.querySelector('[data-sheet="sheet-quest"]')?.classList.toggle('has-dot', dailyClaimable() > 0);
+}
+function dailyHtml() {
+    const st = dailyState(), ms = dailyMissions();
+    const now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const left = mid - now, hh = Math.floor(left / 3600000), mm = Math.floor(left / 60000) % 60;
+    const allDone = st.c.length === 3;
+    return `
+    <div class="daily">
+        <div class="daily-head">
+            <div><div class="qkind">DAILY</div><div class="qtitle">일일 미션</div></div>
+            <div class="daily-reset">초기화까지<b>${hh}시간 ${mm}분</b></div>
+        </div>
+        ${ms.map(m => {
+            const T = DAILY_TIER[m.tier], have = Math.min(m.need, st.p[m.key] || 0);
+            const done = st.c.includes(m.tier), met = have >= m.need;
+            return `
+            <div class="dm ${done ? 'done' : met ? 'ready' : ''}" style="--tc:${T.color}">
+                <div class="dm-tier">${T.name}</div>
+                <div class="dm-main">
+                    <div class="dm-label">${m.label(m.need)}</div>
+                    <div class="dm-bar"><div style="width:${have / m.need * 100}%"></div></div>
+                    <div class="dm-num">${fmt(have)} / ${fmt(m.need)} <span class="dm-rw">🎫 ${fmt(T.xp)} XP · <i class="coin"></i> ${fmt(T.jc)}</span></div>
+                </div>
+                ${done ? '<span class="dm-ok">✓</span>' : `<button class="btn btn-sm ${met ? 'btn-green q-claim' : ''}" data-daily="${m.tier}" ${met ? '' : 'disabled'}>받기</button>`}
+            </div>`;
+        }).join('')}
+        <div class="dm dm-bonus ${st.bonus ? 'done' : allDone ? 'ready' : ''}" style="--tc:#c77dff">
+            <div class="dm-tier">보너스</div>
+            <div class="dm-main">
+                <div class="dm-label">오늘 미션 3개 모두 완료</div>
+                <div class="dm-num">${st.c.length} / 3 <span class="dm-rw">🎫 ${fmt(DAILY_BONUS.xp)} XP · <i class="ticket-ico"></i> 뽑기권 ${DAILY_BONUS.tickets}장</span></div>
+            </div>
+            ${st.bonus ? '<span class="dm-ok">✓</span>' : `<button class="btn btn-sm ${allDone ? 'btn-green q-claim' : ''}" data-dailybonus ${allDone ? '' : 'disabled'}>받기</button>`}
+        </div>
+    </div>`;
+}
+function claimDaily(tier) {
+    const st = dailyState(), m = dailyMissions().find(x => x.tier === tier);
+    if (!m || st.c.includes(tier) || (st.p[m.key] || 0) < m.need) return;
+    const T = DAILY_TIER[tier];
+    st.c.push(tier);
+    gameState.jc += T.jc;
+    passAddXp(T.xp);
+    toast(`📅 ${T.name} 미션 완료\n🎫 ${fmt(T.xp)} XP + ${fmt(T.jc)} JC`, 'gold');
+    saveGame(); renderStats(); renderQuests(); updateDailyDot();
+}
+function claimDailyBonus() {
+    const st = dailyState();
+    if (st.bonus || st.c.length < 3) return;
+    st.bonus = true;
+    passAddXp(DAILY_BONUS.xp);
+    gameState.tickets = (gameState.tickets || 0) + DAILY_BONUS.tickets;
+    toast(`📅 오늘 미션 올클리어!\n🎫 ${fmt(DAILY_BONUS.xp)} XP + 뽑기권 ${DAILY_BONUS.tickets}장`, 'gold');
+    saveGame(); renderStats(); renderQuests(); updateDailyDot();
+}
+
 function trackQuestProgress(type, amount = 1) {
+    if (type === 'rolls' || type === 'rare' || type === 'epic') dailyTrack(type, amount);
     const qId = gameState.activeQuest;
     if (!qId) return;
     if (!gameState.questProgress[qId]) gameState.questProgress[qId] = {};
@@ -684,6 +795,7 @@ async function finishRoll() {
     const gi = GRADES.indexOf(rolled.grade);
     if (gi >= 1) trackQuestProgress("rare");
     if (gi >= 2) trackQuestProgress("epic");
+    if (gi >= 3) dailyTrack('legend');
 
     if (gameState.activeMultBuffs.length) {
         const save = amu().abil === 'brew' ? amu().brewSave : 0;
@@ -957,6 +1069,7 @@ function setNum(el, text) {
 function renderStats() {
     setNum(ui.rollCount, fmt(gameState.rolls));
     setNum(ui.jcCount, fmt(gameState.jc));
+    updateDailyDot();
     ui.luck.textContent = fmt(Math.round(getDisplayLuck() * 100) / 100);
     ui.speed.textContent = (1 + getSpeedBonus()).toFixed(2);
 
@@ -1056,7 +1169,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=55').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=56').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -1165,7 +1278,7 @@ function questRewardHtml(q) {
 
 function renderQuests() {
     ui.questList.classList.add('list');
-    ui.questList.innerHTML = QUEST_DATA.map(q => {
+    ui.questList.innerHTML = dailyHtml() + QUEST_DATA.map(q => {
         const done = !q.repeatable && gameState.completedQuests.includes(q.id);
         const active = gameState.activeQuest === q.id;
         const { rows, canClaim } = questState(q);
@@ -1645,6 +1758,7 @@ function sellAura(id) {
                 if (gameState.equippedAura === id) { gameState.equippedAura = null; applyEquippedAura(); }
             }
             gameState.jc += Math.floor(a.jcValue * sellMult()) * n;
+            dailyTrack('sell', n);
             saveGame(); renderStats(); renderInventory();
             toast(`${fmt(n)}개 판매  +${fmt(Math.floor(a.jcValue * sellMult()) * n)} JC`, 'gold');
         }
@@ -1698,6 +1812,7 @@ ui.potionGrid.addEventListener('click', e => {
         max: item.type === 'biome' ? 1 : count, initial: 1, okText: '사용',
         onConfirm: n => {
             if ((gameState.itemInventory[id] || 0) < n) return;
+            dailyTrack('potion', n);
             gameState.itemInventory[id] -= n;
             if (gameState.itemInventory[id] <= 0) delete gameState.itemInventory[id];
             const now = Date.now();
@@ -1766,6 +1881,8 @@ function equip(item) {
 /* ---------- 퀘스트 ---------- */
 ui.questList.addEventListener('click', e => {
     const d = e.target.dataset;
+    if (d.daily !== undefined) { claimDaily(+d.daily); return; }
+    if (d.dailybonus !== undefined) { claimDailyBonus(); return; }
     if (d.quest) {
         gameState.activeQuest = d.quest;
         if (!gameState.questProgress[d.quest]) gameState.questProgress[d.quest] = {};
@@ -2091,6 +2208,7 @@ function pullGacha(n, ticket = false) {
     }
     const results = Array.from({ length: n }, () => gachaGrant(gachaPick(B)));
     trackQuestProgress("shopPurchases", n);
+    dailyTrack('gacha', n);
     saveGame(); renderStats();
     showGachaResult(results);
 }
@@ -2376,6 +2494,7 @@ function hatchNest(i) {
     if (!n || n.end > Date.now()) return;
     const egg = EGG_BY_ID[n.egg];
     st.nests[i] = null;
+    dailyTrack('hatch');
     showHatch(egg, [rollPetFromEgg(egg)]);
 }
 // 개발자 모드: 기다리지 않고 한번에 부화
@@ -3328,7 +3447,7 @@ function renderPass() {
             <div class="ps-season"><b>${SEASON.name}</b><small>${passEnded() ? '시즌 종료' : `${days}일 남음`}</small></div>
             <div class="ps-lv"><span>LV</span><b>${lv}</b><small>/ ${PASS_MAX}</small></div>
             <div class="ps-bar"><div style="width:${inLv / need * 100}%"></div></div>
-            <div class="ps-xp">${lv >= PASS_MAX ? '최고 레벨!' : `${fmt(inLv)} / ${fmt(need)} XP · 롤 1번 = 1 XP · 출석 = 1,000 XP · 레벨이 오를수록 필요한 XP가 늘어요`}</div>
+            <div class="ps-xp">${lv >= PASS_MAX ? '최고 레벨!' : `${fmt(inLv)} / ${fmt(need)} XP · 롤 1번 = 1 XP · 출석 = 1,000 XP · 일일 미션 최대 11,000 XP · 레벨이 오를수록 필요한 XP가 늘어요`}</div>
             <div class="ps-tickets"><i class="ticket-ico"></i> 뽑기권 <b>${fmt(gameState.tickets || 0)}</b>장 <small>· 상점 행운 뽑기에서 써요</small></div>
         </div>
         <div class="ps-tracks-head"><span>LV</span><span class="b">BASIC <small>무료</small></span><span class="p">PRO ${st.pro ? '<small>보유 중</small>' : ''}</span></div>
@@ -3836,7 +3955,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=55')
+import('./aura3d.js?v=56')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {

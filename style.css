@@ -2334,3 +2334,39 @@ img.yt { image-rendering: auto !important; }
 .bg-row-info { min-width: 0; flex: 1; }
 .bg-eff, .bg-eff b { white-space: normal !important; word-break: keep-all; overflow-wrap: anywhere; }
 .bg-eff .ef-abil { display: block; font-size: 11px; line-height: 1.35; }
+
+/* =========================================================
+   📅 일일 미션
+   ========================================================= */
+.nav-btn { position: relative; }
+.nav-btn.has-dot::after { content: ''; position: absolute; top: 4px; right: calc(50% - 17px); width: 8px; height: 8px; background: #ff4d6d; transform: rotate(45deg); box-shadow: 0 0 8px #ff4d6d; animation: pulse-soft 1.2s ease-in-out infinite; }
+.daily {
+    position: relative; padding: 16px 14px 14px; margin-bottom: 14px;
+    display: flex; flex-direction: column; gap: 8px;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--gold) 9%, transparent), rgba(255, 255, 255, 0.02) 55%);
+    border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+    border-radius: 4px;
+}
+.daily-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4px; }
+.daily-reset { font-size: 10px; color: var(--faint); text-align: right; display: flex; flex-direction: column; gap: 2px; }
+.daily-reset b { font-weight: 400; font-size: 13px; color: var(--text, #fff); font-variant-numeric: tabular-nums; }
+.dm {
+    display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+    background: rgba(0, 0, 0, 0.25); border: 1px solid var(--line);
+    border-left: 3px solid var(--tc);
+}
+.dm.ready { border-color: color-mix(in srgb, var(--mint) 55%, transparent); border-left-color: var(--mint); box-shadow: 0 0 14px color-mix(in srgb, var(--mint) 14%, transparent); }
+.dm.done { opacity: 0.45; }
+.dm-tier { flex: none; width: 40px; font-size: 10.5px; letter-spacing: 0.04em; color: var(--tc); text-align: center; }
+.dm-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dm-label { font-size: 13px; }
+.dm-bar { height: 3px; background: var(--line); }
+.dm-bar > div { height: 100%; background: var(--tc); box-shadow: 0 0 6px var(--tc); transition: width 0.4s; }
+.dm.ready .dm-bar > div { background: var(--mint); }
+.dm-num { font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums; display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+.dm-rw { color: var(--gold); display: inline-flex; align-items: center; gap: 4px; }
+.dm-rw .coin { width: 10px; height: 10px; }
+.dm-rw .ticket-ico { transform: scale(0.75); }
+.dm-ok { flex: none; width: 50px; text-align: center; color: var(--mint); font-size: 18px; }
+.dm .btn { flex: none; min-width: 50px; }
+.dm-bonus { border-style: dashed; }
