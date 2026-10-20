@@ -9,11 +9,11 @@ import { EffectComposer } from './lib/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from './lib/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from './lib/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from './lib/jsm/postprocessing/OutputPass.js';
-import { SIGNATURES, jxsGrand } from './auraSignatures.js?v=56';
-import { JXS_BACKDROPS } from './jxsBackdrops.js?v=56';
-import { POSES } from './poses.js?v=56';
-import { createGearRig } from './gear3d.js?v=56';
-import { createPetRig } from './pets3d.js?v=56';
+import { SIGNATURES, jxsGrand } from './auraSignatures.js?v=57';
+import { JXS_BACKDROPS } from './jxsBackdrops.js?v=57';
+import { POSES } from './poses.js?v=57';
+import { createGearRig } from './gear3d.js?v=57';
+import { createPetRig } from './pets3d.js?v=57';
 
 const BOX = new THREE.BoxGeometry(1, 1, 1);
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -706,7 +706,8 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
     // 계단 현상 줄이기: WebGL2 면 블룸 화면에도 멀티샘플(MSAA) 적용
     const msaa = renderer.capabilities.isWebGL2 ? 4 : 0;
     const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: msaa }));
-    composer.addPass(new RenderPass(scene, camera));
+    const mainPass = new RenderPass(scene, camera);
+    composer.addPass(mainPass);
     const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.6, 0.32, 0.82);
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
@@ -805,7 +806,7 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
     let t = 0;
     // 프레임 시간 재서 화질 조절
     let perfAcc = 0, perfN = 0, perfCooldown = 3;
-    let lowPower = false, skip = 0, pendingDt = 0;
+    let lowPower = false, skip = 0, pendingDt = 0, takeover = null;
     // 화질 자동 조절: 90프레임마다 검사.
     //  느린 프레임(25ms 넘음)이 많으면 한 단계 낮추고, 다시 여유가 생기면(평균 20ms 미만, 느린 프레임 거의 없음) 한 단계 올림
     let perfSlow = 0;
@@ -833,6 +834,17 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
         }
         const dt = Math.min(rawDt + pendingDt, 0.05);
         pendingDt = 0;
+        // 던전: 다른 장면(보스전)이 무대 렌더러를 잠시 빌려 씀
+        if (takeover) {
+            if (!document.hidden) adaptQuality(rawDt);
+            takeover.camera.aspect = W / H;
+            takeover.update(dt, W, H);
+            takeover.camera.updateProjectionMatrix();
+            mainPass.scene = takeover.scene; mainPass.camera = takeover.camera;
+            composer.render();
+            mainPass.scene = scene; mainPass.camera = camera;
+            return;
+        }
         if (!lowPower && !document.hidden) adaptQuality(rawDt);
         fxTimer -= rawDt;
         if (fxTimer <= 0) { fxTimer = 0.5; applyFxBudget(false); }
@@ -928,6 +940,8 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
             resize();
         },
         setLowPower(v) { lowPower = v; },
+        // 다른 장면에 화면을 넘김 ({ scene, camera, update(dt, W, H) } 또는 null)
+        setTakeover(v) { takeover = v; },
         // 효과 양: 'high' | 'mid' | 'low'
         setFxMode(mode) { fxMode = mode; applyFxBudget(true); },
         flash() { flash = 1; },
@@ -935,7 +949,7 @@ export function createAuraStage(canvas, { getStageRect, onLabel }) {
         // 3D 컷씬 재생. cfg = { hit, hit2, total, tier }, getTime() = 지금 컷씬 몇 초인지
         async playCutscene(aura, cfg, getTime) {
             if (!cine) {
-                const { createCutscene } = await import('./cutscene3d.js?v=56');
+                const { createCutscene } = await import('./cutscene3d.js?v=57');
                 cine = createCutscene(cineCtx);
             }
             return cine.play(aura, cfg, getTime, { shake: a => { shakeAmt = Math.max(shakeAmt, a); } });

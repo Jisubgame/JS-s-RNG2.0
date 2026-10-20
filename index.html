@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Orbit&display=swap" rel="stylesheet">
     <!-- 업데이트할 때: 아래 ?v= 숫자 3곳과 version.json 숫자를 똑같이 올리기 -->
-    <link rel="stylesheet" href="style.css?v=56">
-    <link rel="stylesheet" href="rarity.css?v=56">
+    <link rel="stylesheet" href="style.css?v=57">
+    <link rel="stylesheet" href="rarity.css?v=57">
     <script type="importmap">{ "imports": { "three": "./lib/three.module.js" } }</script>
 </head>
 <body>
@@ -90,7 +90,7 @@
 
         <!-- 3D 캐릭터가 이 영역 가운데에 서 있음. 안의 글자는 전부 겹쳐 띄워서 크기가 변해도 아래 버튼이 안 움직임 -->
         <section class="stage">
-            <!-- 양옆 대칭 메뉴: 왼쪽 출석·패스 / 오른쪽 신전·암시장 -->
+            <!-- 양옆 대칭 메뉴: 왼쪽 출석·패스·던전 / 오른쪽 신전·암시장·랭킹 -->
             <div class="side-dock left">
                 <button id="attend-btn" class="dock-btn" aria-label="출석 체크">
                     <svg viewBox="0 0 24 24"><path d="M4 6h16v14H4z"/><path d="M4 10h16M8 3v5M16 3v5"/><path d="M9 15l2 2 4-4"/></svg>
@@ -99,6 +99,10 @@
                 <button id="pass-btn" class="dock-btn pass" aria-label="시즌 패스">
                     <svg viewBox="0 0 24 24"><path d="M3 7h18v4a2 2 0 000 4v4H3v-4a2 2 0 000-4z"/><path d="M14 7v12" stroke-dasharray="2 2"/></svg>
                     <span>패스</span><b class="dock-lv" id="pass-lv">1</b><i class="pass-dot attend-dot hidden"></i>
+                </button>
+                <button id="dng-btn" class="dock-btn dng" data-sheet="sheet-dungeon" aria-label="균열 던전">
+                    <svg viewBox="0 0 24 24"><path d="M12 2.5l1.6 4.2-1.9 3 2.4 3.4-2.2 3.6 1.4 4.8"/><path d="M5 21V9l7-6 7 6v12"/><path d="M3 21h18"/></svg>
+                    <span>던전</span>
                 </button>
             </div>
             <div class="side-dock right">
@@ -109,6 +113,10 @@
                 <button id="bm-btn" class="dock-btn bm" aria-label="암시장">
                     <svg viewBox="0 0 24 24"><path d="M4 10h16l-1.5 10h-13z"/><path d="M8 10V7a4 4 0 018 0v3"/><path d="M10 14h4"/></svg>
                     <span id="bm-label">암시장</span>
+                </button>
+                <button id="rank-btn" class="dock-btn rank" aria-label="랭킹">
+                    <svg viewBox="0 0 24 24"><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M7 6H4v1a3 3 0 003 3M17 6h3v1a3 3 0 01-3 3M12 14v3M8 20h8M9 17h6v3H9z"/></svg>
+                    <span>랭킹</span>
                 </button>
             </div>
             <button id="biome-badge" class="hidden" aria-label="지금 바이옴 정보"></button>
@@ -251,6 +259,15 @@
     </div>
 
     <!-- 📜 퀘스트 (위 출석 체크) -->
+    <div id="sheet-dungeon" class="sheet-backdrop hidden">
+        <div class="sheet">
+            <div class="sheet-head"><h2>균열 던전</h2><button class="sheet-close" data-close aria-label="닫기">✕</button></div>
+            <div class="sheet-body"><div id="dng-panel"></div></div>
+        </div>
+    </div>
+    <!-- 🌀 보스전 화면 (무대 3D 위에 겹침) -->
+    <div id="dng-battle" class="dng-battle hidden"></div>
+
     <div id="sheet-quest" class="sheet-backdrop hidden">
         <div class="sheet">
             <div class="sheet-head"><h2>퀘스트</h2><button class="sheet-close" data-close aria-label="닫기">✕</button></div>
@@ -546,6 +563,6 @@
 
     <div id="toast-wrap"></div>
 
-    <script type="module" src="script.js?v=56"></script>
+    <script type="module" src="script.js?v=57"></script>
 </body>
 </html>

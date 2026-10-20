@@ -290,4 +290,10 @@ export const AURA_DATA = [
       fx: { signature: "pioneer", colors: ["#7ad0ff", "#ffd23a", "#ffffff"], glow: 0.7 } },
     { id: "pass_goldking", name: "황금 개척왕", grade: "ABSOLUTE", in: 50000000, color: "#ffd23a", line: "그가 걸어간 길은 모두 황금이 된다", pass: "pro",
       fx: { signature: "goldKing", colors: ["#ffd23a", "#fff3c0", "#ff9a3a"], glow: 0.8 } },
+
+    // 🌀 균열 던전 보스 드롭 (롤로는 안 나옴) · dskill = 던전 전용 스킬
+    { id: "dng_riftwalker", name: "균열을 걷는 자", grade: "MYTHIC", in: 700000, color: "#ff6ad8", line: "한 걸음마다 세상이 갈라진다", dungeon: true, dskill: "rend",
+      fx: { signature: "riftWalker", colors: ["#ff6ad8", "#c070ff", "#ffffff"], glow: 0.8 } },
+    { id: "dng_riftlord", name: "균열의 지배자", grade: "ABSOLUTE", in: 70000000, color: "#c070ff", line: "차원의 틈은 그의 명령에만 열린다", dungeon: true, dskill: "collapse",
+      fx: { signature: "riftLord", colors: ["#c070ff", "#ff6ad8", "#ffffff"], glow: 0.9 } },
 ];

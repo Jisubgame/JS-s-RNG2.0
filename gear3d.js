@@ -528,7 +528,28 @@ const GAUNTLETS = {
                 w.material.opacity = 0.8 * (1 - k);
             });
         });
-    }
+    },
+    // 🌀 균열파괴자: 흑요석 판금에 보라 균열, 손등의 핵이 맥박치고 수정 가시 셋, 주위에 열리는 작은 틈
+    gear_riftbreaker(g, up, side) {
+        const obs = std('#1b1428', { metal: 0.55, rough: 0.3, emissive: '#2a0a4a', ei: 0.5 });
+        const obs2 = std('#2a1d3e', { metal: 0.5, rough: 0.35 });
+        const crys = std('#9a6aff', { emissive: '#7a3aff', ei: 1.2, rough: 0.15 });
+        shell(g, obs, { top: -0.8, grow: 0.16 });
+        box(g, obs2, 1.24, 0.14, 1.24, 0, -0.84, 0); box(g, obs2, 1.24, 0.14, 1.24, 0, -1.95, 0);
+        const cracks = [[-0.25, -1.2, 0.5], [0.25, -1.55, -0.6], [-0.1, -1.75, 0.9]].map(([x, y, rz]) => box(g, glow('#c070ff', 1), 0.05, 0.36, 0.03, x, y, 0.6, 0, 0, rz));
+        const core = box(g, std('#ff4ad8', { emissive: '#ff4ad8', ei: 2 }), 0.3, 0.3, 0.08, 0, -1.4, 0.64, 0, 0, Math.PI / 4);
+        const halo = box(g, glow('#ff6ad8', 0.5), 0.5, 0.5, 0.02, 0, -1.4, 0.69, 0, 0, Math.PI / 4);
+        for (let i = 0; i < 3; i++) box(g, crys, 0.12, 0.4 - i * 0.06, 0.12, side * 0.62, -1.0 - i * 0.3, (i - 1) * 0.25, 0, 0, side * -0.9);
+        const tear = new THREE.Group(); tear.position.set(side * -0.9, -1.4, 0.2); g.add(tear);
+        const bars = Array.from({ length: 7 }, (_, i) => { const k = i / 6; return { m: box(tear, glow(i % 2 ? '#ff6ad8' : '#ffffff', 0.9), 0.2, 0.09, 0.02, 0, (k - 0.5) * 0.7, 0), w: Math.sin(k * Math.PI) }; });
+        up.push(t => {
+            const p = 1 + Math.sin(t * 4) * 0.12;
+            core.scale.set(0.3 * p, 0.3 * p, 0.08); halo.rotation.z = Math.PI / 4 + t; halo.material.opacity = 0.3 + Math.sin(t * 4) * 0.2;
+            cracks.forEach((c, i) => { c.material.opacity = 0.6 + 0.4 * Math.sin(t * 5 + i * 2); });
+            const k = (t * 0.4) % 1, open = k < 0.6 ? Math.sin(k / 0.6 * Math.PI) : 0;
+            bars.forEach((b, i) => { b.m.scale.x = Math.max(0.005, b.w * 0.22 * open * (0.8 + 0.2 * Math.sin(t * 14 + i))); });
+        });
+    },
 };
 
 /* ---------- 부적 ---------- */
@@ -841,7 +862,23 @@ const AMULETS = {
                 c.rotation.set(t * 6, t * 4, 0);
             });
         });
-    }
+    },
+    // 🌀 균열의 핵: 흑요석 띠 위에 떠서 도는 분홍 핵 + 둘레를 도는 수정 파편
+    amu_riftcore(g, up, side) {
+        box(g, std('#1b1428', { metal: 0.55, rough: 0.3, emissive: '#2a0a4a', ei: 0.4 }), 1.1, 0.28, 1.1, 0, -0.42, 0);
+        box(g, glow('#c070ff', 0.9), 1.12, 0.05, 1.12, 0, -0.32, 0);
+        box(g, glow('#ff6ad8', 0.9), 1.12, 0.05, 1.12, 0, -0.52, 0);
+        const charm = new THREE.Group(); charm.position.set(0, -0.62, 0.66); g.add(charm);
+        const coreM = std('#ff4ad8', { emissive: '#ff4ad8', ei: 2.2 });
+        const core = box(charm, coreM, 0.22, 0.22, 0.22, 0, -0.3, 0, 0.6, 0.6, 0);
+        const frame = box(charm, std('#3a2a5a', { metal: 0.8, rough: 0.25 }), 0.3, 0.3, 0.06, 0, -0.3, -0.05, 0, 0, Math.PI / 4);
+        const shards = Array.from({ length: 5 }, (_, i) => box(charm, i % 2 ? std('#9a6aff', { emissive: '#7a3aff', ei: 1.1 }) : glow('#ff9aec', 1), 0.06, 0.12, 0.06, 0, 0, 0));
+        up.push(t => {
+            core.rotation.set(t * 1.2, t * 1.6, 0); coreM.emissiveIntensity = 1.6 + Math.sin(t * 4) * 0.8;
+            charm.position.y = -0.62 + Math.sin(t * 2) * 0.04; frame.rotation.z = Math.PI / 4 - t * 0.6;
+            shards.forEach((m, i) => { const a = t * 2 + i / 5 * Math.PI * 2; m.position.set(Math.cos(a) * 0.28, -0.3 + Math.sin(a * 2) * 0.05, Math.sin(a) * 0.28); m.rotation.set(t * 3, t * 2, 0); });
+        });
+    },
 };
 
 /* ---------- 장착 관리 ---------- */

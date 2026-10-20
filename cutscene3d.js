@@ -14,7 +14,7 @@
      hit2 : JXS만. 두 번째 클라이맥스. hit~hit2 동안은 각성 직전 단계
    ========================================================= */
 
-import { buildLocomotive } from './auraSignatures.js?v=56';
+import { buildLocomotive } from './auraSignatures.js?v=57';
 
 export function createCutscene(ctx) {
     const { THREE, scene, camera, dummy, floor, stars, kit, bloom, stageApi } = ctx;

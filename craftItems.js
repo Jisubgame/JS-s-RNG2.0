@@ -217,5 +217,19 @@ export const CRAFT_ITEMS = [
         name: "개척의 별 부적",
         desc: "시즌 1 PRO 패스 보상. 8롤마다 행운이 ×12배가 됩니다. 행운 +50%.",
         luckBonus: 0.5, speedBonus: 0, amuletMult: 12, amuletEvery: 8, req: {}
+    },
+
+    // 🌀 균열 던전 보스 드롭
+    {
+        id: "gear_riftbreaker", category: "gauntlet", gacha: "dungeon",
+        name: "균열파괴자의 건틀렛",
+        desc: "균열의 군주에게서 떨어진 주먹 조각. 행운 450%, 속도 20%. 던전 공격력 +60%, 체력 +30%.",
+        luckBonus: 4.5, speedBonus: 0.2, dngAtk: 0.6, dngHp: 0.3, req: {}
+    },
+    {
+        id: "amu_riftcore", category: "amulet", gacha: "dungeon", abil: "rift",
+        name: "균열의 핵 부적",
+        desc: "보스의 가슴에서 꺼낸 핵. 행운 +100%. 던전 공격력 ×1.5, 체력 ×1.4.",
+        luckBonus: 1, speedBonus: 0, riftAtk: 1.5, riftHp: 1.4, req: {}
     }
 ];

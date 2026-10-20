@@ -203,6 +203,119 @@ export const SIGNATURES = {
         });
     },
 
+    /* =================== 🌀 균열 던전 칭호 =================== */
+
+    /* 균열을 걷는 자 — 두건 달린 흑요석 망토, 주위에서 열렸다 닫히는 차원의 틈, 발자국마다 남는 균열 */
+    riftWalker({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, BOX, glowMat, square, rand } = kit;
+        stage.setSky('#08040f');
+        const owned = [];
+        const attach = (parent, obj) => { parent.add(obj); owned.push([parent, obj]); };
+        stage.onClear(() => owned.forEach(([p, o]) => p.remove(o)));
+        const box = (m, w, h, d, x, y, z, p = group) => { const b = new THREE.Mesh(BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
+        const obs = new THREE.MeshStandardMaterial({ color: 0x1b1428, roughness: 0.35, metalness: 0.45, emissive: 0x2a0a4a, emissiveIntensity: 0.4 });
+        const crack = glowMat(pick(0), 1);
+        // 두건
+        const hood = new THREE.Group(); hood.position.y = 0.1;
+        box(obs, 1.45, 0.25, 1.45, 0, 0.72, 0, hood); box(obs, 0.18, 1.3, 1.45, -0.72, 0.05, 0, hood); box(obs, 0.18, 1.3, 1.45, 0.72, 0.05, 0, hood); box(obs, 1.45, 1.3, 0.18, 0, 0.05, -0.72, hood);
+        box(crack, 1.0, 0.05, 0.05, 0, 0.6, 0.74, hood);
+        attach(dummy.head, hood);
+        // 망토 (조각조각 흩어지는 끝자락)
+        const cape = new THREE.Group(); cape.position.set(0, 0.95, -0.6);
+        const capeSegs = Array.from({ length: 6 }, (_, i) => box(obs, 2.1 - i * 0.12, 0.55, 0.08, 0, -i * 0.52, 0, cape));
+        attach(dummy.torso, cape);
+        // 가슴의 작은 핵
+        const coreM = new THREE.MeshStandardMaterial({ color: 0xff4ad8, emissive: 0xff4ad8, emissiveIntensity: 2 });
+        const core = new THREE.Mesh(BOX, coreM); core.scale.setScalar(0.32); core.position.set(0, 0.2, 0.55); core.rotation.z = Math.PI / 4;
+        attach(dummy.torso, core);
+        // 주위에서 열리고 닫히는 세로 틈 5개
+        const rifts = Array.from({ length: 5 }, (_, k) => {
+            const g = new THREE.Group(); group.add(g);
+            const bars = Array.from({ length: 14 }, (_, i) => { const t = i / 13; return { m: box(glowMat(i % 3 ? pick(0) : 0xffffff, 0.85), 1, 0.3, 0.06, 0, (t - 0.5) * 3.6, 0, g), w: Math.sin(t * Math.PI) }; });
+            return { g, bars, ph: k / 5, a: (k / 5) * Math.PI * 2 };
+        });
+        // 바닥 균열 발자국
+        const steps = Array.from({ length: 10 }, (_, i) => { const m = box(glowMat(pick(1), 0.9), 0.5, 0.04, 0.12, 0, 0.04, 0); return { m, ph: i / 10 }; });
+        // 떠다니는 흑요석 파편
+        const shards = Array.from({ length: 10 }, (_, i) => ({ m: box(i % 2 ? obs : glowMat(pick(1), 0.9), 0.3, 0.3, 0.3, 0, 0, 0), a: i / 10 * Math.PI * 2, r: rand(2.2, 3), y: rand(1, 5.5) }));
+        const ring = square(4.6, 0.1, glowMat(pick(0), 0.6)); ring.position.y = 0.05; group.add(ring);
+        sig.slash = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            capeSegs.forEach((b, i) => { b.rotation.x = 0.12 + Math.sin(t * 2.4 - i * 0.7) * 0.07 * i; b.position.z = -i * 0.1; b.scale.x = (2.1 - i * 0.12) * (i > 3 ? 0.8 + 0.2 * Math.sin(t * 6 + i) : 1); });
+            coreM.emissiveIntensity = 1.6 + Math.sin(t * 4) * 0.6;
+            rifts.forEach(r => {
+                const k = (t * 0.25 + r.ph) % 1, open = k < 0.5 ? Math.sin(k / 0.5 * Math.PI) : 0;
+                r.g.position.set(Math.cos(r.a + t * 0.1) * 3.4, 3 + lift, Math.sin(r.a + t * 0.1) * 2 - 0.6);
+                r.g.rotation.y = -r.a;
+                r.bars.forEach((b, i) => { b.m.scale.x = Math.max(0.01, b.w * 0.9 * open * (0.8 + 0.2 * Math.sin(t * 12 + i))); });
+            });
+            steps.forEach(s => { const k = (t * 0.35 + s.ph) % 1; s.m.position.set(-3 + k * 6, 0.04, Math.sin(k * 9) * 0.5 + 0.8); s.m.material.opacity = Math.sin(k * Math.PI) * 0.9; s.m.rotation.y = Math.sin(k * 9) * 0.6; });
+            shards.forEach((s, i) => { const a = s.a + t * 0.5; s.m.position.set(Math.cos(a) * s.r, s.y + lift + Math.sin(t * 1.3 + i) * 0.3, Math.sin(a) * s.r); s.m.rotation.set(t * 2 + i, t * 1.5, 0); });
+            ring.rotation.y = t * 0.3;
+            const c = (t % 3.5) / 3.5; sig.slash = c > 0.75 ? Math.sin((c - 0.75) / 0.25 * Math.PI) : 0;
+        });
+    },
+
+    /* 균열의 지배자 — 흑요석 갑옷과 수정 왕관, 몸 주위에 떠 있는 거대한 두 주먹, 등 뒤에 열린 거대한 차원 균열 */
+    riftLord({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, BOX, glowMat, square, rand } = kit;
+        stage.setSky('#0a0414');
+        const owned = [];
+        const attach = (parent, obj) => { parent.add(obj); owned.push([parent, obj]); };
+        stage.onClear(() => owned.forEach(([p, o]) => p.remove(o)));
+        const box = (m, w, h, d, x, y, z, p = group) => { const b = new THREE.Mesh(BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
+        const obs = new THREE.MeshStandardMaterial({ color: 0x1b1428, roughness: 0.3, metalness: 0.55, emissive: 0x2a0a4a, emissiveIntensity: 0.4 });
+        const obs2 = new THREE.MeshStandardMaterial({ color: 0x261b38, roughness: 0.35, metalness: 0.5, emissive: 0x1a0630, emissiveIntensity: 0.35 });
+        const crystal = new THREE.MeshStandardMaterial({ color: 0x9a6aff, emissive: 0x7a3aff, emissiveIntensity: 1.2, roughness: 0.15 });
+        const crack = glowMat(pick(0), 1);
+        // 갑옷
+        const armor = new THREE.Group();
+        box(obs, 2.18, 2.16, 1.18, 0, 0, 0, armor);
+        for (const s of [-1, 1]) { box(obs2, 1.0, 0.6, 1.4, s * 1.3, 0.9, 0, armor); box(crystal, 0.18, 0.8, 0.18, s * 1.55, 1.45, 0, armor).rotation.z = -s * 0.4; }
+        [[-0.6, 0.35, 0.5], [0.55, -0.3, -0.6], [-0.3, -0.55, 0.9]].forEach(([x, y, rz]) => box(crack, 0.06, 0.7, 0.04, x, y, 0.6, armor).rotation.z = rz);
+        const coreM = new THREE.MeshStandardMaterial({ color: 0xff4ad8, emissive: 0xff4ad8, emissiveIntensity: 2.4 });
+        const core = box(coreM, 0.5, 0.5, 0.1, 0, 0.15, 0.62, armor); core.rotation.z = Math.PI / 4;
+        attach(dummy.torso, armor);
+        // 수정 왕관 (머리 위에 떠서 돎)
+        const crown = new THREE.Group(); group.add(crown);
+        const crs = Array.from({ length: 7 }, (_, i) => { const a = i / 7 * Math.PI * 2, h = i % 2 ? 0.5 : 0.9; const c = box(crystal, 0.16, h, 0.16, Math.cos(a) * 0.75, h / 2, Math.sin(a) * 0.75, crown); return c; });
+        const cr = square(1.6, 0.06, glowMat(pick(1), 0.8)); crown.add(cr);
+        // 떠 있는 두 주먹
+        const fists = [-1, 1].map(s => {
+            const g = new THREE.Group(); group.add(g);
+            box(obs, 1.1, 1.05, 1.1, 0, 0, 0, g); box(obs2, 1.2, 0.3, 1.2, 0, -0.4, 0, g);
+            for (let i = 0; i < 4; i++) box(obs2, 0.22, 0.22, 0.2, (i - 1.5) * 0.26, 0.22, 0.6, g);
+            box(glowMat(pick(0), 0.9), 1.22, 0.07, 1.22, 0, -0.18, 0, g);
+            return { g, s };
+        });
+        // 등 뒤의 거대한 균열
+        const rift = new THREE.Group(); rift.position.set(0, 5, -3.6); rift.userData.noFit = true; group.add(rift);
+        const bars = Array.from({ length: 30 }, (_, i) => {
+            const k = i / 29, w = Math.pow(Math.sin(k * Math.PI), 0.8) * 2.4;
+            return { a: box(glowMat(0xffffff, 0.9), 1, 0.36, 0.06, Math.sin(i * 0.9) * 0.2, (k - 0.5) * 10, 0.05, rift), b: box(glowMat(pick(1), 0.55), 1, 0.34, 0.06, Math.sin(i * 0.9) * 0.2, (k - 0.5) * 10, 0, rift), c: box(glowMat(pick(0), 0.35), 1, 0.32, 0.06, Math.sin(i * 0.9) * 0.2, (k - 0.5) * 10, -0.05, rift), w, ph: i * 0.4 };
+        });
+        // 바닥 결계
+        const runes = [square(5.4, 0.12, glowMat(pick(0), 0.7)), square(3.8, 0.08, glowMat(pick(1), 0.6))];
+        runes.forEach((r, i) => { r.position.y = 0.05 + i * 0.01; if (i) r.rotation.y = Math.PI / 4; group.add(r); });
+        const motes = Array.from({ length: 18 }, () => ({ m: box(glowMat(pick(Math.random() < 0.5 ? 0 : 1), 1), 0.14, 0.14, 0.14, 0, 0, 0), p: Math.random(), x: rand(-3, 3), z: rand(-2, 1.5) }));
+        sig.command = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            coreM.emissiveIntensity = 2 + Math.sin(t * 3) * 0.8;
+            crown.position.set(0, 6.1 + lift + Math.sin(t * 2) * 0.08, 0); crown.rotation.y = t * 0.6;
+            const c = (t % 5) / 5, cmd = c > 0.7 ? Math.sin((c - 0.7) / 0.3 * Math.PI) : 0;
+            sig.command = cmd;
+            fists.forEach(({ g, s }, i) => {
+                g.position.set(s * (2.9 - cmd * 0.6), 3.2 + lift + Math.sin(t * 1.6 + i * 2) * 0.25 + cmd * 1.2, 0.5 + cmd * 1.4);
+                g.rotation.set(-cmd * 0.5, Math.sin(t + i) * 0.2, s * 0.1);
+            });
+            bars.forEach((b, i) => { const f = 0.8 + 0.2 * Math.sin(t * 6 + b.ph) + cmd * 0.3; b.a.scale.x = Math.max(0.04, b.w * 0.25 * f); b.b.scale.x = b.w * 0.6 * f; b.c.scale.x = b.w * f; });
+            runes[0].rotation.y = t * 0.2; runes[1].rotation.y = Math.PI / 4 - t * 0.3;
+            motes.forEach(o => { const k = (t * 0.3 + o.p) % 1; o.m.position.set(o.x * (1 - k * 0.6), k * 7, o.z); o.m.scale.setScalar(0.14 * Math.sin(k * Math.PI)); });
+        });
+    },
+
     /* =================== 🎫 시즌 패스 칭호 =================== */
 
     /* 시즌1 개척자 — 등에 멘 배낭과 깃발, 발밑에 펼쳐지는 지도, 주위를 도는 나침반 */

@@ -1,8 +1,9 @@
-import { AURA_DATA } from './auras.js?v=56';
-import { CRAFT_ITEMS } from './craftItems.js?v=56';
-import { createMusicPlayer, coverArt } from './music.js?v=56';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=56';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=56';
+import { AURA_DATA } from './auras.js?v=57';
+import { CRAFT_ITEMS } from './craftItems.js?v=57';
+import { createMusicPlayer, coverArt } from './music.js?v=57';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=57';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=57';
+import { createDungeon, auraSkill } from './dungeon.js?v=57';
 
 /* =========================================================
    📦 게임 데이터
@@ -170,6 +171,39 @@ const CRAFT_BY_ID = Object.fromEntries(CRAFT_ITEMS.map(i => [i.id, i]));
 const $ = id => document.getElementById(id);
 const fmt = n => Number(n || 0).toLocaleString();
 const gradeCol = g => `col-${g.toLowerCase()}`;
+
+/* ---------- 🌀 균열 던전 (dungeon.js) ---------- */
+const dungeon = createDungeon({
+    gs: () => gameState,
+    aura: id => AURA_BY_ID[id], auras: AURA_DATA,
+    fmt: v => fmt(v), esc: v => escapeHtml(v), gradeCol: g => gradeCol(g),
+    toast: (m, t) => toast(m, t), ask: o => ask(o),
+    save: () => saveGame(), renderStats: () => renderStats(),
+    gear: () => getGear(), amu: () => amu(), pet: () => getPetBonus(),
+    passAddXp: n => passAddXp(n), addItems: it => addItems(it),
+    addEgg: id => { const eg = petState().eggs; eg[id] = (eg[id] || 0) + 1; updatePetDot(); },
+    grantAura: id => grantReward({ aura: id }),
+    grantGear: id => {
+        if (!gameState.craftedGears.includes(id)) { gameState.craftedGears.push(id); return '새 장비!'; }
+        const lv = gearLv(id);
+        if (lv < GEAR_LV_MAX) { gameState.gearLv = gameState.gearLv || {}; gameState.gearLv[id] = lv + 1; applyGear(); return `강화 +${lv} → +${lv + 1}`; }
+        gameState.jc += 500000; return '최대 강화라 500,000 JC';
+    },
+    broadcastAura: id => broadcastRare(AURA_BY_ID[id]),
+    rewardChips: r => rewardChips(r),
+    itemName: id => SHOP_BY_ID[id]?.name || id, eggName: id => EGG_BY_ID[id]?.name || id, gearName: id => CRAFT_BY_ID[id]?.name || id,
+    dailyTrack: k => dailyTrack(k),
+    me: () => ({ uid: window.__DNG_UID || session?.uid || CLIENT_ID, nick: window.__DNG_NICK || session?.nick || '게스트' }),
+    today: () => todayKey(),
+    SB_URL: 'https://vccpgfalbvanmwitkoqy.supabase.co', get SB_KEY() { return SB_KEY; },
+    openSheet: id => openSheet(id), closeSheet: id => closeSheet(id),
+    setTakeover: v => stage3d?.setTakeover?.(v),
+    setBusy: v => {
+        if (v && isAutoRolling) { isAutoRolling = false; autoWorker.postMessage({ command: 'stop' }); renderRollToggles(); }
+        stage3d?.setLowPower(false);
+    }
+});
+dungeon.bind();
 
 // 칭호 색 3개 (아우라 색 그대로)
 function auraColors(aura) {
@@ -515,6 +549,7 @@ function abilText(g) {
     if (g.abil === 'twin') return `${Math.round(g.twinChance * 100)}% 확률로 칭호 하나 더`;
     if (g.abil === 'sell') return `판매가 +${Math.round((g.sellMult - 1) * 100)}% · 신전 수입 +${Math.round((g.showMult - 1) * 100)}%`;
     if (g.abil === 'hatch') return `부화 시간 -${Math.round(g.hatchCut * 100)}% · 펫 효과 +${Math.round((g.petMult - 1) * 100)}%`;
+    if (g.abil === 'rift') return `던전 공격력 ×${g.riftAtk} · 체력 ×${g.riftHp}`;
     if (g.abil === 'brew') return `배수 물약 ${Math.round(g.brewSave * 100)}% 확률로 안 닳음 · 시간 물약 ×${g.brewTime}`;
     return '';
 }
@@ -613,7 +648,8 @@ const DAILY_POOL = [
         { key: 'rolls', need: 2000, label: n => `롤 ${fmt(n)}번 하기` },
         { key: 'epic', need: 6, label: n => `EPIC 이상 ${n}개 뽑기` },
         { key: 'gacha', need: 3, label: n => `행운 뽑기 ${n}번 하기` },
-        { key: 'hatch', need: 1, label: n => `알 ${n}개 부화시키기` }
+        { key: 'hatch', need: 1, label: n => `알 ${n}개 부화시키기` },
+        { key: 'dungeon', need: 1, label: n => `균열 던전 ${n}번 클리어` }
     ],
     [   // 어려움
         { key: 'rolls', need: 5000, label: n => `롤 ${fmt(n)}번 하기` },
@@ -627,7 +663,7 @@ const DAILY_TIER = [
     { name: '보통', color: 'var(--gold)', xp: 3000, jc: 50000 },
     { name: '어려움', color: '#ff5a8a', xp: 5000, jc: 120000 }
 ];
-const DAILY_BONUS = { xp: 1500, tickets: 1 };
+const DAILY_BONUS = { xp: 1500, tickets: 1, dtk: 1 };
 function dailyMissions() {
     const day = todayKey();
     let h = 0; for (const c of day) h = (h * 31 + c.charCodeAt(0)) >>> 0;
@@ -682,7 +718,7 @@ function dailyHtml() {
             <div class="dm-tier">보너스</div>
             <div class="dm-main">
                 <div class="dm-label">오늘 미션 3개 모두 완료</div>
-                <div class="dm-num">${st.c.length} / 3 <span class="dm-rw">🎫 ${fmt(DAILY_BONUS.xp)} XP · <i class="ticket-ico"></i> 뽑기권 ${DAILY_BONUS.tickets}장</span></div>
+                <div class="dm-num">${st.c.length} / 3 <span class="dm-rw">🎫 ${fmt(DAILY_BONUS.xp)} XP · <i class="ticket-ico"></i> 뽑기권 ${DAILY_BONUS.tickets}장 · 🎟 던전 티켓 ${DAILY_BONUS.dtk}장</span></div>
             </div>
             ${st.bonus ? '<span class="dm-ok">✓</span>' : `<button class="btn btn-sm ${allDone ? 'btn-green q-claim' : ''}" data-dailybonus ${allDone ? '' : 'disabled'}>받기</button>`}
         </div>
@@ -704,7 +740,8 @@ function claimDailyBonus() {
     st.bonus = true;
     passAddXp(DAILY_BONUS.xp);
     gameState.tickets = (gameState.tickets || 0) + DAILY_BONUS.tickets;
-    toast(`📅 오늘 미션 올클리어!\n🎫 ${fmt(DAILY_BONUS.xp)} XP + 뽑기권 ${DAILY_BONUS.tickets}장`, 'gold');
+    dungeon.ticketAdd(DAILY_BONUS.dtk);
+    toast(`📅 오늘 미션 올클리어!\n🎫 ${fmt(DAILY_BONUS.xp)} XP + 뽑기권 ${DAILY_BONUS.tickets}장 + 던전 티켓 ${DAILY_BONUS.dtk}장`, 'gold');
     saveGame(); renderStats(); renderQuests(); updateDailyDot();
 }
 
@@ -717,7 +754,7 @@ function trackQuestProgress(type, amount = 1) {
 }
 
 function startRoll() {
-    if (isRolling) return;
+    if (isRolling || dungeon.busy()) return;
     isRolling = true;
     ui.rollBtn.disabled = true;
     ui.rollBtn.classList.remove('cooldown-active');
@@ -769,7 +806,7 @@ function pickAura() {
     // 바이옴과 어울리는 칭호는 확률 ×boost (N을 boost로 나눈 것과 같음)
     const biome = getBiome();
     // 바이옴 전용 칭호(a.biome)는 그 바이옴일 때만 나옴
-    const effIn = a => a.pass || (a.biome && a.biome !== biome?.id) ? Infinity : biome && biome.auras.includes(a.id) ? a.in / biome.boost : a.in;
+    const effIn = a => a.pass || a.dungeon || (a.biome && a.biome !== biome?.id) ? Infinity : biome && biome.auras.includes(a.id) ? a.in / biome.boost : a.in;
     if (multBonus > 0) {
         const pool = AURA_DATA.filter(a => effIn(a) > totalLuck && isFinite(effIn(a)));
         const sum = pool.reduce((s, a) => s + totalLuck / effIn(a), 0);
@@ -1169,7 +1206,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=56').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=57').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -1206,14 +1243,17 @@ function renderCraft() {
         if (AMULET_MULT[gear.id]) chips.push(`<span class="chip amulet">10롤마다 행운 ×${AMULET_MULT[gear.id]}</span>`);
         if (gear.amuletMult) chips.push(`<span class="chip amulet">${gear.amuletEvery || 10}롤마다 행운 ×${gear.amuletMult}</span>`);
         if (gear.biomeBoost) chips.push(`<span class="chip biome">바이옴 ×${gear.biomeBoost} · 지속 ×${gear.biomeTime}</span>`);
-        if (gear.gacha) chips.push(`<span class="chip gacha">${gear.gacha === 'halloween' ? '🎃 할로윈 한정' : gear.gacha === 'pass' ? '🎫 시즌 패스 PRO' : '뽑기 전용'}</span>`);
+        if (gear.gacha) chips.push(`<span class="chip gacha">${gear.gacha === 'halloween' ? '🎃 할로윈 한정' : gear.gacha === 'pass' ? '🎫 시즌 패스 PRO' : gear.gacha === 'dungeon' ? '🌀 던전 드롭' : '뽑기 전용'}</span>`);
         if (gear.jcBonus) chips.push(`<span class="chip amulet">롤마다 판매가 ${Math.round(gear.jcBonus * 100)}% JC (최대 ${fmt(gear.jcBonusMax)})</span>`);
         if (gear.abil) chips.push(`<span class="chip abil">✦ ${abilText(gear)}</span>`);
+        if (gear.dngAtk) chips.push(`<span class="chip abil">🌀 던전 공격력 +${Math.round(gear.dngAtk * 100)}% · 체력 +${Math.round((gear.dngHp || 0) * 100)}%</span>`);
         const state = equipped ? '<span class="cstate on">장착 중</span>' : owned ? '<span class="cstate owned">보유</span>' : gear.gacha ? '<span class="cstate">미보유</span>' : `<span class="cstate">${metN}/${reqN}</span>`;
         const btn = owned
             ? `<button class="btn btn-block" data-gotobag="${gear.category}">가방에서 ${equipped ? '해제' : '장착'}</button>`
             : gear.gacha === 'pass'
                 ? `<button class="btn btn-block" data-gotopass>시즌 패스 PRO 15레벨 보상</button>`
+            : gear.gacha === 'dungeon'
+                ? `<button class="btn btn-block" data-gotodng>균열 던전에서 얻기</button>`
             : gear.gacha
                     ? (gear.gacha === 'halloween' && !isHalloween()
                         ? `<button class="btn btn-block" disabled>할로윈 이벤트 종료</button>`
@@ -1422,10 +1462,11 @@ bindTabs('index-tabs', tab => {
 });
 
 // 한정 칭호: 바이옴 전용 또는 시즌 패스 보상 (일반 롤로는 안 나옴)
-const isLimitedAura = a => !!(a.biome || a.pass);
-const limitedKey = a => a.pass ? 'pass:' + a.pass : 'biome:' + a.biome;
+const isLimitedAura = a => !!(a.biome || a.pass || a.dungeon);
+const limitedKey = a => a.pass ? 'pass:' + a.pass : a.dungeon ? 'dungeon:rift' : 'biome:' + a.biome;
 function limitedTitle(k) {
     const [t, id] = k.split(':');
+    if (t === 'dungeon') return '🌀 균열 던전 보스 드롭';
     if (t === 'pass') return `🎫 시즌 패스 ${id === 'pro' ? 'PRO' : 'BASIC'} 보상`;
     const b = BIOME_BY_ID[id];
     return b ? `${b.icon} ${b.name} 바이옴 전용` : id;
@@ -1433,6 +1474,7 @@ function limitedTitle(k) {
 // 바이옴 전용 칭호 표시
 function biomeTag(a) {
     if (a.pass) return `<span class="biome-tag" style="--bc:#b9a8ff">🎫 패스 ${a.pass === 'pro' ? 'PRO' : 'BASIC'} 보상</span>`;
+    if (a.dungeon) return `<span class="biome-tag" style="--bc:#ff6ad8">🌀 던전 드롭</span>`;
     const b = a.biome && BIOME_BY_ID[a.biome];
     return b ? `<span class="biome-tag" style="--bc:${b.color}">${b.icon} ${b.name} 전용</span>` : '';
 }
@@ -1505,7 +1547,8 @@ const SHEET_RENDER = {
     'sheet-show': () => renderShowcase(),
     'sheet-pass': () => renderPass(),
     'sheet-bm': () => renderBM(),
-    'sheet-pet': () => renderPets()
+    'sheet-pet': () => renderPets(),
+    'sheet-dungeon': () => dungeon.onOpen()
 };
 
 function stagger(el) {
@@ -1539,6 +1582,7 @@ function closeSheet(id) {
     const el = $(id);
     if (el.classList.contains('hidden')) return;
     if (id === 'sheet-craft' || id === 'sheet-shop' || id === 'sheet-bag') gearPreviews?.stop();
+    if (id === 'sheet-dungeon') dungeon.onClose();
     el.classList.add('closing');
     document.querySelectorAll(`[data-sheet="${id}"]`).forEach(b => b.classList.remove('open'));
     setTimeout(() => {
@@ -1711,7 +1755,7 @@ function openAuraDialog(id) {
         <div class="ad-grade ${gradeCol(a.grade)}">${a.grade}</div>
         <div class="ad-name">${auraNameHtml(a)}</div>
         ${a.line ? `<div class="ad-line">${a.line}</div>` : ''}
-    </div>`;
+    </div>${(sk => sk ? `<div class="ad-skill" style="--sc:#${sk.color.toString(16).padStart(6, '0')}"><b>🌀 던전 스킬 · ${sk.icon} ${sk.name}</b><small>${sk.desc(sk.g, sk.tier)} · 재사용 ${sk.cd}초</small></div>` : '')(auraSkill(a))}`;
     $('ad-odds').textContent = `1 in ${fmt(a.in)}`;
     $('ad-have').textContent = `×${fmt(gameState.inventory[id])}`;
     $('ad-value').textContent = `${fmt(a.jcValue)} JC`;
@@ -1859,6 +1903,9 @@ ui.craftGrid.addEventListener('click', e => {
         return;
     } else if (d.gotogacha) {
         closeSheet('sheet-craft'); openSheet('sheet-shop'); setShopTab(d.gotogacha);
+        return;
+    } else if ('gotodng' in d) {
+        closeSheet('sheet-craft'); openSheet('sheet-dungeon');
         return;
     } else if ('gotopass' in d) {
         closeSheet('sheet-craft'); openSheet('sheet-pass');
@@ -3218,6 +3265,7 @@ $('avatar-file').addEventListener('change', async e => {
     } catch (err) { toast('사진을 못 올렸어요', 'bad'); }
 });
 $('profile-btn').addEventListener('click', () => openSheet('sheet-profile'));
+$('rank-btn').addEventListener('click', () => { profTab = 'rank'; openSheet('sheet-profile'); });
 renderProfileBtn();
 if (session) setTimeout(() => cloudUpload(true), 8000);   // 켜고 조금 뒤 한 번 맞춰 둠
 
@@ -3955,7 +4003,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=56')
+import('./aura3d.js?v=57')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {
