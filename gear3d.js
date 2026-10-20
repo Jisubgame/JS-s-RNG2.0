@@ -547,6 +547,23 @@ const AMULETS = {
             });
         });
     },
+    // 🎫 개척의 별 부적: 남색 띠 + 금사슬 끝에 도는 금빛 팔각 별, 둘레에 작은 궤도 고리
+    pass_amulet(g, up, side) {
+        const band = std('#1f3a7a', { rough: 0.6 });
+        const gold = std('#ffcf4a', { metal: 0.9, rough: 0.2, emissive: '#7a5000', ei: 0.4 });
+        box(g, band, 1.1, 0.26, 1.1, 0, -0.42, 0);
+        box(g, gold, 1.12, 0.05, 1.12, 0, -0.3, 0); box(g, gold, 1.12, 0.05, 1.12, 0, -0.54, 0);
+        const charm = new THREE.Group(); charm.position.set(0, -0.56, 0.6);
+        for (let i = 0; i < 4; i++) box(charm, gold, 0.05, 0.05, 0.05, 0, -i * 0.07, 0);
+        const star = new THREE.Group(); star.position.y = -0.5; charm.add(star);
+        const core = std('#fff3c0', { emissive: '#ffd23a', ei: 1.2, metal: 0.4, rough: 0.2 });
+        box(star, core, 0.2, 0.2, 0.08, 0, 0, 0); box(star, core, 0.2, 0.2, 0.08, 0, 0, 0, 0, 0, Math.PI / 4);
+        for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; box(star, gold, 0.06, 0.12, 0.05, Math.cos(a) * 0.17, Math.sin(a) * 0.17, 0, 0, 0, a - Math.PI / 2); }
+        const ring = new THREE.Group(); ring.position.y = -0.5; charm.add(ring);
+        for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; box(ring, glow('#7ad0ff', 0.9), 0.03, 0.03, 0.03, Math.cos(a) * 0.3, 0, Math.sin(a) * 0.3); }
+        g.add(charm);
+        up.push(t => { star.rotation.z = t * 1.4; ring.rotation.set(0.6, t * 2, 0.3); charm.rotation.z = Math.sin(t * 1.5) * 0.12; });
+    },
     // 🍀 네잎클로버: 초록 띠 + 금사슬에 매달린 클로버가 빙글빙글
     gacha_clover(g, up, side) {
         const band = std('#1f6b3a', { rough: 0.7 });

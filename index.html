@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Orbit&display=swap" rel="stylesheet">
     <!-- 업데이트할 때: 아래 ?v= 숫자 3곳과 version.json 숫자를 똑같이 올리기 -->
-    <link rel="stylesheet" href="style.css?v=45">
-    <link rel="stylesheet" href="rarity.css?v=45">
+    <link rel="stylesheet" href="style.css?v=46">
+    <link rel="stylesheet" href="rarity.css?v=46">
     <script type="importmap">{ "imports": { "three": "./lib/three.module.js" } }</script>
 </head>
 <body>
@@ -124,13 +124,14 @@
         <div id="active-buffs" class="buffs"></div>
 
         <section class="controls">
-            <button id="roll-btn">
+            <div class="roll-wrap"><button id="roll-btn">
                 <div class="roll-btn-content">
                     <span id="btn-main-text">ROLL</span>
                     <span id="btn-sub-text" class="hidden">0 / 10</span>
                 </div>
                 <div id="cooldown-bar"></div>
-            </button>
+                <i class="rb-corner tl"></i><i class="rb-corner tr"></i><i class="rb-corner bl"></i><i class="rb-corner br"></i>
+            </button></div>
             <div class="toggles">
                 <button id="auto-roll-btn" class="toggle">AUTO</button>
                 <button id="quick-roll-btn" class="toggle" disabled>QUICK</button>
@@ -536,6 +537,6 @@
 
     <div id="toast-wrap"></div>
 
-    <script type="module" src="script.js?v=45"></script>
+    <script type="module" src="script.js?v=46"></script>
 </body>
 </html>

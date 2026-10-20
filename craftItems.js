@@ -144,5 +144,11 @@ export const CRAFT_ITEMS = [
         name: "개척자의 건틀렛",
         desc: "시즌 1 PRO 패스 보상. 영구적으로 행운 500%, 속도 15%가 증가합니다.",
         luckBonus: 5, speedBonus: 0.15, req: {}
+    },
+    {
+        id: "pass_amulet", category: "amulet", gacha: "pass",
+        name: "개척의 별 부적",
+        desc: "시즌 1 PRO 패스 보상. 8롤마다 행운이 ×12배가 됩니다. 행운 +50%.",
+        luckBonus: 0.5, speedBonus: 0, amuletMult: 12, amuletEvery: 8, req: {}
     }
 ];

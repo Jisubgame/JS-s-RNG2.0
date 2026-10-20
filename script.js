@@ -1,8 +1,8 @@
-import { AURA_DATA } from './auras.js?v=45';
-import { CRAFT_ITEMS } from './craftItems.js?v=45';
-import { createMusicPlayer, coverArt } from './music.js?v=45';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=45';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=45';
+import { AURA_DATA } from './auras.js?v=46';
+import { CRAFT_ITEMS } from './craftItems.js?v=46';
+import { createMusicPlayer, coverArt } from './music.js?v=46';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=46';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=46';
 
 /* =========================================================
    📦 게임 데이터
@@ -34,6 +34,9 @@ const SHOP_ITEMS = [
     { id: "overcome_potion", name: "극복의 물약", price: 250000, type: "luck_mult", value: 60000, maxUses: 2, desc: "×60,000 행운 (2회)", frame: "MYTHIC", color: "#00e5ff", color2: "#6a5cff" },
     { id: "heaven_potion", name: "천상의 물약", price: 400000, type: "luck_mult", value: 180000, maxUses: 1, desc: "×180,000 행운 (1회)", frame: "ANCIENT", color: "#ffe39a" },
     { id: "void_potion", name: "공허의 물약", price: 2000000, type: "luck_mult", value: 850000, maxUses: 1, desc: "×850,000 행운 (1회)", frame: "JXS", unique: "voidpotion", color: "#b026ff", color2: "#ff2d55" },
+    // 🌌 최상급 물약 (상점에선 안 팜 · 뽑기 아주 낮은 확률 / 암시장 / 시즌 패스로만)
+    { id: "nebula_potion", gacha: "special", name: "성운 응축액", type: "luck_mult", value: 3000000, maxUses: 1, desc: "×3,000,000 행운 (1회) · 별이 태어나는 성운을 한 방울로 압축", frame: "JXS", color: "#5ab0ff", color2: "#ff6fd8" },
+    { id: "genesis_potion", gacha: "special", name: "창세의 물약", type: "luck_mult", value: 15000000, maxUses: 1, desc: "×15,000,000 행운 (1회) · 세상이 처음 만들어지던 순간의 빛", frame: "JXS", unique: "voidpotion", color: "#fff3c0", color2: "#7dff9a" },
     // 🎰 상점 뽑기 전용 (상점에서 안 팔고 뽑기에서만 나옴)
     { id: "dice_potion", gacha: true, name: "주사위 물약", type: "dice", faces: [1200, 6000, 24000, 60000, 150000, 360000], desc: "주사위를 굴려 ×1,200 ~ ×360,000 행운 (1회)", frame: "EPIC", color: "#ff3b5c", color2: "#ffffff" },
     { id: "star_potion", gacha: true, name: "별빛 물약", type: "luck", level: 4, value: 3, duration: 180, desc: "+300% 행운 (3분)", frame: "LEGEND", color: "#d7b8ff", color2: "#7ae8ff" },
@@ -67,7 +70,8 @@ const GACHA_POOL = [
     { kind: 'gear', id: 'gacha_jackpot', w: 3.5, tier: 'MYTHIC', dupe: 300000 },
     { kind: 'items', items: { heaven_potion: 1 }, w: 2.5, tier: 'MYTHIC' },
     { kind: 'gear', id: 'gacha_cat', w: 1, tier: 'ANCIENT', dupe: 800000 },
-    { kind: 'gear', id: 'gacha_comet', w: 0.5, tier: 'ABSOLUTE', dupe: 1500000 }
+    { kind: 'gear', id: 'gacha_comet', w: 0.5, tier: 'ABSOLUTE', dupe: 1500000 },
+    { kind: 'items', items: { nebula_potion: 1 }, w: 0.15, tier: 'ABSOLUTE' }
 ];
 
 /* 🎃 할로윈 한정 뽑기 (이 날짜까지) */
@@ -138,7 +142,8 @@ const QUEST_TARGET_LABELS = {
 };
 
 const COUPONS = {
-    'JSRNG2.0': { jc: 500000, items: { limit_potion: 3, overcome_potion: 1, heaven_potion: 1 }, msg: "🪙 50만 JC + 🧪 한계의 물약 3개 + 극복의 물약 1개 + 천상의 물약 1개" }
+    'UPDATE2': { items: { void_potion: 1 }, msg: "🧪 공허의 물약 1개" },
+    'SEASONPASS': { jc: 1000000, items: { heaven_potion: 5 }, msg: "🪙 100만 JC + 🧪 천상의 물약 5개" }
 };
 
 const DEV_PASSWORD = "3699";
@@ -1025,7 +1030,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=45').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=46').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -1949,6 +1954,7 @@ function renderGacha() {
             <div class="gpity-note">${B.pity}번 안에 <b>새 장비</b>가 안 나오면 ${B.pity}번째에 아직 없는 장비 하나가 확정! (이미 있는 장비가 나오면 강화되고 천장은 그대로)</div>
             <div class="gpity-odds">${gears.map(e => `<span style="--c:${TIER_COL[e.tier]}"><i></i>${CRAFT_BY_ID[e.id].name.replace(/ (건틀렛|부적)$/, '')}<b>${pityPct(B, e)}</b></span>`).join('')}</div>
         </div>
+        ${!hw && (gameState.tickets || 0) > 0 ? `<button class="gbtn gbtn-ticket" data-ticket><i class="ticket-ico"></i><span>뽑기권으로 뽑기</span><b>${fmt(gameState.tickets)}장 남음</b></button>` : ''}
         <div class="gbtns">
             <button class="gbtn" data-pull="1" ${ended || gameState.jc < B.cost ? 'disabled' : ''}><span>1회 뽑기</span><b>${fmt(B.cost)} JC</b></button>
             <button class="gbtn gbtn-10" data-pull="10" ${ended || gameState.jc < B.cost10 ? 'disabled' : ''}><span>10회 뽑기</span><b>${fmt(B.cost10)} JC</b><em>10% 할인</em></button>
@@ -2043,13 +2049,18 @@ function gachaGrant(e) {
     return res;
 }
 
-function pullGacha(n) {
+function pullGacha(n, ticket = false) {
     const B = BANNERS[shopTab];
     if (!B) return;
     if (B.end && Date.now() >= B.end) { toast('이벤트가 끝났어요', 'bad'); renderGacha(); return; }
-    const cost = n === 10 ? B.cost10 : B.cost * n;
-    if (gameState.jc < cost) { toast('JC가 부족해요', 'bad'); return; }
-    gameState.jc -= cost;
+    if (ticket) {
+        if (B !== BANNERS.gacha || !(gameState.tickets > 0)) return;
+        gameState.tickets--;
+    } else {
+        const cost = n === 10 ? B.cost10 : B.cost * n;
+        if (gameState.jc < cost) { toast('JC가 부족해요', 'bad'); return; }
+        gameState.jc -= cost;
+    }
     const results = Array.from({ length: n }, () => gachaGrant(gachaPick(B)));
     trackQuestProgress("shopPurchases", n);
     saveGame(); renderStats();
@@ -2376,6 +2387,7 @@ $('sheet-pet').addEventListener('click', e => {
 $('gacha-panel').addEventListener('click', e => {
     const b = e.target.closest('[data-pull]');
     if (b) pullGacha(+b.dataset.pull);
+    if (e.target.closest('[data-ticket]')) pullGacha(1, true);
     const g = e.target.closest('[data-ggear]');
     if (g) openGearDetail(g.dataset.ggear);
     if (e.target.closest('[data-pityhelp]')) {
@@ -2982,6 +2994,7 @@ function rewardChips(r) {
     if (r.jc) out.push(`<span class="at-rw"><i class="coin"></i>${fmt(r.jc)}</span>`);
     for (const id in r.items || {}) out.push(`<span class="at-rw">${vialHtml(SHOP_BY_ID[id])}<small>${SHOP_BY_ID[id].name} ×${r.items[id]}</small></span>`);
     for (const id in r.eggs || {}) out.push(`<span class="at-rw">${eggHtml(EGG_BY_ID[id], 'at-egg')}<small>${EGG_BY_ID[id].name} ×${r.eggs[id]}</small></span>`);
+    if (r.tickets) out.push(`<span class="at-rw"><i class="ticket-ico"></i><small>뽑기권 ×${r.tickets}</small></span>`);
     return out.join('');
 }
 /* =========================================================
@@ -3080,23 +3093,48 @@ $('show-btn').addEventListener('click', () => { showPick = -1; openSheet('sheet-
    - 롤 1번 = 1 XP, 출석 = 50 XP. 레벨마다 BASIC·PRO 보상
    - PRO는 언제 사도 지난 레벨 보상까지 다 받을 수 있음
    ========================================================= */
-const SEASON = { id: 's1', name: '시즌 1 · 개척의 시대', end: new Date('2026-12-01T00:00:00+09:00').getTime(), xp: 500, pro: 10000000 };
-const PASS_BASIC = [
-    { jc: 10000 }, { items: { luck_3: 3 } }, { jc: 20000 }, { eggs: { egg_basic: 1 } }, { items: { limit_potion: 1 } },
-    { items: { speed_3: 3 } }, { jc: 40000 }, { items: { dice_potion: 1 } }, { eggs: { egg_basic: 2 } }, { eggs: { egg_rare: 1 }, big: true },
-    { jc: 60000 }, { items: { star_potion: 1 } }, { items: { limit_potion: 2 } }, { items: { warp_potion: 1 } }, { jc: 100000, big: true },
-    { eggs: { egg_rare: 1 } }, { items: { biome_potion: 1 } }, { items: { dice_potion: 2 } }, { jc: 120000 }, { items: { overcome_potion: 1 }, big: true },
-    { items: { star_potion: 2 } }, { eggs: { egg_rare: 1 } }, { jc: 150000 }, { items: { limit_potion: 3 } }, { eggs: { egg_legend: 1 }, big: true },
-    { jc: 200000 }, { items: { dice_potion: 2 } }, { items: { heaven_potion: 1 } }, { jc: 300000 }, { aura: 'pass_pioneer', big: true }
-];
-const PASS_PRO = [
-    { jc: 100000 }, { items: { limit_potion: 3 } }, { eggs: { egg_rare: 1 } }, { jc: 150000 }, { items: { heaven_potion: 1 }, big: true },
-    { items: { star_potion: 3 } }, { jc: 200000 }, { eggs: { egg_rare: 2 } }, { items: { overcome_potion: 2 } }, { eggs: { egg_legend: 1 }, big: true },
-    { jc: 250000 }, { items: { dice_potion: 3 } }, { items: { warp_potion: 3 } }, { jc: 300000 }, { gear: 'pass_gauntlet', big: true },
-    { items: { heaven_potion: 1 } }, { eggs: { egg_legend: 1 } }, { jc: 400000 }, { items: { overcome_potion: 2 } }, { eggs: { egg_mythic: 1 }, big: true },
-    { jc: 500000 }, { items: { void_potion: 1 } }, { items: { star_potion: 4 } }, { jc: 600000 }, { eggs: { egg_legend: 2 }, big: true },
-    { items: { heaven_potion: 2 } }, { jc: 800000 }, { items: { void_potion: 1 } }, { jc: 1000000 }, { aura: 'pass_goldking', big: true }
-];
+const SEASON = { id: 's1', name: '시즌 1 · 개척의 시대', end: new Date('2026-12-01T00:00:00+09:00').getTime(), xp: 700, pro: 10000000 };
+// 50레벨. 5레벨마다 조금 큰 보상, 10레벨마다 큰 보상
+const PASS_BASIC = Array.from({ length: 50 }, (_, i) => {
+    const lv = i + 1;
+    const SPECIAL = {
+        10: { eggs: { egg_rare: 1 }, tickets: 2, big: true },
+        20: { eggs: { egg_legend: 1 }, items: { overcome_potion: 1 }, big: true },
+        30: { aura: 'pass_pioneer', tickets: 3, big: true },
+        40: { items: { nebula_potion: 1 }, eggs: { egg_legend: 1 }, big: true },
+        50: { jc: 1500000, eggs: { egg_mythic: 1 }, tickets: 5, big: true }
+    };
+    if (SPECIAL[lv]) return SPECIAL[lv];
+    if (lv % 5 === 0) return { tickets: 1, jc: 40000 * lv / 5 };
+    const ROT = [
+        { jc: 20000 + lv * 4000 }, { items: { luck_3: 4 } }, { items: { limit_potion: 1 + (lv > 25 ? 1 : 0) } }, { eggs: { egg_basic: 1 } },
+        { items: { star_potion: 1 } }, { items: { dice_potion: 1 } }, { items: { speed_3: 4 } }, { eggs: { egg_rare: lv > 25 ? 1 : 0, egg_basic: lv > 25 ? 0 : 2 } }
+    ];
+    const r = ROT[i % ROT.length];
+    if (r.eggs) for (const k in r.eggs) if (!r.eggs[k]) delete r.eggs[k];
+    return r;
+});
+const PASS_PRO = Array.from({ length: 50 }, (_, i) => {
+    const lv = i + 1;
+    const SPECIAL = {
+        5: { items: { heaven_potion: 1 }, tickets: 2, big: true },
+        10: { eggs: { egg_legend: 1 }, tickets: 3, big: true },
+        15: { gear: 'pass_gauntlet', big: true },
+        20: { eggs: { egg_mythic: 1 }, jc: 500000, big: true },
+        25: { items: { void_potion: 1 }, tickets: 5, big: true },
+        30: { gear: 'pass_amulet', big: true },
+        35: { items: { nebula_potion: 1 }, jc: 800000, big: true },
+        40: { eggs: { egg_mythic: 2 }, tickets: 5, big: true },
+        45: { items: { nebula_potion: 2 }, big: true },
+        50: { aura: 'pass_goldking', items: { genesis_potion: 1 }, big: true }
+    };
+    if (SPECIAL[lv]) return SPECIAL[lv];
+    const ROT = [
+        { jc: 100000 + lv * 20000 }, { items: { overcome_potion: 1 } }, { tickets: 2 }, { items: { star_potion: 2 } },
+        { eggs: { egg_rare: 2 } }, { items: { heaven_potion: 1 } }, { items: { dice_potion: 2 } }, { eggs: { egg_legend: 1 } }, { items: { limit_potion: 4 } }
+    ];
+    return ROT[i % ROT.length];
+});
 const PASS_MAX = PASS_BASIC.length;
 function passState() {
     const g = gameState;
@@ -3125,12 +3163,13 @@ function updatePassDot() {
 function grantReward(r) {
     if (r.jc) gameState.jc += r.jc;
     if (r.items) addItems(r.items);
+    if (r.tickets) gameState.tickets = (gameState.tickets || 0) + r.tickets;
     if (r.eggs) { const eg = petState().eggs; for (const id in r.eggs) eg[id] = (eg[id] || 0) + r.eggs[id]; updatePetDot(); }
     if (r.gear && !gameState.craftedGears.includes(r.gear)) gameState.craftedGears.push(r.gear);
     if (r.aura) { gameState.inventory[r.aura] = (gameState.inventory[r.aura] || 0) + 1; if (!gameState.discoveredAuras.includes(r.aura)) gameState.discoveredAuras.push(r.aura); }
 }
 function rewardText(r) {
-    return [r.jc ? `${fmt(r.jc)} JC` : '', ...Object.entries(r.items || {}).map(([id, n]) => `${SHOP_BY_ID[id].name} ×${n}`), ...Object.entries(r.eggs || {}).map(([id, n]) => `${EGG_BY_ID[id].name} ×${n}`), r.gear ? CRAFT_BY_ID[r.gear].name : '', r.aura ? `칭호 「${AURA_BY_ID[r.aura].name}」` : ''].filter(Boolean).join(' · ');
+    return [r.jc ? `${fmt(r.jc)} JC` : '', r.tickets ? `뽑기권 ×${r.tickets}` : '', ...Object.entries(r.items || {}).map(([id, n]) => `${SHOP_BY_ID[id].name} ×${n}`), ...Object.entries(r.eggs || {}).map(([id, n]) => `${EGG_BY_ID[id].name} ×${n}`), r.gear ? CRAFT_BY_ID[r.gear].name : '', r.aura ? `칭호 「${AURA_BY_ID[r.aura].name}」` : ''].filter(Boolean).join(' · ');
 }
 function passCell(r, track, i, lv, st) {
     const got = (track === 'p' ? st.p : st.b).includes(i);
@@ -3153,6 +3192,7 @@ function renderPass() {
             <div class="ps-lv"><span>LV</span><b>${lv}</b><small>/ ${PASS_MAX}</small></div>
             <div class="ps-bar"><div style="width:${inLv / SEASON.xp * 100}%"></div></div>
             <div class="ps-xp">${lv >= PASS_MAX ? '최고 레벨!' : `${fmt(inLv)} / ${fmt(SEASON.xp)} XP · 롤 1번 = 1 XP · 출석 = 50 XP`}</div>
+            <div class="ps-tickets"><i class="ticket-ico"></i> 뽑기권 <b>${fmt(gameState.tickets || 0)}</b>장 <small>· 상점 행운 뽑기에서 써요</small></div>
         </div>
         <div class="ps-tracks-head"><span>LV</span><span class="b">BASIC <small>무료</small></span><span class="p">PRO ${st.pro ? '<small>보유 중</small>' : ''}</span></div>
         ${st.pro ? '' : `<button class="btn btn-block ps-buy" data-passbuy ${gameState.jc >= SEASON.pro ? '' : 'disabled'}>👑 PRO 패스 열기 · ${fmt(SEASON.pro)} JC<small>지난 레벨 PRO 보상도 전부 받을 수 있어요 · 전용 건틀렛·칭호</small></button>`}
@@ -3246,6 +3286,7 @@ const BM_POOL = [
     { kind: 'items', items: { warp_potion: 1 }, v: 60000 }, { kind: 'items', items: { biome_potion: 1 }, v: 120000 },
     { kind: 'egg', id: 'egg_basic', v: 40000 }, { kind: 'egg', id: 'egg_rare', v: 220000 }, { kind: 'egg', id: 'egg_legend', v: 1200000, rare: true },
     { kind: 'egg', id: 'egg_mythic', v: 5000000, rare: true },
+    { kind: 'items', items: { nebula_potion: 1 }, v: 7000000, rare: true }, { kind: 'items', items: { genesis_potion: 1 }, v: 35000000, rare: true },
     { kind: 'gear', id: 'gacha_clover', v: 600000, dupe: 60000 }, { kind: 'gear', id: 'gacha_dice', v: 700000, dupe: 80000 },
     { kind: 'gear', id: 'gacha_compass', v: 1500000, dupe: 150000, rare: true }, { kind: 'gear', id: 'gacha_jackpot', v: 2500000, dupe: 300000, rare: true }
 ];
@@ -3658,7 +3699,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=45')
+import('./aura3d.js?v=46')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {
