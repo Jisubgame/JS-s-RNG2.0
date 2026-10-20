@@ -2245,3 +2245,82 @@ img.yt { image-rendering: auto !important; }
 .yt-pip { left: 8px; bottom: auto; top: 306px; width: 136px; }
 .sheet-backdrop:not(.hidden) ~ .yt-pip, body:has(.sheet-backdrop:not(.hidden)) .yt-pip { top: 8px; left: auto; right: 8px; }
 .yt-login { display: block; text-align: center; text-decoration: none; margin-bottom: 8px; font-size: 12.5px; --ec: rgba(255, 210, 58, 0.5); border-color: rgba(255, 210, 58, 0.5); color: #ffd24a; }
+
+/* ---------- ✨ 합성의 제단 ---------- */
+.altar { --c: #b9a8ff; position: relative; padding: 0 0 12px; clip-path: var(--chamfer); --cut: 12px; --ec: rgba(242, 205, 92, 0.45);
+    background: var(--corners), radial-gradient(ellipse at 50% 55%, color-mix(in srgb, var(--c) 18%, transparent), transparent 65%), linear-gradient(180deg, #1a1630, #0a0814);
+    box-shadow: inset 0 0 0 1px rgba(242, 205, 92, 0.45), inset 0 0 30px rgba(0, 0, 0, 0.6); }
+.al-head { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 0 2px; font-family: var(--display); font-size: 14px; letter-spacing: 0.3em; color: #f2cd5c; text-shadow: 0 0 10px rgba(242, 205, 92, 0.6); }
+.al-head i { flex: 0 0 46px; height: 2px; background: linear-gradient(90deg, transparent, #f2cd5c); }
+.al-head i:last-child { transform: scaleX(-1); }
+.al-stage { position: relative; height: 210px; margin: 0 10px; }
+.al-ring { position: absolute; left: 50%; top: 62%; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+.al-ring.r1 { width: 190px; height: 190px; border: 1px dashed color-mix(in srgb, var(--c) 55%, transparent); animation: al-spin 18s linear infinite; }
+.al-ring.r2 { width: 140px; height: 140px; border: 2px solid transparent; background: conic-gradient(from 0deg, transparent 0 10%, color-mix(in srgb, var(--c) 60%, transparent) 10% 12%, transparent 12% 35%, #f2cd5c 35% 36%, transparent 36% 60%, color-mix(in srgb, var(--c) 60%, transparent) 60% 62%, transparent 62% 85%, #f2cd5c 85% 86%, transparent 86%) border-box; -webkit-mask: radial-gradient(circle, transparent 66px, #000 67px); mask: radial-gradient(circle, transparent 66px, #000 67px); animation: al-spin 9s linear infinite reverse; }
+@keyframes al-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+.al-slot { --c: #555; position: absolute; width: 76px; height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 4px;
+    clip-path: polygon(50% 0, 100% 22%, 100% 78%, 50% 100%, 0 78%, 0 22%);
+    background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--c) 35%, transparent), transparent 70%), linear-gradient(180deg, #24203e, #0d0b18); }
+.al-slot::before { content: ''; position: absolute; inset: 0; clip-path: inherit; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--c) 70%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--c) 70%, #fff) 0 2px, transparent 2px); opacity: 0.8; pointer-events: none; }
+.al-slot canvas { position: absolute; inset: 4px 2px 14px; width: calc(100% - 4px); height: calc(100% - 18px); }
+.al-slot .pet-star { position: relative; font-size: 9px; letter-spacing: 0; }
+.al-slot.empty span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; color: rgba(255, 255, 255, 0.2); }
+.al-slot.a { left: 8%; top: 2px; }
+.al-slot.b { right: 8%; top: 2px; }
+.al-slot.out { left: 50%; top: 92px; width: 100px; height: 112px; margin-left: -50px; animation: al-glow 2.4s ease-in-out infinite; }
+.al-slot.out em { position: absolute; top: 8px; font-style: normal; font-size: 9px; padding: 1px 6px; background: #f2cd5c; color: #1a1200; letter-spacing: 0.1em; }
+.altar:not(.ready) .al-slot.out { animation: none; }
+@keyframes al-glow { 50% { filter: brightness(1.25) drop-shadow(0 0 12px var(--c)); } }
+.al-plus { position: absolute; left: 50%; top: 34px; transform: translateX(-50%); font-size: 22px; color: #f2cd5c; text-shadow: 0 0 10px #f2cd5c; }
+.al-beam { position: absolute; top: 78px; width: 2px; height: 56px; background: linear-gradient(180deg, color-mix(in srgb, var(--c) 80%, #fff), transparent); opacity: 0.25; }
+.al-beam.l { left: 30%; transform: rotate(-38deg); transform-origin: top; }
+.al-beam.r { right: 30%; transform: rotate(38deg); transform-origin: top; }
+.altar.ready .al-beam { opacity: 0.8; animation: al-beam 1.4s ease-in-out infinite; }
+@keyframes al-beam { 50% { opacity: 0.3; } }
+.al-info { text-align: center; padding: 6px 12px 10px; }
+.al-info b { font-family: var(--display); font-weight: 400; font-size: 17px; }
+.al-cmp { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 4px; font-size: 11px; color: var(--muted); flex-wrap: wrap; }
+.al-cmp .up { color: var(--mint); font-weight: 700; }
+.al-cmp i { font-style: normal; color: #f2cd5c; }
+.al-go { margin: 0 12px; width: calc(100% - 24px); font-size: 15px; padding: 13px; }
+/* 합성 중: 양쪽 재료가 가운데로 빨려 들어가고 번쩍 */
+.altar.fusing .al-slot.a { animation: al-in-l 0.85s ease-in forwards; }
+.altar.fusing .al-slot.b { animation: al-in-r 0.85s ease-in forwards; }
+.altar.fusing .al-ring { animation-duration: 0.6s; }
+.altar.fusing .al-slot.out { animation: al-flash 0.9s ease-in forwards; }
+@keyframes al-in-l { to { transform: translate(90px, 110px) scale(0.2); opacity: 0; } }
+@keyframes al-in-r { to { transform: translate(-90px, 110px) scale(0.2); opacity: 0; } }
+@keyframes al-flash { 70% { filter: brightness(2.5) drop-shadow(0 0 30px #fff); transform: scale(1.15); } 100% { filter: brightness(3); } }
+.al-all { margin-left: auto; font: inherit; font-size: 10.5px; letter-spacing: 0; padding: 3px 8px; color: #f2cd5c; background: rgba(242, 205, 92, 0.1); border: 1px solid rgba(242, 205, 92, 0.4); cursor: pointer; }
+.glabel:has(.al-all) { display: flex; align-items: center; gap: 6px; }
+.al-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.al-card { --c: #888; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 0 2px 6px; font: inherit; color: var(--text); cursor: pointer;
+    clip-path: var(--chamfer); --cut: 6px; --ec: color-mix(in srgb, var(--c) 45%, transparent); background: var(--corners), #0e0c1a; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 45%, transparent); }
+.al-card.on { --ec: #f2cd5c; box-shadow: inset 0 0 0 2px #f2cd5c, inset 0 0 14px rgba(242, 205, 92, 0.25); }
+.al-card-view { position: relative; width: 100%; aspect-ratio: 1; }
+.al-card-view canvas { width: 100%; height: 100%; display: block; }
+.al-card-name { font-size: 10.5px; font-family: var(--display); line-height: 1.2; text-align: center; word-break: keep-all; }
+.al-card .pet-star { font-size: 8px; letter-spacing: 0; }
+
+/* ---------- 🪙 펫 상인 ---------- */
+.merchant { padding: 12px; clip-path: var(--chamfer); --cut: 10px; --ec: rgba(242, 205, 92, 0.4); background: var(--corners), linear-gradient(135deg, rgba(242, 205, 92, 0.12), rgba(12, 11, 28, 0.9)); box-shadow: inset 0 0 0 1px rgba(242, 205, 92, 0.4); display: flex; flex-direction: column; gap: 10px; }
+.mc-head { display: flex; align-items: center; gap: 10px; }
+.mc-icon { font-size: 30px; filter: drop-shadow(0 0 8px rgba(242, 205, 92, 0.6)); }
+.mc-head b { display: block; font-family: var(--display); font-weight: 400; font-size: 17px; color: #f2cd5c; }
+.mc-head small { font-size: 11px; color: var(--muted); }
+.mc-sweep { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; }
+.mc-sweep small { font-size: 10.5px; color: var(--gold); font-weight: 400; }
+.mc-list { display: flex; flex-direction: column; gap: 6px; }
+.mc-row { --c: #888; display: grid; grid-template-columns: 58px 1fr auto; align-items: center; gap: 10px; padding: 6px 10px 6px 6px; clip-path: var(--chamfer); --cut: 8px; --ec: color-mix(in srgb, var(--c) 40%, transparent); background: var(--corners), linear-gradient(90deg, color-mix(in srgb, var(--c) 12%, transparent), #0e0c1a 60%); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 40%, transparent); }
+.mc-view { width: 58px; height: 58px; } .mc-view canvas { width: 100%; height: 100%; display: block; }
+.mc-info { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.mc-name { font-family: var(--display); font-size: 13.5px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.mc-name .pet-star { font-size: 9px; letter-spacing: 0; }
+.mc-info small { font-size: 10px; color: var(--muted); }
+.mc-qty { display: flex; align-items: center; gap: 4px; }
+.mc-qty button { width: 26px; height: 24px; font: inherit; font-size: 14px; line-height: 1; color: #fff; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16); cursor: pointer; }
+.mc-qty button:disabled { opacity: 0.3; }
+.mc-qty b { min-width: 24px; text-align: center; font-size: 13px; }
+.mc-qty .mc-max { width: auto; padding: 0 7px; font-size: 10.5px; }
+.mc-go { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 72px; }
+.mc-go small { font-size: 10px; font-weight: 700; }

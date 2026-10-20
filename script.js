@@ -1,8 +1,8 @@
-import { AURA_DATA } from './auras.js?v=49';
-import { CRAFT_ITEMS } from './craftItems.js?v=49';
-import { createMusicPlayer, coverArt } from './music.js?v=49';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=49';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=49';
+import { AURA_DATA } from './auras.js?v=50';
+import { CRAFT_ITEMS } from './craftItems.js?v=50';
+import { createMusicPlayer, coverArt } from './music.js?v=50';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=50';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=50';
 
 /* =========================================================
    📦 게임 데이터
@@ -34,8 +34,8 @@ const SHOP_ITEMS = [
     { id: "overcome_potion", name: "극복의 물약", price: 250000, type: "luck_mult", value: 60000, maxUses: 2, desc: "×60,000 행운 (2회)", frame: "MYTHIC", color: "#00e5ff", color2: "#6a5cff" },
     { id: "heaven_potion", name: "천상의 물약", price: 400000, type: "luck_mult", value: 180000, maxUses: 1, desc: "×180,000 행운 (1회)", frame: "ANCIENT", color: "#ffe39a" },
     { id: "void_potion", name: "공허의 물약", price: 2000000, type: "luck_mult", value: 850000, maxUses: 1, desc: "×850,000 행운 (1회)", frame: "JXS", unique: "voidpotion", color: "#b026ff", color2: "#ff2d55" },
-    // 🌌 최상급 물약 (상점에선 안 팜 · 뽑기 아주 낮은 확률 / 암시장 / 시즌 패스로만)
-    { id: "nebula_potion", gacha: "special", name: "성운 응축액", type: "luck_mult", value: 3000000, maxUses: 1, desc: "×3,000,000 행운 (1회) · 별이 태어나는 성운을 한 방울로 압축", frame: "JXS", color: "#5ab0ff", color2: "#ff6fd8" },
+    // 💥 최상급 물약 (공허 → 초신성 → 창세 순서로 강함) (상점에선 안 팜 · 뽑기 아주 낮은 확률 / 암시장 / 시즌 패스로만)
+    { id: "nebula_potion", gacha: "special", name: "초신성의 물약", type: "luck_mult", value: 3000000, maxUses: 1, desc: "×3,000,000 행운 (1회) · 별이 터지는 순간의 빛을 한 병에 담았다", frame: "JXS", color: "#5ab0ff", color2: "#ff6fd8" },
     { id: "genesis_potion", gacha: "special", name: "창세의 물약", type: "luck_mult", value: 15000000, maxUses: 1, desc: "×15,000,000 행운 (1회) · 세상이 처음 만들어지던 순간의 빛", frame: "JXS", unique: "voidpotion", color: "#fff3c0", color2: "#7dff9a" },
     // 🎰 상점 뽑기 전용 (상점에서 안 팔고 뽑기에서만 나옴)
     { id: "dice_potion", gacha: true, name: "주사위 물약", type: "dice", faces: [1200, 6000, 24000, 60000, 150000, 360000], desc: "주사위를 굴려 ×1,200 ~ ×360,000 행운 (1회)", frame: "EPIC", color: "#ff3b5c", color2: "#ffffff" },
@@ -1034,7 +1034,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=49').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=50').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -2131,6 +2131,101 @@ function updatePetDot() {
     const canPut = st.nests.some(n => !n) && Object.values(st.eggs).some(v => v > 0);
     document.querySelector('.pet-dot')?.classList.toggle('hidden', !(ready || canPut));
 }
+/* ---------- ✨ 합성의 제단 ---------- */
+let mergeSel = null;   // 'petId:성'
+const gKey = g => `${g.id}:${g.s}`;
+function mergeAltarHtml(groups) {
+    const can = groups.filter(g => g.s < STAR_MAX && g.list.length >= 2);
+    if (!can.some(g => gKey(g) === mergeSel)) mergeSel = can[0] ? gKey(can[0]) : null;
+    const sel = can.find(g => gKey(g) === mergeSel);
+    const d = sel && PET_BY_ID[sel.id];
+    const slot = (cls, g, s) => g
+        ? `<div class="al-slot ${cls}" style="--c:${TIER_COL[PET_BY_ID[g.id].tier]}"><canvas data-gear="${g.id}" aria-hidden="true"></canvas>${petStarHtml(s)}</div>`
+        : `<div class="al-slot ${cls} empty"><span>?</span></div>`;
+    const totalMerges = can.reduce((n, g) => n + Math.floor(g.list.length / 2), 0);
+    return `
+        <div class="altar ${sel ? 'ready' : ''}" ${d ? `style="--c:${TIER_COL[d.tier]}"` : ''}>
+            <div class="al-head"><i></i><span>합성의 제단</span><i></i></div>
+            <div class="al-stage">
+                <div class="al-ring r1"></div><div class="al-ring r2"></div>
+                ${slot('a', sel, sel?.s)}
+                <div class="al-plus">＋</div>
+                ${slot('b', sel, sel?.s)}
+                <div class="al-beam l"></div><div class="al-beam r"></div>
+                ${sel ? `<div class="al-slot out" style="--c:${TIER_COL[d.tier]}"><canvas data-gear="${sel.id}" aria-hidden="true"></canvas>${petStarHtml(sel.s + 1)}<em>NEW</em></div>` : `<div class="al-slot out empty"><span>✦</span></div>`}
+            </div>
+            <div class="al-info">${sel ? `
+                <b>${d.name}</b>
+                <div class="al-cmp"><span>★${sel.s} · ${petEffectText(d, sel.s)}</span><i>▶</i><span class="up">★${sel.s + 1} · ${petEffectText(d, sel.s + 1)}</span></div>` : `<b>합성할 수 있는 펫이 없어요</b><div class="al-cmp"><span>같은 펫 · 같은 성 2마리를 모으면 한 성 위 1마리가 돼요</span></div>`}
+            </div>
+            <button class="btn btn-block btn-gold al-go" data-mergego ${sel ? '' : 'disabled'}>✨ 합성하기</button>
+        </div>
+        ${can.length ? `<div class="glabel">재료 고르기 <span style="letter-spacing:0">${can.length}종</span>${totalMerges > 1 ? `<button class="al-all" data-mergeall>전부 합성 (${totalMerges}번)</button>` : ''}</div>
+        <div class="al-pick">${can.map(g => {
+            const pd = PET_BY_ID[g.id];
+            return `<button class="al-card ${gKey(g) === mergeSel ? 'on' : ''}" data-mergesel="${gKey(g)}" style="--c:${TIER_COL[pd.tier]}">
+                <div class="al-card-view"><canvas data-gear="${g.id}" aria-hidden="true"></canvas><span class="pet-cnt">×${g.list.length}</span></div>
+                <div class="al-card-name">${pd.name}</div>${petStarHtml(g.s)}
+            </button>`;
+        }).join('')}</div>` : ''}
+        ${groups.some(g => g.s < STAR_MAX && g.list.length < 2) ? `<div class="glabel">한 마리 더 필요해요</div>
+        <div class="merge-wait">${groups.filter(g => g.s < STAR_MAX && g.list.length < 2).map(g => `<span style="--c:${TIER_COL[PET_BY_ID[g.id].tier]}">${PET_BY_ID[g.id].name} ★${g.s} <b>1/2</b></span>`).join('')}</div>` : ''}
+        <div class="set-note">★2 효과 ×1.4 · ★3 ×1.9 · ★4 ×2.5 · ★5 ×3.2 (최대 ★${STAR_MAX})</div>`;
+}
+
+/* ---------- 🪙 펫 상인 (판매) ---------- */
+const sellQty = {};
+const spareOf = g => g.list.filter(p => p.u !== gameState.pet);
+function petMerchantHtml(groups) {
+    const rows = groups.filter(g => spareOf(g).length);
+    // 중복 정리: 펫마다 가장 높은 성 1마리만 남기고 나머지
+    const dupVal = petDupSweep(true);
+    return `
+        <div class="merchant">
+            <div class="mc-head"><span class="mc-icon">🪙</span><div><b>펫 상인</b><small>남는 펫을 JC로 바꿔 드려요 · 함께하는 펫은 안 팔아요</small></div></div>
+            <button class="btn btn-block mc-sweep" data-sellsweep ${dupVal.n ? '' : 'disabled'}>🧹 중복 정리 · 펫마다 제일 높은 성 1마리만 남기고 팔기${dupVal.n ? `<small>${dupVal.n}마리 → +${fmt(dupVal.jc)} JC</small>` : '<small>정리할 중복이 없어요</small>'}</button>
+        </div>
+        ${rows.length ? `<div class="mc-list">${rows.map(g => {
+            const pd = PET_BY_ID[g.id], k = gKey(g), max = spareOf(g).length;
+            const q = Math.min(max, Math.max(1, sellQty[k] || 1)), each = petSellPrice(g.id, g.s);
+            return `<div class="mc-row" style="--c:${TIER_COL[pd.tier]}">
+                <div class="mc-view"><canvas data-gear="${g.id}" aria-hidden="true"></canvas></div>
+                <div class="mc-info">
+                    <div class="mc-name">${pd.name} ${petStarHtml(g.s)}</div>
+                    <small>팔 수 있는 ${max}마리 · 1마리 ${fmt(each)} JC</small>
+                    <div class="mc-qty">
+                        <button data-sellstep="${k}:-1" ${q <= 1 ? 'disabled' : ''}>−</button><b>${q}</b><button data-sellstep="${k}:1" ${q >= max ? 'disabled' : ''}>＋</button>
+                        <button class="mc-max" data-sellstep="${k}:max">최대</button>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-gold mc-go" data-sellgo="${k}">팔기<small>+${fmt(each * q)}</small></button>
+            </div>`;
+        }).join('')}</div>` : `<div class="empty">팔 수 있는 펫이 없어요</div>`}`;
+}
+// 중복 정리 계산 (dry=true면 계산만)
+function petDupSweep(dry) {
+    const st = petState(), best = {};
+    for (const p of st.petList) if (!best[p.id] || p.s > best[p.id].s || (p.s === best[p.id].s && p.u === gameState.pet)) best[p.id] = p;
+    if (gameState.pet) { const on = petOn(); if (on) best[on.id] = best[on.id]?.s > on.s ? best[on.id] : on; }
+    const keep = new Set([...Object.values(best).map(p => p.u), gameState.pet]);
+    const sell = st.petList.filter(p => !keep.has(p.u));
+    const jc = sell.reduce((t, p) => t + petSellPrice(p.id, p.s), 0);
+    if (!dry) { st.petList = st.petList.filter(p => keep.has(p.u)); gameState.jc += jc; }
+    return { n: sell.length, jc };
+}
+function sellPetGroup(k, n) {
+    const [id, sStr] = k.split(':'), s = +sStr, st = petState();
+    const spare = st.petList.filter(p => p.id === id && p.s === s && p.u !== gameState.pet).slice(0, n);
+    if (!spare.length) return;
+    const jc = spare.reduce((t, p) => t + petSellPrice(p.id, p.s), 0);
+    const gone = new Set(spare.map(p => p.u));
+    st.petList = st.petList.filter(p => !gone.has(p.u));
+    gameState.jc += jc; delete sellQty[k];
+    saveGame(); renderStats(); renderPets();
+    toast(`🪙 ${PET_BY_ID[id].name} ★${s} ${spare.length}마리 판매 +${fmt(jc)} JC`, 'gold');
+    playTone(880, 'triangle', 0.1 * soundSettings.master, 0.005, 0.15);
+}
+
 function renderPets() {
     const st = petState(), el = $('pet-panel');
     clearInterval(petTimer);
@@ -2171,7 +2266,7 @@ function renderPets() {
             el.querySelectorAll('[data-left]').forEach(s => { const l = +s.dataset.left - Date.now(); if (l <= 0) redo = true; else s.textContent = fmtLeft(l); });
             if (redo) { renderPets(); updatePetDot(); }
         }, 10000);
-    } else if (petTab === 'mine' || petTab === 'merge') {
+    } else if (petTab === 'mine' || petTab === 'merge' || petTab === 'sell') {
         // 같은 펫 · 같은 성끼리 한 칸으로 묶음
         const groups = [];
         for (const p of st.petList) {
@@ -2208,33 +2303,8 @@ function renderPets() {
                     </button>`;
                 }).join('')}</div>`;
         } else {
-            const can = groups.filter(g => g.s < STAR_MAX && g.list.length >= 2);
-            el.innerHTML = `
-                <div class="merge-intro"><b>같은 펫 + 같은 성 2마리</b> → <b>한 성 위 1마리</b><br><small>최대 ★${STAR_MAX} · ★2 ×1.4 · ★3 ×1.9 · ★4 ×2.5 · ★5 ×3.2 효과</small></div>
-                ${can.length ? `<button class="btn btn-block btn-gold" data-mergeall>✨ 할 수 있는 거 전부 합성 (${can.reduce((n, g) => n + Math.floor(g.list.length / 2), 0)}번)</button>
-                <div class="merge-list">${can.map(g => {
-                    const d = PET_BY_ID[g.id];
-                    return `<div class="merge-row" style="--c:${TIER_COL[d.tier]}">
-                        <div class="merge-side">
-                            <div class="merge-view"><canvas data-gear="${g.id}" aria-hidden="true"></canvas><span class="pet-cnt">×${g.list.length}</span></div>
-                            ${petStarHtml(g.s)}<small>${petEffectText(d, g.s)}</small>
-                        </div>
-                        <div class="merge-arrow">2 → 1<i>▶</i></div>
-                        <div class="merge-side up">
-                            <div class="merge-name">${d.name}</div>
-                            ${petStarHtml(g.s + 1)}<small class="up">${petEffectText(d, g.s + 1)}</small>
-                            <button class="btn btn-sm btn-gold" data-merge="${g.list[0].u}">합성</button>
-                        </div>
-                    </div>`;
-                }).join('')}</div>` : `<div class="empty">지금 합성할 수 있는 펫이 없어요.<br><small>같은 펫 · 같은 성을 2마리 모아 봐요</small></div>`}
-                <div class="glabel">펫 팔기 <span class="pet-hint">· 함께하는 펫은 안 팔려요</span></div>
-                <div class="merge-wait">${groups.map(g => {
-                    const spare = g.list.filter(p => p.u !== gameState.pet);
-                    if (!spare.length) return '';
-                    return `<button class="pet-sell" data-petsell="${spare[0].u}" style="--c:${TIER_COL[PET_BY_ID[g.id].tier]}">${PET_BY_ID[g.id].name} ★${g.s}${spare.length > 1 ? ` ×${spare.length}` : ''} <b>+${fmt(petSellPrice(g.id, g.s))}</b></button>`;
-                }).join('') || '<span>팔 수 있는 펫이 없어요</span>'}</div>
-                ${groups.filter(g => !(g.s < STAR_MAX && g.list.length >= 2)).length ? `<div class="glabel">한 마리 더 필요해요</div>
-                <div class="merge-wait">${groups.filter(g => g.s < STAR_MAX && g.list.length < 2).map(g => `<span style="--c:${TIER_COL[PET_BY_ID[g.id].tier]}">${PET_BY_ID[g.id].name} ★${g.s} <b>1/2</b></span>`).join('')}</div>` : ''}`;
+            if (petTab === 'merge') el.innerHTML = mergeAltarHtml(groups);
+            else el.innerHTML = petMerchantHtml(groups);
         }
         attachGearPreviews(el);
     } else {
@@ -2383,6 +2453,39 @@ $('sheet-pet').addEventListener('click', e => {
     const dh = e.target.closest('[data-devhatch]');
     if (dh) { devHatch(dh.dataset.devhatch); return; }
     if (e.target.closest('[data-mergeall]')) { mergeAllPets(); return; }
+    const ms = e.target.closest('[data-mergesel]');
+    if (ms) { mergeSel = ms.dataset.mergesel; renderPets(); return; }
+    if (e.target.closest('[data-mergego]')) {
+        const [id, sStr] = (mergeSel || '').split(':');
+        const p = st.petList.find(x => x.id === id && x.s === +sStr);
+        if (!p) return;
+        const alt = $('pet-panel').querySelector('.altar');
+        alt?.classList.add('fusing');
+        e.target.closest('[data-mergego]').disabled = true;
+        playTone(440, 'sawtooth', 0.06 * soundSettings.master, 0.01, 0.6);
+        setTimeout(() => mergePet(p.u), 900);
+        return;
+    }
+    const sst = e.target.closest('[data-sellstep]');
+    if (sst) {
+        const [id, sv, d] = sst.dataset.sellstep.split(':'), k = `${id}:${sv}`;
+        const max = st.petList.filter(p => p.id === id && p.s === +sv && p.u !== gameState.pet).length;
+        sellQty[k] = d === 'max' ? max : Math.max(1, Math.min(max, (sellQty[k] || 1) + +d));
+        renderPets(); return;
+    }
+    const sg = e.target.closest('[data-sellgo]');
+    if (sg) { const k = sg.dataset.sellgo; sellPetGroup(k, sellQty[k] || 1); return; }
+    if (e.target.closest('[data-sellsweep]')) {
+        const v = petDupSweep(true);
+        if (!v.n) return;
+        ask({ title: '중복 펫을 정리할까요?', message: `펫마다 제일 높은 성 1마리만 남기고\n${v.n}마리를 팔아요 (+${fmt(v.jc)} JC)\n\n합성 재료로 쓸 펫도 같이 팔려요!`, okText: '정리하기', danger: true }).then(ok => {
+            if (!ok) return;
+            const r = petDupSweep(false);
+            saveGame(); renderStats(); renderPets();
+            toast(`🧹 ${r.n}마리 정리 +${fmt(r.jc)} JC`, 'gold');
+        });
+        return;
+    }
     const ps = e.target.closest('[data-petsell]');
     if (ps) { sellPet(ps.dataset.petsell); return; }
     const mg = e.target.closest('[data-merge]');
@@ -3705,7 +3808,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=49')
+import('./aura3d.js?v=50')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {
