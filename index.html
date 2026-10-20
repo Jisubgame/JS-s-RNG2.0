@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Orbit&display=swap" rel="stylesheet">
     <!-- 업데이트할 때: 아래 ?v= 숫자 3곳과 version.json 숫자를 똑같이 올리기 -->
-    <link rel="stylesheet" href="style.css?v=59">
-    <link rel="stylesheet" href="rarity.css?v=59">
+    <link rel="stylesheet" href="style.css?v=60">
+    <link rel="stylesheet" href="rarity.css?v=60">
     <script type="importmap">{ "imports": { "three": "./lib/three.module.js" } }</script>
 </head>
 <body>
@@ -447,16 +447,18 @@
                 <div class="section abuse">
                     <div class="section-title">👑 어드민 어뷰즈 <small>(접속한 모두에게)</small> <span id="admin-status" class="admin-status">연결 확인 중…</span></div>
                     <div class="ab-row"><span>🍀 행운 폭탄</span>
-                        <select id="ab-luck-mult"><option value="2">×2</option><option value="5">×5</option><option value="10" selected>×10</option><option value="50">×50</option><option value="100">×100</option></select>
-                        <select id="ab-luck-min"><option value="5">5분</option><option value="10" selected>10분</option><option value="30">30분</option><option value="60">60분</option></select>
+                        <label class="ab-num">×<input id="ab-luck-mult" type="number" min="1.1" step="any" value="10"></label>
+                        <label class="ab-num"><input id="ab-luck-min" type="number" min="1" max="1440" step="1" value="10">분</label>
                         <button class="btn btn-sm btn-gold" data-abuse="luck">발사</button></div>
                     <div class="ab-row"><span>🌦️ 바이옴</span>
                         <select id="ab-biome"></select>
-                        <select id="ab-biome-min"><option value="3">3분</option><option value="5" selected>5분</option><option value="10">10분</option></select>
+                        <label class="ab-num"><input id="ab-biome-min" type="number" min="1" max="1440" step="1" value="5">분</label>
                         <button class="btn btn-sm btn-gold" data-abuse="biome">발사</button></div>
+                    <div class="ab-row ab-sub"><span></span>
+                        <label class="ab-num">바이옴 행운 ×<input id="ab-biome-luck" type="number" min="1" step="any" placeholder="기본"></label></div>
                     <div class="ab-row"><span>🎁 선물</span>
                         <select id="ab-gift"></select>
-                        <input id="ab-gift-n" type="number" min="1" max="99" value="1">
+                        <input id="ab-gift-n" type="number" min="1" step="1" value="1" title="JC면 금액, 아이템이면 개수">
                         <button class="btn btn-sm btn-gold" data-abuse="gift">발사</button></div>
                     <div class="ab-row"><span>📢 공지</span>
                         <input id="ab-text" type="text" maxlength="80" placeholder="모두에게 보여줄 말">
@@ -563,6 +565,6 @@
 
     <div id="toast-wrap"></div>
 
-    <script type="module" src="script.js?v=59"></script>
+    <script type="module" src="script.js?v=60"></script>
 </body>
 </html>

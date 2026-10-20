@@ -223,13 +223,13 @@ export const CRAFT_ITEMS = [
     {
         id: "gear_riftbreaker", category: "gauntlet", gacha: "dungeon",
         name: "균열파괴자의 건틀렛",
-        desc: "균열의 군주에게서 떨어진 주먹 조각. 행운 450%, 속도 20%. 던전 공격력 +60%, 체력 +30%.",
-        luckBonus: 4.5, speedBonus: 0.2, dngAtk: 0.6, dngHp: 0.3, req: {}
+        desc: "균열의 군주에게서 떨어진 주먹 조각. 행운 450%, 속도 20%. 레이드 공격력 +25%, 체력 +20%.",
+        luckBonus: 4.5, speedBonus: 0.2, dngAtk: 0.25, dngHp: 0.2, req: {}
     },
     {
         id: "amu_riftcore", category: "amulet", gacha: "dungeon", abil: "rift",
         name: "균열의 핵 부적",
-        desc: "보스의 가슴에서 꺼낸 핵. 행운 +100%. 던전 공격력 ×1.5, 체력 ×1.4.",
-        luckBonus: 1, speedBonus: 0, riftAtk: 1.5, riftHp: 1.4, req: {}
+        desc: "보스의 가슴에서 꺼낸 핵. 행운 +100%. 레이드 공격력 ×1.2, 체력 ×1.2.",
+        luckBonus: 1, speedBonus: 0, riftAtk: 1.2, riftHp: 1.2, req: {}
     }
 ];

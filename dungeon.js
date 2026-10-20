@@ -30,8 +30,9 @@ export const RAID_AURAS = {
     js_lightning_jisung: 'volt', jxs_creator_gaeun: 'light',
     dng_riftwalker: 'rift', dng_riftlord: 'rift'
 };
-const GRADE_STAT = { EPIC: [600, 4000], LEGEND: [900, 5500], MYTHIC: [1300, 7500], ANCIENT: [1800, 10000], ABSOLUTE: [2400, 13000], JXS: [3200, 17000] };
-const STAT_OVERRIDE = { dng_riftwalker: [1500, 8000], dng_riftlord: [2700, 14000] };
+// 등급 차이는 작게 (JXS 하나로 다 이기지 않게) — 속성·팀 구성이 더 중요
+const GRADE_STAT = { EPIC: [900, 6000], LEGEND: [980, 6400], MYTHIC: [1060, 6800], ANCIENT: [1140, 7200], ABSOLUTE: [1220, 7600], JXS: [1300, 8000] };
+const STAT_OVERRIDE = { dng_riftwalker: [1200, 7200], dng_riftlord: [1360, 8000] };
 export function raidInfo(a) {
     const el = a && RAID_AURAS[a.id];
     if (!el) return null;
@@ -42,8 +43,8 @@ export function raidInfo(a) {
 export const DIFFS = [
     { id: 'easy',   star: 1, label: '쉬움',   color: '#5fe08a', hp: 20000,  hit: 120, slam: 600,  jc: 60000,   xp: 1500, items: { limit_potion: 1 },                    egg: ['egg_basic', 0.2] },
     { id: 'normal', star: 3, label: '보통',   color: '#ffd23a', hp: 60000,  hit: 300, slam: 1200, jc: 200000,  xp: 3000, items: { limit_potion: 2, star_potion: 1 },    egg: ['egg_rare', 0.25] },
-    { id: 'hard',   star: 5, label: '어려움', color: '#ff8a3a', hp: 200000, hit: 500, slam: 2200, jc: 600000,  xp: 5000, items: { overcome_potion: 1, dice_potion: 1 }, egg: ['egg_legend', 0.25] },
-    { id: 'hell',   star: 6, label: '지옥',   color: '#ff2a4a', hp: 500000, hit: 800, slam: 3500, jc: 1800000, xp: 8000, items: { heaven_potion: 1 },                   egg: ['egg_mythic', 0.25], extra: ['void_potion', 0.3] }
+    { id: 'hard',   star: 5, label: '어려움', color: '#ff8a3a', hp: 120000, hit: 500, slam: 2200, jc: 600000,  xp: 5000, items: { overcome_potion: 1, dice_potion: 1 }, egg: ['egg_legend', 0.25] },
+    { id: 'hell',   star: 6, label: '지옥',   color: '#ff2a4a', hp: 250000, hit: 800, slam: 3500, jc: 1800000, xp: 8000, items: { heaven_potion: 1 },                   egg: ['egg_mythic', 0.25], extra: ['void_potion', 0.3] }
 ];
 // 레이드 클리어 시 전용 드롭 (난이도별 확률: ★1, ★3, ★5, ★6)
 export const DROPS = [
@@ -144,9 +145,9 @@ export function createDungeon(api) {
     // 장비·부적·펫 보너스 (공격 배율 / 체력 배율)
     function mults() {
         const g = api.gear(), am = api.amu(), pet = api.pet();
-        const gm = 1 + (g?.luckBonus || 0) * 0.12 + (g?.dngAtk || 0);
+        const gm = 1 + Math.min(0.3, (g?.luckBonus || 0) * 0.04) + (g?.dngAtk || 0);
         const amm = am.abil === 'rift' ? am.riftAtk : 1;
-        const pm = 1 + (pet.luck || 0) * 0.1 + (pet.speed || 0) * 0.2;
+        const pm = 1 + Math.min(0.15, (pet.luck || 0) * 0.04 + (pet.speed || 0) * 0.1);
         const hpm = (am.abil === 'rift' ? am.riftHp : 1) * (1 + (g?.dngHp || 0));
         return { atk: gm * amm * pm, hp: hpm, gm, amm, pm };
     }
@@ -410,7 +411,7 @@ export function createDungeon(api) {
         api.closeSheet('sheet-dungeon');
         closeLobby();
         const me = api.me(), D = DIFFS[diff], now = Date.now();
-        const bossMax = Math.round(D.hp * (1 + 0.6 * (roster.length - 1)));
+        const bossMax = Math.round(D.hp * (1 + 0.5 * (roster.length - 1)));
         const mem = team().filter(Boolean).map(member);
         mem.forEach(x => { x.hp = x.max; });
         B = {
@@ -426,7 +427,7 @@ export function createDungeon(api) {
         wireNet();
         api.setBusy(true);
         buildBattleUI();
-        import('./boss3d.js?v=59').then(({ createBossScene }) => {
+        import('./boss3d.js?v=60').then(({ createBossScene }) => {
             if (!B || B.net !== net) return;
             B.scene = createBossScene();
             api.setTakeover(B.scene);
@@ -636,9 +637,11 @@ export function createDungeon(api) {
             </div>
             <div id="db-party" class="db-party"></div>
             <div id="db-float" class="db-float"></div>
-            <div class="db-hint" id="db-hint">화면 탭 · 꾹 눌러 공격 &nbsp;|&nbsp; 옆으로 그어 회피</div>
+            <div class="db-hint" id="db-hint">화면 탭 · 꾹 눌러 공격 &nbsp;|&nbsp; 양옆 화살표로 회피</div>
             <button id="db-quit" class="db-quit" aria-label="나가기"><svg viewBox="0 0 24 24"><path d="M14 4a2 2 0 110 .01M10 9l3-1 3 3 3 1M13 8l-2 6 3 3v4M11 14l-3 2-3-1"/></svg></button>
             <button id="db-charged" class="db-charged"><div class="db-ch-segs" id="db-segs"></div><b id="db-ch-name"></b></button>
+            <button id="db-dodge-l" class="db-dodge l" aria-label="왼쪽으로 회피"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><small>회피</small></button>
+            <button id="db-dodge-r" class="db-dodge r" aria-label="오른쪽으로 회피"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg><small>회피</small></button>
             <button id="db-swap" class="db-swapbtn" aria-label="교체"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><small>교체</small></button>
             <div id="db-swappanel" class="db-swappanel hidden"></div>
             <div id="db-rejoin" class="db-rejoin hidden"><b>팀 전멸</b><small>재정비 중… <span id="db-rj-t">8</span>초 뒤 다시 들어가요</small></div>
@@ -653,6 +656,10 @@ export function createDungeon(api) {
             if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(e.clientY - sy)) { moved = true; B.holding = false; dodge(Math.sign(dx)); }
         };
         stage.onpointerup = stage.onpointercancel = () => { if (B) B.holding = false; };
+        // 회피 버튼: 누르는 순간 바로 (클릭 지연 없이)
+        for (const [id, dir] of [['db-dodge-l', -1], ['db-dodge-r', 1]]) {
+            $(id).onpointerdown = e => { e.preventDefault(); e.stopPropagation(); if (B) { B.holding = false; dodge(dir); const b = $(id); b.classList.remove('fire'); void b.offsetWidth; b.classList.add('fire'); } };
+        }
         el.onclick = e => {
             const sw = e.target.closest('[data-dbsw]');
             if (sw) { swapTo(+sw.dataset.dbsw); return; }

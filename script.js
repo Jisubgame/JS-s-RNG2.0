@@ -1,9 +1,9 @@
-import { AURA_DATA } from './auras.js?v=59';
-import { CRAFT_ITEMS } from './craftItems.js?v=59';
-import { createMusicPlayer, coverArt } from './music.js?v=59';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=59';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=59';
-import { createDungeon, raidInfo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=59';
+import { AURA_DATA } from './auras.js?v=60';
+import { CRAFT_ITEMS } from './craftItems.js?v=60';
+import { createMusicPlayer, coverArt } from './music.js?v=60';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=60';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=60';
+import { createDungeon, raidInfo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=60';
 
 /* =========================================================
    📦 게임 데이터
@@ -1214,7 +1214,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=59').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=60').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -2031,7 +2031,7 @@ function openAdminSheet() {
     const absel = $('ab-biome');
     if (!absel.children.length) absel.innerHTML = BIOMES.map(b => `<option value="${b.id}">${b.icon} ${b.name}</option>`).join('');
     const gsel = $('ab-gift');
-    if (!gsel.children.length) gsel.innerHTML = `<option value="jc">🪙 10만 JC</option>` + SHOP_ITEMS.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+    if (!gsel.children.length) gsel.innerHTML = `<option value="jc">🪙 JC (적은 숫자만큼)</option>` + SHOP_ITEMS.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
     setOnline(!!evOnline);
     closeSheet('sheet-settings');
     openSheet('sheet-admin');
@@ -2807,7 +2807,7 @@ function applyAdminEvent(ev, late) {
     } else if (ev.kind === 'biome') {
         const b = BIOME_BY_ID[d.biome];
         if (!b || end <= now) return;
-        gameState.biome = { id: b.id, until: end };
+        gameState.biome = { id: b.id, until: end, ...(d.luck > 1 ? { luck: d.luck } : {}) };
         saveGame(); applyBiome(true);
     } else if (ev.kind === 'announce') {
         // 이미 본 공지 / 오래된 공지는 다시 안 띄움 (게임 다시 켜도)
@@ -2922,16 +2922,24 @@ $('sheet-admin').addEventListener('click', e => {
     const b = e.target.closest('[data-abuse]');
     if (!b) return;
     const k = b.dataset.abuse;
-    if (k === 'luck') sendAdminEvent('luck', { mult: +$('ab-luck-mult').value }, +$('ab-luck-min').value * 60);
-    else if (k === 'biome') sendAdminEvent('biome', { biome: $('ab-biome').value }, +$('ab-biome-min').value * 60);
+    // 숫자는 관리자가 마음대로 (분은 1분 ~ 24시간)
+    const mins = id => Math.max(1, Math.min(1440, Math.round(+$(id).value || 0))) * 60;
+    if (k === 'luck') {
+        const mult = +$('ab-luck-mult').value;
+        if (!(mult > 1)) { toast('행운 배수는 1보다 커야 해요', 'bad'); return; }
+        sendAdminEvent('luck', { mult }, mins('ab-luck-min'));
+    } else if (k === 'biome') {
+        const luck = +$('ab-biome-luck').value;
+        sendAdminEvent('biome', luck > 1 ? { biome: $('ab-biome').value, luck } : { biome: $('ab-biome').value }, mins('ab-biome-min'));
+    }
     else if (k === 'announce') {
         const text = $('ab-text').value.trim();
         if (!text) { toast('공지 내용을 써 주세요', 'bad'); return; }
         sendAdminEvent('announce', { nick: session?.nick || '관리자', text: text.slice(0, 80) }, 0);
         $('ab-text').value = '';
     } else if (k === 'gift') {
-        const v = $('ab-gift').value, n = Math.max(1, Math.min(99, +$('ab-gift-n').value || 1));
-        sendAdminEvent('gift', v === 'jc' ? { jc: 100000 * n } : { items: { [v]: n } }, 1800);   // 30분 안에 들어온 사람까지 받음
+        const v = $('ab-gift').value, n = Math.max(1, Math.min(1e12, Math.round(+$('ab-gift-n').value || 1)));
+        sendAdminEvent('gift', v === 'jc' ? { jc: n } : { items: { [v]: Math.min(n, 9999) } }, 1800);   // 30분 안에 들어온 사람까지 받음
     }
 });
 
@@ -3855,7 +3863,8 @@ let biomeFx = null;
 let nextBiomeCheck = Date.now() + BIOME_CHECK_MS;
 function getBiome() {
     const b = gameState.biome;
-    return b && b.until > Date.now() ? BIOME_BY_ID[b.id] || null : null;
+    const B = b && b.until > Date.now() ? BIOME_BY_ID[b.id] || null : null;
+    return B && b.luck ? { ...B, luck: b.luck } : B;   // 관리자가 바이옴 행운을 따로 정했으면 그 값
 }
 function startBiome(b) {
     const am = gearOf(gameState.amulet);
@@ -4039,7 +4048,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=59')
+import('./aura3d.js?v=60')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {
