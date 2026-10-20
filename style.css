@@ -2155,3 +2155,67 @@ body.cine-on #biome-fx { opacity: 0; }
 .ps-tickets { grid-column: 1 / -1; font-size: 11.5px; color: #e6e6ff; display: flex; align-items: center; gap: 6px; }
 .ps-tickets b { color: #ffd24a; font-size: 14px; }
 .ps-tickets small { color: var(--faint); }
+
+/* ---------- 깎인 모서리에도 테두리 선 (대각선을 그라데이션으로 그림) ---------- */
+:root {
+    --ec: rgba(255, 255, 255, 0.16);
+    --corners:
+        linear-gradient(to bottom right, transparent calc(50% - 0.8px), var(--ec) calc(50% - 0.8px) calc(50% + 0.8px), transparent calc(50% + 0.8px)) top left / var(--cut) var(--cut) no-repeat border-box,
+        linear-gradient(to bottom left, transparent calc(50% - 0.8px), var(--ec) calc(50% - 0.8px) calc(50% + 0.8px), transparent calc(50% + 0.8px)) top right / var(--cut) var(--cut) no-repeat border-box,
+        linear-gradient(to top right, transparent calc(50% - 0.8px), var(--ec) calc(50% - 0.8px) calc(50% + 0.8px), transparent calc(50% + 0.8px)) bottom left / var(--cut) var(--cut) no-repeat border-box,
+        linear-gradient(to top left, transparent calc(50% - 0.8px), var(--ec) calc(50% - 0.8px) calc(50% + 0.8px), transparent calc(50% + 0.8px)) bottom right / var(--cut) var(--cut) no-repeat border-box;
+    --corners-top:
+        linear-gradient(to bottom right, transparent calc(50% - 0.8px), var(--ec) calc(50% - 0.8px) calc(50% + 0.8px), transparent calc(50% + 0.8px)) top left / var(--cut) var(--cut) no-repeat border-box,
+        linear-gradient(to bottom left, transparent calc(50% - 0.8px), var(--ec) calc(50% - 0.8px) calc(50% + 0.8px), transparent calc(50% + 0.8px)) top right / var(--cut) var(--cut) no-repeat border-box;
+}
+/* 버튼 (테두리 1px + 대각선) */
+.btn { --ec: rgba(255, 255, 255, 0.22); background: var(--corners), linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03)); }
+.btn-gold { --ec: #ffe9a0; background: var(--corners), linear-gradient(180deg, #fff1b8 0%, #ffd24a 38%, #e8a420 72%, #ffcf5a 100%); }
+.btn-gold:active { background: var(--corners), linear-gradient(180deg, #ffd24a, #e8a420); }
+.btn-primary { --ec: color-mix(in srgb, var(--aura) 80%, #fff); background: var(--corners), linear-gradient(180deg, color-mix(in srgb, var(--aura) 85%, #fff 15%), color-mix(in srgb, var(--aura) 70%, #000)); }
+.btn-red { --ec: color-mix(in srgb, var(--red) 60%, transparent); background: var(--corners), linear-gradient(180deg, rgba(255, 93, 122, 0.18), rgba(255, 93, 122, 0.04)); }
+.btn-green { --ec: color-mix(in srgb, var(--mint) 55%, transparent); background: var(--corners), transparent; }
+/* 상단 */
+.readout { clip-path: var(--chamfer); --cut: 10px; padding-right: 14px; --ec: rgba(255, 255, 255, 0.18); background: var(--corners), var(--panel); }
+.readout::after { right: 10px; left: 10px; }
+.topbar-right .icon-btn { --ec: rgba(255, 255, 255, 0.2); background: var(--corners), var(--panel); }
+.topbar-right .icon-btn:active { background: var(--corners), linear-gradient(180deg, rgba(91, 77, 255, 0.4), rgba(12, 11, 28, 0.9)); }
+.mini-player { --ec: rgba(255, 255, 255, 0.2); background: var(--corners), var(--panel); }
+.profile-btn { --ec: var(--c); background: var(--corners), linear-gradient(135deg, color-mix(in srgb, var(--c) 65%, #000), color-mix(in srgb, var(--c) 25%, #000)); }
+.profile-btn.guest { --ec: rgba(255, 255, 255, 0.2); background: var(--corners), rgba(255, 255, 255, 0.04); }
+/* 양옆 메뉴 */
+.dock-btn { --ec: color-mix(in srgb, currentColor 40%, transparent); background: var(--corners), radial-gradient(ellipse at 50% 30%, color-mix(in srgb, currentColor 22%, transparent), transparent 70%), var(--panel); }
+.dock-btn.bm.open { --ec: #ff5ad8; }
+/* ROLL */
+#roll-btn {
+    --ec: color-mix(in srgb, var(--aura) 75%, #fff 25%);
+    background:
+        linear-gradient(to bottom right, transparent calc(50% - 1.2px), var(--ec) calc(50% - 1.2px) calc(50% + 1.2px), transparent calc(50% + 1.2px)) top left / var(--cut) var(--cut) no-repeat,
+        linear-gradient(to bottom left, transparent calc(50% - 1.2px), var(--ec) calc(50% - 1.2px) calc(50% + 1.2px), transparent calc(50% + 1.2px)) top right / var(--cut) var(--cut) no-repeat,
+        linear-gradient(to top right, transparent calc(50% - 1.2px), var(--ec) calc(50% - 1.2px) calc(50% + 1.2px), transparent calc(50% + 1.2px)) bottom left / var(--cut) var(--cut) no-repeat,
+        linear-gradient(to top left, transparent calc(50% - 1.2px), var(--ec) calc(50% - 1.2px) calc(50% + 1.2px), transparent calc(50% + 1.2px)) bottom right / var(--cut) var(--cut) no-repeat,
+        repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.025) 0 10px, transparent 10px 20px),
+        radial-gradient(ellipse 70% 120% at 50% 0%, color-mix(in srgb, var(--aura) 60%, transparent), transparent 70%),
+        linear-gradient(180deg, color-mix(in srgb, var(--aura) 45%, #14123a), #07061a 90%);
+}
+#roll-btn:disabled { --ec: rgba(255, 255, 255, 0.14); }
+/* AUTO / QUICK */
+.toggle { --ec: rgba(255, 255, 255, 0.16); background: var(--corners), var(--panel); }
+.toggle.active { --ec: rgba(111, 242, 192, 0.6); background: var(--corners), linear-gradient(180deg, rgba(111, 242, 192, 0.20), rgba(12, 11, 28, 0.94)); }
+/* 하단 메뉴 */
+.bottom-nav { --ec: rgba(255, 255, 255, 0.18); background: var(--corners), linear-gradient(180deg, rgba(36, 33, 74, 0.94), rgba(10, 9, 24, 0.97)); }
+/* 시트 (위 모서리 둘) */
+.sheet {
+    --cut: 18px; --ec: rgba(255, 255, 255, 0.14);
+    background:
+        var(--corners-top),
+        radial-gradient(ellipse 80% 120px at 50% 0%, color-mix(in srgb, var(--aura) 22%, transparent), transparent 100%),
+        linear-gradient(180deg, #15132e, #08070f 40%);
+}
+.bm-sheet { background: var(--corners-top), linear-gradient(180deg, #170a1c, #07050c) !important; }
+.sheet-close { --ec: rgba(255, 255, 255, 0.22); background: var(--corners), var(--panel); }
+.sheet-close:active { background: var(--corners), rgba(255, 93, 122, 0.3); }
+/* 탭 */
+.tabs { --ec: rgba(255, 255, 255, 0.12); background: var(--corners), rgba(0, 0, 0, 0.35); }
+.tab.active { --ec: rgba(255, 255, 255, 0.4); background: var(--corners), linear-gradient(180deg, color-mix(in srgb, var(--aura) 75%, #fff 10%), color-mix(in srgb, var(--aura) 45%, #000)); }
+.tab-hw.active { background: var(--corners), linear-gradient(180deg, #ff9a3a, #a8420a); }
