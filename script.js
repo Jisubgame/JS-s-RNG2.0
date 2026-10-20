@@ -1,8 +1,8 @@
-import { AURA_DATA } from './auras.js?v=51';
-import { CRAFT_ITEMS } from './craftItems.js?v=51';
-import { createMusicPlayer, coverArt } from './music.js?v=51';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=51';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=51';
+import { AURA_DATA } from './auras.js?v=52';
+import { CRAFT_ITEMS } from './craftItems.js?v=52';
+import { createMusicPlayer, coverArt } from './music.js?v=52';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=52';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=52';
 
 /* =========================================================
    📦 게임 데이터
@@ -913,6 +913,7 @@ async function playCinematic(rolled) {
     cine.el.classList.add('hidden');
     cine.el.classList.remove('closing');
     document.body.classList.remove('cine-on');
+    applyEquippedAura();   // 컷씬에서 보여 준 칭호 → 원래 장착한 칭호로 되돌림 (자동 장착 아님)
 }
 
 /* ---------- 연출 ---------- */
@@ -1053,7 +1054,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=51').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=52').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -3267,12 +3268,14 @@ const PASS_PRO = Array.from({ length: 50 }, (_, i) => {
     return ROT[i % ROT.length];
 });
 const PASS_MAX = PASS_BASIC.length;
+const PASS_REQ = Array.from({ length: PASS_MAX }, (_, i) => Math.round(1500 * Math.pow(1.09, i) / 100) * 100);   // i레벨 → i+1레벨에 필요한 XP
+const PASS_CUM = PASS_REQ.reduce((a, r) => (a.push((a[a.length - 1] || 0) + r), a), []);                     // 누적
 function passState() {
     const g = gameState;
     if (!g.pass || g.pass.season !== SEASON.id) g.pass = { season: SEASON.id, xp: 0, pro: false, b: [], p: [] };
     return g.pass;
 }
-const passLevel = () => Math.min(PASS_MAX, Math.floor(passState().xp / SEASON.xp));
+function passLevel() { const xp = passState().xp; let lv = 0; while (lv < PASS_MAX && xp >= PASS_CUM[lv]) lv++; return lv; }
 const passEnded = () => Date.now() >= SEASON.end;
 function passAddXp(n) {
     if (passEnded()) return;
@@ -3314,15 +3317,16 @@ function passCell(r, track, i, lv, st) {
 }
 function renderPass() {
     const st = passState(), lv = passLevel(), el = $('pass-panel');
-    const inLv = lv >= PASS_MAX ? SEASON.xp : st.xp - lv * SEASON.xp;
+    const need = lv >= PASS_MAX ? 1 : PASS_REQ[lv];
+    const inLv = lv >= PASS_MAX ? 1 : st.xp - (lv ? PASS_CUM[lv - 1] : 0);
     const days = Math.max(0, Math.ceil((SEASON.end - Date.now()) / 86400000));
     const claim = passClaimable();
     el.innerHTML = `
         <div class="ps-head">
             <div class="ps-season"><b>${SEASON.name}</b><small>${passEnded() ? '시즌 종료' : `${days}일 남음`}</small></div>
             <div class="ps-lv"><span>LV</span><b>${lv}</b><small>/ ${PASS_MAX}</small></div>
-            <div class="ps-bar"><div style="width:${inLv / SEASON.xp * 100}%"></div></div>
-            <div class="ps-xp">${lv >= PASS_MAX ? '최고 레벨!' : `${fmt(inLv)} / ${fmt(SEASON.xp)} XP · 롤 1번 = 1 XP · 출석 = 50 XP`}</div>
+            <div class="ps-bar"><div style="width:${inLv / need * 100}%"></div></div>
+            <div class="ps-xp">${lv >= PASS_MAX ? '최고 레벨!' : `${fmt(inLv)} / ${fmt(need)} XP · 롤 1번 = 1 XP · 출석 = 1,000 XP · 레벨이 오를수록 필요한 XP가 늘어요`}</div>
             <div class="ps-tickets"><i class="ticket-ico"></i> 뽑기권 <b>${fmt(gameState.tickets || 0)}</b>장 <small>· 상점 행운 뽑기에서 써요</small></div>
         </div>
         <div class="ps-tracks-head"><span>LV</span><span class="b">BASIC <small>무료</small></span><span class="p">PRO ${st.pro ? '<small>보유 중</small>' : ''}</span></div>
@@ -3632,7 +3636,7 @@ $('attend-panel').addEventListener('click', e => {
     if (r.items) addItems(r.items);
     if (r.eggs) { const eg = petState().eggs; for (const id in r.eggs) eg[id] = (eg[id] || 0) + r.eggs[id]; updatePetDot(); }
     st.last = todayKey(); st.count++; st.total++;
-    passAddXp(50);
+    passAddXp(1000);
     saveGame(); renderStats(); renderAttend(); updateAttendDot();
     playDropSound('LEGEND');
     toast(`📅 출석 ${st.total}일째!\n${[r.jc ? `${fmt(r.jc)} JC` : '', ...Object.entries(r.items || {}).map(([id, n]) => `${SHOP_BY_ID[id].name} ×${n}`), ...Object.entries(r.eggs || {}).map(([id, n]) => `${EGG_BY_ID[id].name} ×${n}`)].filter(Boolean).join(' · ')}`, 'gold');
@@ -3830,7 +3834,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=51')
+import('./aura3d.js?v=52')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {
