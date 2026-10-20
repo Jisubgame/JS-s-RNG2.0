@@ -325,6 +325,36 @@ const GAUNTLETS = {
     },
 
     // 🌠 별똥별: 밤하늘 판금(별 박힌) + 손등 수정 + 팔을 비스듬히 도는 혜성과 꼬리
+    // 🎫 개척자의 건틀렛: 흰 가죽 + 금 테두리, 손등에 도는 나침반, 손목에 휘날리는 깃발 리본
+    pass_gauntlet(g, up, side) {
+        const leather = std('#f2ede2', { rough: 0.6 });
+        const gold = std('#ffcf4a', { metal: 0.9, rough: 0.2, emissive: '#5a3a00', ei: 0.4 });
+        const navy = std('#1f3a7a', { metal: 0.3, rough: 0.4 });
+        shell(g, leather, { top: -0.8, grow: 0.14 });
+        box(g, gold, 1.22, 0.08, 1.22, 0, -0.82, 0);
+        box(g, gold, 1.22, 0.08, 1.22, 0, -1.95, 0);
+        box(g, navy, 1.2, 0.18, 1.2, 0, -1.12, 0);
+        for (let i = 0; i < 4; i++) box(g, gold, 0.08, 0.08, 0.08, (i - 1.5) * 0.28, -1.12, 0.61);
+        // 나침반
+        const comp = new THREE.Group(); comp.position.set(0, -1.5, 0.66);
+        box(comp, gold, 0.5, 0.5, 0.06, 0, 0, 0);
+        box(comp, std('#0b1430', { emissive: '#1a3aa0', ei: 0.6 }), 0.4, 0.4, 0.07, 0, 0, 0.01);
+        const needle = new THREE.Group(); comp.add(needle);
+        box(needle, glow('#ff4a5a', 1), 0.05, 0.18, 0.02, 0, 0.09, 0.05);
+        box(needle, glow('#ffffff', 1), 0.05, 0.18, 0.02, 0, -0.09, 0.05);
+        const ring = box(comp, glow('#ffd23a', 0.5), 0.62, 0.62, 0.02, 0, 0, -0.02, 0, 0, Math.PI / 4);
+        g.add(comp);
+        // 리본 깃발 (바깥쪽으로 휘날림)
+        const flag = new THREE.Group(); flag.position.set(side * 0.62, -0.9, 0); g.add(flag);
+        const segs = Array.from({ length: 5 }, (_, i) => box(flag, i % 2 ? navy : std('#7ad0ff', { emissive: '#2a7aff', ei: 0.4 }), 0.04, 0.16, 0.18, side * (0.05 + i * 0.12), 0, 0));
+        up.push(t => {
+            needle.rotation.z = Math.sin(t * 1.3) * 0.6 + Math.sin(t * 3.1) * 0.15;
+            ring.rotation.z = Math.PI / 4 + t * 0.6;
+            ring.material.opacity = 0.35 + Math.sin(t * 2.4) * 0.15;
+            segs.forEach((b, i) => { b.position.y = Math.sin(t * 6 - i * 0.9) * 0.05 * i; b.rotation.x = Math.sin(t * 6 - i) * 0.3; });
+        });
+    },
+
     gacha_comet(g, up, side) {
         const night = std('#0d1640', { metal: 0.75, rough: 0.25, emissive: '#0a1450', ei: 0.35 });
         const silver = std('#dfe6ff', { metal: 0.95, rough: 0.15 });

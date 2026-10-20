@@ -14,6 +14,107 @@
 
 export const SIGNATURES = {
 
+    /* =================== 🎫 시즌 패스 칭호 =================== */
+
+    /* 시즌1 개척자 — 등에 멘 배낭과 깃발, 발밑에 펼쳐지는 지도, 주위를 도는 나침반 */
+    pioneer({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, BOX, glowMat, square, rand } = kit;
+        const owned = [];
+        const attach = (parent, obj) => { parent.add(obj); owned.push([parent, obj]); };
+        stage.onClear(() => owned.forEach(([p, o]) => p.remove(o)));
+        const box = (m, w, h, d, x, y, z, p = group) => { const b = new THREE.Mesh(BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
+        const canvas = new THREE.MeshStandardMaterial({ color: 0xc8a06a, roughness: 0.8 });
+        const strap = new THREE.MeshStandardMaterial({ color: 0x5a3a20, roughness: 0.7 });
+        // 탐험모 + 배낭
+        const hat = new THREE.Group(); hat.position.y = 0.6;
+        box(canvas, 1.7, 0.1, 1.7, 0, 0, 0, hat); box(canvas, 1.1, 0.45, 1.1, 0, 0.25, 0, hat); box(strap, 1.12, 0.12, 1.12, 0, 0.08, 0, hat);
+        attach(dummy.head, hat);
+        const pack = new THREE.Group(); pack.position.set(0, 0.1, -0.85);
+        box(canvas, 1.6, 1.8, 0.7, 0, 0, 0, pack); box(strap, 1.62, 0.15, 0.72, 0, 0.4, 0, pack); box(new THREE.MeshStandardMaterial({ color: 0x3a6ab0 }), 1.5, 0.35, 0.4, 0, -1.05, 0.05, pack);
+        // 배낭에 꽂힌 깃발
+        const pole = box(new THREE.MeshStandardMaterial({ color: 0x8a6a40 }), 0.08, 3.2, 0.08, 0.6, 1.9, 0, pack);
+        const flag = new THREE.Group(); flag.position.set(0.6, 3.1, 0); pack.add(flag);
+        const fseg = Array.from({ length: 6 }, (_, i) => box(new THREE.MeshStandardMaterial({ color: i % 2 ? new THREE.Color(pick(0)) : new THREE.Color(pick(1)), emissive: pick(0), emissiveIntensity: 0.3, side: THREE.DoubleSide }), 0.24, 0.7, 0.03, 0.12 + i * 0.22, 0, 0, flag));
+        attach(dummy.torso, pack);
+        // 발밑 지도 (격자 + 길 + X 표시)
+        const map = new THREE.Group(); map.position.y = 0.04; group.add(map);
+        box(new THREE.MeshStandardMaterial({ color: 0xe8d4a0, roughness: 0.9 }), 6, 0.04, 4.4, 0, 0, 0, map);
+        for (let i = -2; i <= 2; i++) { box(glowMat(0x8a6a40, 0.35), 6, 0.05, 0.03, 0, 0.01, i * 0.9, map); box(glowMat(0x8a6a40, 0.35), 0.03, 0.05, 4.4, i * 1.2, 0.01, 0, map); }
+        const path = [];
+        for (let i = 0; i < 14; i++) path.push(box(glowMat(pick(1), 0.9), 0.14, 0.06, 0.14, -2.6 + i * 0.4, 0.03, Math.sin(i * 0.7) * 1.3));
+        const xm = new THREE.Group(); xm.position.set(2.7, 0.04, Math.sin(13 * 0.7) * 1.3); map.add(xm);
+        box(glowMat(0xff4a5a, 1), 0.6, 0.06, 0.12, 0, 0, 0, xm).rotation.y = 0.785; box(glowMat(0xff4a5a, 1), 0.6, 0.06, 0.12, 0, 0, 0, xm).rotation.y = -0.785;
+        // 도는 나침반
+        const comp = new THREE.Group(); group.add(comp);
+        const rim = square(1.2, 0.08, glowMat(pick(1), 0.9)); rim.rotation.x = Math.PI / 2; comp.add(rim);
+        const needle = new THREE.Group(); comp.add(needle);
+        box(glowMat(0xff4a5a, 1), 0.1, 0.5, 0.04, 0, 0.25, 0, needle); box(glowMat(0xffffff, 1), 0.1, 0.5, 0.04, 0, -0.25, 0, needle);
+        sig.step = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            fseg.forEach((b, i) => { b.position.z = Math.sin(t * 5 - i * 0.8) * 0.08 * i; b.rotation.y = Math.sin(t * 5 - i * 0.8) * 0.25; });
+            const k = (t * 0.4) % 1;
+            path.forEach((b, i) => { b.material.opacity = 0.25 + 0.75 * Math.max(0, 1 - Math.abs(i / 13 - k) * 5); });
+            xm.scale.setScalar(1 + Math.sin(t * 4) * 0.12);
+            comp.position.set(Math.cos(t * 0.8) * 2.6, 3.6 + Math.sin(t * 1.6) * 0.3 + lift, Math.sin(t * 0.8) * 2.6);
+            comp.rotation.y = -t * 0.8;
+            needle.rotation.z = Math.sin(t * 2.2) * 0.8;
+            sig.step = Math.sin(t * 3);
+        });
+    },
+
+    /* 황금 개척왕 — 황금 갑옷과 망토, 뒤에 꽂힌 황금 깃발 셋, 발밑이 황금으로 물들고 금화가 쏟아짐 */
+    goldKing({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, BOX, glowMat, square, rand, TMP } = kit;
+        stage.setSky('#120c02');
+        const owned = [];
+        const attach = (parent, obj) => { parent.add(obj); owned.push([parent, obj]); };
+        stage.onClear(() => owned.forEach(([p, o]) => p.remove(o)));
+        const box = (m, w, h, d, x, y, z, p = group) => { const b = new THREE.Mesh(BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
+        const gold = new THREE.MeshStandardMaterial({ color: 0xffcf4a, metalness: 0.9, roughness: 0.22, emissive: 0x6a4500, emissiveIntensity: 0.5 });
+        const red = new THREE.MeshStandardMaterial({ color: 0xb01830, roughness: 0.6 });
+        // 갑옷 + 왕관
+        const armor = new THREE.Group(); armor.add(box(gold, 2.16, 2.14, 1.16, 0, 0, 0, armor));
+        box(new THREE.MeshStandardMaterial({ color: 0xfff3c0, emissive: 0xffd23a, emissiveIntensity: 0.8 }), 0.5, 0.5, 0.06, 0, 0.3, 0.6, armor).rotation.z = 0.785;
+        for (const s of [-1, 1]) box(gold, 0.9, 0.5, 1.3, s * 1.25, 0.85, 0, armor);   // 어깨 갑옷
+        attach(dummy.torso, armor);
+        const crown = new THREE.Group(); crown.position.y = 0.72;
+        box(gold, 1.3, 0.3, 1.3, 0, 0, 0, crown);
+        for (let i = 0; i < 4; i++) for (const s of [-1, 1]) box(gold, 0.2, 0.4, 0.2, (i - 1.5) * 0.36, 0.3, s * 0.55, crown);
+        box(new THREE.MeshStandardMaterial({ color: 0xff3b5c, emissive: 0xff3b5c, emissiveIntensity: 0.8 }), 0.22, 0.22, 0.1, 0, 0.05, 0.66, crown);
+        attach(dummy.head, crown);
+        // 망토
+        const cape = new THREE.Group(); cape.position.set(0, 0.9, -0.62);
+        const capeSegs = Array.from({ length: 5 }, (_, i) => box(red, 2.2, 0.62, 0.1, 0, -i * 0.6, 0, cape));
+        attach(dummy.torso, cape);
+        // 뒤에 꽂힌 황금 깃발 셋
+        const flags = [-3.4, 0, 3.4].map((x, k) => {
+            const g = new THREE.Group(); g.position.set(x, 0, -3 - (k === 1 ? 1.2 : 0)); g.userData.noFit = true; group.add(g);
+            box(gold, 0.16, 7.5 + (k === 1 ? 1.5 : 0), 0.16, 0, 3.75 + (k === 1 ? 0.75 : 0), 0, g);
+            const fl = new THREE.Group(); fl.position.y = 7 + (k === 1 ? 1.5 : 0); g.add(fl);
+            const segs = Array.from({ length: 6 }, (_, i) => box(new THREE.MeshStandardMaterial({ color: i % 2 ? 0xffcf4a : 0xb01830, metalness: i % 2 ? 0.8 : 0, roughness: 0.4, side: THREE.DoubleSide }), 0.36, 1.4, 0.04, 0.2 + i * 0.34, -0.6, 0, fl));
+            return segs;
+        });
+        // 황금으로 물드는 바닥
+        const floor = new THREE.Group(); floor.position.y = 0.05; group.add(floor);
+        const tiles = [];
+        for (let x = -3; x <= 3; x++) for (let z = -3; z <= 2; z++) { const tl = box(gold.clone(), 0.95, 0.04, 0.95, x, 0, z, floor); tl.userData.d = Math.hypot(x, z); tiles.push(tl); }
+        // 떨어지는 금화
+        const N = 40, coins = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.16, 0.16, 0.05, 10), new THREE.MeshStandardMaterial({ color: 0xffd23a, metalness: 0.95, roughness: 0.2, emissive: 0x6a4500, emissiveIntensity: 0.6 }), N);
+        group.add(coins);
+        const cp = Array.from({ length: N }, () => ({ x: rand(-4, 4), z: rand(-2.5, 2.5), ph: Math.random(), sp: rand(0.25, 0.45), r: rand(0, 6) }));
+        sig.rule = 0;
+        tick(t => {
+            capeSegs.forEach((b, i) => { b.rotation.x = 0.1 + Math.sin(t * 2.2 - i * 0.6) * 0.06 * i; b.position.z = -i * 0.08; });
+            flags.forEach((segs, k) => segs.forEach((b, i) => { b.position.z = Math.sin(t * 4 + k - i * 0.8) * 0.1 * i; b.rotation.y = Math.sin(t * 4 + k - i * 0.8) * 0.3; }));
+            const wave = (t * 1.5) % 6;
+            tiles.forEach(tl => { const k = Math.max(0, 1 - Math.abs(tl.userData.d - wave) * 0.8); tl.material.emissiveIntensity = 0.3 + k * 1.2; tl.position.y = k * 0.12; });
+            cp.forEach((c, i) => { const k = (t * c.sp + c.ph) % 1; TMP.p.set(c.x, 9 - k * 9, c.z); TMP.e.set(t * 3 + c.r, t * 2, c.r); TMP.q.setFromEuler(TMP.e); TMP.sc.setScalar(1); coins.setMatrixAt(i, TMP.m4.compose(TMP.p, TMP.q, TMP.sc)); });
+            coins.instanceMatrix.needsUpdate = true;
+            sig.rule = Math.max(0, Math.sin(t * 0.8));
+        });
+    },
+
     /* =================== 🆕 새 칭호 (v43) =================== */
 
     /* 연금술사 김가은 — 손 위에서 끓는 플라스크, 주위를 도는 약병, 바닥의 변환진 */

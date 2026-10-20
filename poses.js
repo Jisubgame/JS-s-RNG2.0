@@ -687,6 +687,20 @@ export const POSES = {
         d.head.rotation.x = mix(0.2, -0.25, g); d.root.position.y += 0.3 + g * 0.5 + S(t * 0.9) * 0.08;
         set(d.legL, 0, 0, -0.05); set(d.legR, 0, 0, 0.05);
     },
+    // 시즌1 개척자: 한 손을 이마에 대고 먼 곳을 바라보며 걷는 듯 살랑
+    pass_pioneer(t, d, _r, sig) {
+        const w = sig?.step ?? 0;
+        set(d.armL, -2.2, 0, -0.5); set(d.armR, -0.2 + w * 0.15, 0, 0.2);
+        d.head.rotation.y = 0.3 + S(t * 0.5) * 0.15; d.head.rotation.x = -0.1;
+        set(d.legL, w * 0.25, 0, -0.04); set(d.legR, -w * 0.25, 0, 0.04);
+    },
+    // 황금 개척왕: 허리에 손을 얹고 당당하게, 가끔 한 팔을 앞으로 뻗어 명령
+    pass_goldking(t, d, _r, sig) {
+        const k = sig?.rule ?? 0;
+        set(d.armR, -0.2, 0, -0.6); set(d.armL, mix(-0.2, -1.5, k), 0, mix(0.6, -0.1, k));
+        d.head.rotation.x = -0.12; d.root.position.y += 0.1 + S(t * 1.1) * 0.05;
+        set(d.legL, 0, 0, -0.14); set(d.legR, 0, 0, 0.14);
+    },
     abs_timestop_byungeun(t, d, _r, sig) {
         const k = sig?.stop ?? 0;
         set(d.armL, mix(-0.3, -1.6, k), 0, mix(-0.15, 0, k)); set(d.armR, -0.35, 0, 0.2);

@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Orbit&display=swap" rel="stylesheet">
     <!-- 업데이트할 때: 아래 ?v= 숫자 3곳과 version.json 숫자를 똑같이 올리기 -->
-    <link rel="stylesheet" href="style.css?v=44">
-    <link rel="stylesheet" href="rarity.css?v=44">
+    <link rel="stylesheet" href="style.css?v=45">
+    <link rel="stylesheet" href="rarity.css?v=45">
     <script type="importmap">{ "imports": { "three": "./lib/three.module.js" } }</script>
 </head>
 <body>
@@ -82,14 +82,6 @@
                 <button id="admin-btn" class="icon-btn admin-crown hidden" aria-label="관리자 패널">
                     <svg viewBox="0 0 24 24"><path d="M3 18h18M4 16l-1-9 5 4 4-7 4 7 5-4-1 9z"/></svg>
                 </button>
-                <button id="show-btn" class="icon-btn" aria-label="전시장">
-                    <svg viewBox="0 0 24 24"><path d="M3 9l9-5 9 5M4 9h16M6 9v8M10 9v8M14 9v8M18 9v8M3 20h18M4 17h16"/></svg>
-                    <i class="show-dot attend-dot hidden"></i>
-                </button>
-                <button id="attend-btn" class="icon-btn" aria-label="출석 체크">
-                    <svg viewBox="0 0 24 24"><path d="M4 6h16v14H4z"/><path d="M4 10h16M8 3v5M16 3v5"/><path d="M9 15l2 2 4-4"/></svg>
-                    <i class="attend-dot hidden"></i>
-                </button>
                 <button id="settings-btn" class="icon-btn" aria-label="설정">
                     <svg viewBox="0 0 24 24"><path d="M9 9h6v6H9z"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>
                 </button>
@@ -98,6 +90,27 @@
 
         <!-- 3D 캐릭터가 이 영역 가운데에 서 있음. 안의 글자는 전부 겹쳐 띄워서 크기가 변해도 아래 버튼이 안 움직임 -->
         <section class="stage">
+            <!-- 양옆 대칭 메뉴: 왼쪽 출석·패스 / 오른쪽 신전·암시장 -->
+            <div class="side-dock left">
+                <button id="attend-btn" class="dock-btn" aria-label="출석 체크">
+                    <svg viewBox="0 0 24 24"><path d="M4 6h16v14H4z"/><path d="M4 10h16M8 3v5M16 3v5"/><path d="M9 15l2 2 4-4"/></svg>
+                    <span>출석</span><i class="attend-dot hidden"></i>
+                </button>
+                <button id="pass-btn" class="dock-btn pass" aria-label="시즌 패스">
+                    <svg viewBox="0 0 24 24"><path d="M3 7h18v4a2 2 0 000 4v4H3v-4a2 2 0 000-4z"/><path d="M14 7v12" stroke-dasharray="2 2"/></svg>
+                    <span>패스</span><b class="dock-lv" id="pass-lv">1</b><i class="pass-dot attend-dot hidden"></i>
+                </button>
+            </div>
+            <div class="side-dock right">
+                <button id="show-btn" class="dock-btn temple" aria-label="신전">
+                    <svg viewBox="0 0 24 24"><path d="M3 9l9-5 9 5M4 9h16M6 9v8M10 9v8M14 9v8M18 9v8M3 20h18M4 17h16"/></svg>
+                    <span>신전</span><i class="show-dot attend-dot hidden"></i>
+                </button>
+                <button id="bm-btn" class="dock-btn bm" aria-label="암시장">
+                    <svg viewBox="0 0 24 24"><path d="M4 10h16l-1.5 10h-13z"/><path d="M8 10V7a4 4 0 018 0v3"/><path d="M10 14h4"/></svg>
+                    <span id="bm-label">암시장</span>
+                </button>
+            </div>
             <button id="biome-badge" class="hidden" aria-label="지금 바이옴 정보"></button>
             <div id="aura-display">
                 <div class="stage-hint">ROLL을 눌러 운명을 확인하세요</div>
@@ -197,10 +210,26 @@
         </div>
     </div>
 
+    <!-- 🎫 시즌 패스 -->
+    <div id="sheet-pass" class="sheet-backdrop hidden">
+        <div class="sheet">
+            <div class="sheet-head"><h2>시즌 패스</h2><button class="sheet-close" data-close aria-label="닫기">✕</button></div>
+            <div class="sheet-body"><div id="pass-panel"></div></div>
+        </div>
+    </div>
+
+    <!-- 🕶 암시장 -->
+    <div id="sheet-bm" class="sheet-backdrop hidden">
+        <div class="sheet bm-sheet">
+            <div class="sheet-head"><h2>암시장</h2><button class="sheet-close" data-close aria-label="닫기">✕</button></div>
+            <div class="sheet-body"><div id="bm-panel"></div></div>
+        </div>
+    </div>
+
     <!-- 🏛 전시장 -->
     <div id="sheet-show" class="sheet-backdrop hidden">
         <div class="sheet">
-            <div class="sheet-head"><h2>전시장</h2><button class="sheet-close" data-close aria-label="닫기">✕</button></div>
+            <div class="sheet-head"><h2>신전</h2><button class="sheet-close" data-close aria-label="닫기">✕</button></div>
             <div class="sheet-body"><div id="show-panel"></div></div>
         </div>
     </div>
@@ -233,6 +262,7 @@
             <div class="sheet-head"><h2>도감 <small id="index-progress"></small></h2><button class="sheet-close" data-close aria-label="닫기">✕</button></div>
             <div class="tabs" id="index-tabs">
                 <button class="tab active" data-tab="all">칭호</button>
+                <button class="tab" data-tab="limited">⏳ 한정</button>
                 <button class="tab" data-tab="sets">📚 세트</button>
             </div>
             <div class="sheet-body"><div id="index-grid"></div><div id="set-grid" class="hidden"></div></div>
@@ -506,6 +536,6 @@
 
     <div id="toast-wrap"></div>
 
-    <script type="module" src="script.js?v=44"></script>
+    <script type="module" src="script.js?v=45"></script>
 </body>
 </html>

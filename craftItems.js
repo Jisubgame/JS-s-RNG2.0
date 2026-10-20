@@ -137,5 +137,12 @@ export const CRAFT_ITEMS = [
         name: "사탕 바구니 부적",
         desc: "롤마다 뽑은 칭호 판매가의 10%만큼 JC를 더 받습니다. (한 번에 최대 500 JC)",
         luckBonus: 0, speedBonus: 0, jcBonus: 0.1, jcBonusMax: 500, req: {}
+    },
+    // 🎫 시즌 패스 전용 (PRO 15레벨 보상)
+    {
+        id: "pass_gauntlet", category: "gauntlet", gacha: "pass",
+        name: "개척자의 건틀렛",
+        desc: "시즌 1 PRO 패스 보상. 영구적으로 행운 500%, 속도 15%가 증가합니다.",
+        luckBonus: 5, speedBonus: 0.15, req: {}
     }
 ];

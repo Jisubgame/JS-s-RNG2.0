@@ -1,8 +1,8 @@
-import { AURA_DATA } from './auras.js?v=44';
-import { CRAFT_ITEMS } from './craftItems.js?v=44';
-import { createMusicPlayer, coverArt } from './music.js?v=44';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=44';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=44';
+import { AURA_DATA } from './auras.js?v=45';
+import { CRAFT_ITEMS } from './craftItems.js?v=45';
+import { createMusicPlayer, coverArt } from './music.js?v=45';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=45';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=45';
 
 /* =========================================================
    📦 게임 데이터
@@ -11,14 +11,14 @@ import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiom
 // 등급 = 확률 구간 (자릿수마다 한 등급)
 const GRADES = ["COMMON", "RARE", "EPIC", "LEGEND", "MYTHIC", "ANCIENT", "ABSOLUTE", "JXS"];
 const GRADE_ODDS = {
-    COMMON: "1 in 1 ~ 999",
-    RARE: "1 in 1,000 ~ 9,999",
-    EPIC: "1 in 10,000 ~ 99,999",
-    LEGEND: "1 in 100,000 ~ 999,999",
-    MYTHIC: "1 in 1,000,000 ~ 9,999,999",
-    ANCIENT: "1 in 10,000,000 ~ 99,999,999",
-    ABSOLUTE: "1 in 100,000,000 ~ 999,999,999",
-    JXS: "1 in 1,000,000,000 ~ 9,999,999,999"
+    COMMON: "1 in 1 ~ 99",
+    RARE: "1 in 100 ~ 999",
+    EPIC: "1 in 1,000 ~ 9,999",
+    LEGEND: "1 in 10,000 ~ 99,999",
+    MYTHIC: "1 in 100,000 ~ 999,999",
+    ANCIENT: "1 in 1,000,000 ~ 9,999,999",
+    ABSOLUTE: "1 in 10,000,000 ~ 99,999,999",
+    JXS: "1 in 100,000,000 ~ 999,999,999"
 };
 const HIGH_GRADES = ["LEGEND", "MYTHIC", "ANCIENT", "ABSOLUTE", "JXS"];
 const CUTSCENE_GRADES = ["ANCIENT", "ABSOLUTE", "JXS"];
@@ -30,18 +30,18 @@ const SHOP_ITEMS = [
     { id: "speed_1", name: "속도의 물약 1", price: 500, type: "speed", level: 1, value: 0.15, duration: 180, desc: "+15% 속도 (3분)", frame: "RARE", color: "#4da3ff" },
     { id: "speed_2", name: "속도의 물약 2", price: 1200, type: "speed", level: 2, value: 0.30, duration: 180, desc: "+30% 속도 (3분)", frame: "RARE", color: "#4da3ff" },
     { id: "speed_3", name: "속도의 물약 3", price: 3000, type: "speed", level: 3, value: 0.55, duration: 180, desc: "+55% 속도 (3분)", frame: "RARE", color: "#4da3ff" },
-    { id: "limit_potion", name: "한계의 물약", price: 40000, type: "luck_mult", value: 50000, maxUses: 3, desc: "×50,000 행운 (3회)", frame: "LEGEND", color: "#ff7a1a" },
-    { id: "overcome_potion", name: "극복의 물약", price: 250000, type: "luck_mult", value: 500000, maxUses: 2, desc: "×500,000 행운 (2회)", frame: "MYTHIC", color: "#00e5ff", color2: "#6a5cff" },
-    { id: "heaven_potion", name: "천상의 물약", price: 400000, type: "luck_mult", value: 1500000, maxUses: 1, desc: "×1,500,000 행운 (1회)", frame: "ANCIENT", color: "#ffe39a" },
-    { id: "void_potion", name: "공허의 물약", price: 2000000, type: "luck_mult", value: 7000000, maxUses: 1, desc: "×7,000,000 행운 (1회)", frame: "JXS", unique: "voidpotion", color: "#b026ff", color2: "#ff2d55" },
+    { id: "limit_potion", name: "한계의 물약", price: 40000, type: "luck_mult", value: 6000, maxUses: 3, desc: "×6,000 행운 (3회)", frame: "LEGEND", color: "#ff7a1a" },
+    { id: "overcome_potion", name: "극복의 물약", price: 250000, type: "luck_mult", value: 60000, maxUses: 2, desc: "×60,000 행운 (2회)", frame: "MYTHIC", color: "#00e5ff", color2: "#6a5cff" },
+    { id: "heaven_potion", name: "천상의 물약", price: 400000, type: "luck_mult", value: 180000, maxUses: 1, desc: "×180,000 행운 (1회)", frame: "ANCIENT", color: "#ffe39a" },
+    { id: "void_potion", name: "공허의 물약", price: 2000000, type: "luck_mult", value: 850000, maxUses: 1, desc: "×850,000 행운 (1회)", frame: "JXS", unique: "voidpotion", color: "#b026ff", color2: "#ff2d55" },
     // 🎰 상점 뽑기 전용 (상점에서 안 팔고 뽑기에서만 나옴)
-    { id: "dice_potion", gacha: true, name: "주사위 물약", type: "dice", faces: [10000, 50000, 200000, 500000, 1200000, 3000000], desc: "주사위를 굴려 ×10,000 ~ ×3,000,000 행운 (1회)", frame: "EPIC", color: "#ff3b5c", color2: "#ffffff" },
+    { id: "dice_potion", gacha: true, name: "주사위 물약", type: "dice", faces: [1200, 6000, 24000, 60000, 150000, 360000], desc: "주사위를 굴려 ×1,200 ~ ×360,000 행운 (1회)", frame: "EPIC", color: "#ff3b5c", color2: "#ffffff" },
     { id: "star_potion", gacha: true, name: "별빛 물약", type: "luck", level: 4, value: 3, duration: 180, desc: "+300% 행운 (3분)", frame: "LEGEND", color: "#d7b8ff", color2: "#7ae8ff" },
     { id: "warp_potion", gacha: true, name: "시간 가속 물약", type: "speed", level: 4, value: 1, duration: 120, desc: "+100% 속도 (2분)", frame: "LEGEND", color: "#7ae8ff", color2: "#4da3ff" },
     { id: "biome_potion", gacha: true, name: "바이옴 소환 물약", type: "biome", desc: "지금 바로 랜덤 바이옴을 불러옵니다", frame: "MYTHIC", color: "#8fb8ff", color2: "#ff4a5a" },
     // 🎃 할로윈 한정 뽑기 전용
     { id: "candy_potion", gacha: "halloween", name: "사탕 물약", type: "luck", level: 5, value: 5, duration: 120, desc: "+500% 행운 (2분)", frame: "EPIC", color: "#ff3b7a", color2: "#ffe14d" },
-    { id: "pumpkin_potion", gacha: "halloween", name: "호박 물약", type: "luck_mult", value: 100000, maxUses: 2, desc: "×100,000 행운 (2회)", frame: "LEGEND", color: "#ff7a1a", color2: "#3a8c2a" },
+    { id: "pumpkin_potion", gacha: "halloween", name: "호박 물약", type: "luck_mult", value: 12000, maxUses: 2, desc: "×12,000 행운 (2회)", frame: "LEGEND", color: "#ff7a1a", color2: "#3a8c2a" },
     { id: "ghost_potion", gacha: "halloween", name: "유령 물약", type: "biome", biome: "halloween", desc: "할로윈의 밤 바이옴을 바로 불러옵니다", frame: "MYTHIC", color: "#c8b8ff", color2: "#5a2a8a" }
 ];
 
@@ -108,21 +108,21 @@ const QUEST_DATA = [
         desc: "빠른 롤을 쓸 자격을 증명하세요.",
         rewardDesc: "빠른 롤 해금 + 천상의 물약 5개",
         reward: { unlockQuickRoll: true, items: { heaven_potion: 5 } },
-        targets: { rolls: 2500, rare: 5, epic: 2, jc: 750000, shopPurchases: 10 }
+        targets: { rolls: 2500, epic: 10, legend: 2, jc: 750000, shopPurchases: 10 }
     },
     {
         id: "quest_repeat_overcome", name: "극복의 시련", repeatable: true,
         desc: "지속적인 시련을 극복하고 성장의 기반을 다지세요.",
         rewardDesc: "🧪 극복의 물약 1개 + 🪙 70,000 JC",
         reward: { items: { overcome_potion: 1 }, jc: 70000 },
-        targets: { rolls: 800, rare: 3, epic: 1 }
+        targets: { rolls: 800, rare: 10, epic: 3 }
     },
     {
         id: "quest_repeat_heaven", name: "천상의 시련", repeatable: true,
         desc: "천상에 도달하기 위한 극한의 운명을 테스트하세요.",
         rewardDesc: "🧪 천상의 물약 1개 + 🪙 140,000 JC",
         reward: { items: { heaven_potion: 1 }, jc: 140000 },
-        targets: { rolls: 1500, rare: 5, epic: 2 }
+        targets: { rolls: 1500, epic: 6, legend: 1 }
     }
 ];
 const QUEST_TARGET_LABELS = {
@@ -591,6 +591,7 @@ function startRoll() {
     ui.rollBtn.classList.remove('cooldown-active');
     gameState.rolls++;
     trackQuestProgress("rolls");
+    passAddXp(1);
     renderStats();
     saveGame();
 
@@ -636,7 +637,7 @@ function pickAura() {
     // 바이옴과 어울리는 칭호는 확률 ×boost (N을 boost로 나눈 것과 같음)
     const biome = getBiome();
     // 바이옴 전용 칭호(a.biome)는 그 바이옴일 때만 나옴
-    const effIn = a => a.biome && a.biome !== biome?.id ? Infinity : biome && biome.auras.includes(a.id) ? a.in / biome.boost : a.in;
+    const effIn = a => a.pass || (a.biome && a.biome !== biome?.id) ? Infinity : biome && biome.auras.includes(a.id) ? a.in / biome.boost : a.in;
     if (multBonus > 0) {
         const pool = AURA_DATA.filter(a => effIn(a) > totalLuck && isFinite(effIn(a)));
         const sum = pool.reduce((s, a) => s + totalLuck / effIn(a), 0);
@@ -1024,7 +1025,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=44').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=45').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -1061,11 +1062,13 @@ function renderCraft() {
         if (AMULET_MULT[gear.id]) chips.push(`<span class="chip amulet">10롤마다 행운 ×${AMULET_MULT[gear.id]}</span>`);
         if (gear.amuletMult) chips.push(`<span class="chip amulet">${gear.amuletEvery || 10}롤마다 행운 ×${gear.amuletMult}</span>`);
         if (gear.biomeBoost) chips.push(`<span class="chip biome">바이옴 ×${gear.biomeBoost} · 지속 ×${gear.biomeTime}</span>`);
-        if (gear.gacha) chips.push(`<span class="chip gacha">${gear.gacha === 'halloween' ? '🎃 할로윈 한정' : '뽑기 전용'}</span>`);
+        if (gear.gacha) chips.push(`<span class="chip gacha">${gear.gacha === 'halloween' ? '🎃 할로윈 한정' : gear.gacha === 'pass' ? '🎫 시즌 패스 PRO' : '뽑기 전용'}</span>`);
         if (gear.jcBonus) chips.push(`<span class="chip amulet">롤마다 판매가 ${Math.round(gear.jcBonus * 100)}% JC (최대 ${fmt(gear.jcBonusMax)})</span>`);
         const state = equipped ? '<span class="cstate on">장착 중</span>' : owned ? '<span class="cstate owned">보유</span>' : gear.gacha ? '<span class="cstate">미보유</span>' : `<span class="cstate">${metN}/${reqN}</span>`;
         const btn = owned
             ? `<button class="btn btn-block" data-gotobag="${gear.category}">가방에서 ${equipped ? '해제' : '장착'}</button>`
+            : gear.gacha === 'pass'
+                ? `<button class="btn btn-block" data-gotopass>시즌 패스 PRO 15레벨 보상</button>`
             : gear.gacha
                     ? (gear.gacha === 'halloween' && !isHalloween()
                         ? `<button class="btn btn-block" disabled>할로윈 이벤트 종료</button>`
@@ -1268,13 +1271,23 @@ $('set-grid').addEventListener('click', e => {
 });
 bindTabs('index-tabs', tab => {
     indexTab = tab;
-    ui.indexGrid.classList.toggle('hidden', tab !== 'all');
+    ui.indexGrid.classList.toggle('hidden', tab === 'sets');
     $('set-grid').classList.toggle('hidden', tab !== 'sets');
-    if (tab === 'sets') { renderSets(); stagger($('set-grid')); } else stagger(ui.indexGrid.querySelector('.index-grid'));
+    if (tab === 'sets') { renderSets(); stagger($('set-grid')); } else { renderIndex(); stagger(ui.indexGrid.querySelector('.index-grid')); }
 });
 
+// 한정 칭호: 바이옴 전용 또는 시즌 패스 보상 (일반 롤로는 안 나옴)
+const isLimitedAura = a => !!(a.biome || a.pass);
+const limitedKey = a => a.pass ? 'pass:' + a.pass : 'biome:' + a.biome;
+function limitedTitle(k) {
+    const [t, id] = k.split(':');
+    if (t === 'pass') return `🎫 시즌 패스 ${id === 'pro' ? 'PRO' : 'BASIC'} 보상`;
+    const b = BIOME_BY_ID[id];
+    return b ? `${b.icon} ${b.name} 바이옴 전용` : id;
+}
 // 바이옴 전용 칭호 표시
 function biomeTag(a) {
+    if (a.pass) return `<span class="biome-tag" style="--bc:#b9a8ff">🎫 패스 ${a.pass === 'pro' ? 'PRO' : 'BASIC'} 보상</span>`;
     const b = a.biome && BIOME_BY_ID[a.biome];
     return b ? `<span class="biome-tag" style="--bc:${b.color}">${b.icon} ${b.name} 전용</span>` : '';
 }
@@ -1285,10 +1298,15 @@ function renderIndex() {
     ui.indexProgress.textContent = `${foundCount} / ${total}`;
 
     let html = `<div class="index-bar"><div style="width:${foundCount / total * 100}%"></div></div><div class="index-grid">`;
-    for (const grade of GRADES) {
-        const list = AURA_DATA.filter(a => a.grade === grade);
+    // 한정 칭호(바이옴 전용·시즌 패스)는 '한정' 탭에 따로, 출처별로 묶음
+    const lim = indexTab === 'limited';
+    const groups = lim
+        ? [...new Set(AURA_DATA.filter(isLimitedAura).map(limitedKey))].map(k => ({ key: k, list: AURA_DATA.filter(a => isLimitedAura(a) && limitedKey(a) === k) }))
+        : GRADES.map(g => ({ key: g, list: AURA_DATA.filter(a => a.grade === g && !isLimitedAura(a)) }));
+    for (const { key: grade, list } of groups) {
+        if (!list.length) continue;
         const gFound = list.filter(a => found.has(a.id)).length;
-        html += gradeHeader(grade, `${gFound}/${list.length}`);
+        html += lim ? `<div class="grade-header limited-head">${limitedTitle(grade)} <span class="count">${gFound}/${list.length}</span></div>` : gradeHeader(grade, `${gFound}/${list.length}`);
         for (const a of list) {
             html += found.has(a.id)
                 ? `<div ${frameAttrs(a.grade, auraColors(a), a.frame).replace('class="', 'class="index-cell ')}>${frameDeco(a.grade, a.frame)}<div class="card-name">${auraNameHtml(a)}</div><div class="card-meta">1 in ${fmt(a.in)}${biomeTag(a)}</div></div>`
@@ -1340,6 +1358,8 @@ const SHEET_RENDER = {
     'sheet-profile': () => renderProfileSheet(),
     'sheet-attend': () => renderAttend(),
     'sheet-show': () => renderShowcase(),
+    'sheet-pass': () => renderPass(),
+    'sheet-bm': () => renderBM(),
     'sheet-pet': () => renderPets()
 };
 
@@ -1501,7 +1521,7 @@ $('game-start-btn').addEventListener('click', () => {
         stage3d?.resize();
         applyEquippedAura();
         applyBiome(false);   // 저장된 바이옴이 남아 있으면 이어서
-        updateAttendDot(); updatePetDot(); setInterval(updatePetDot, 60000); updateShowDot(); setInterval(updateShowDot, 60000);
+        updateAttendDot(); updatePetDot(); setInterval(updatePetDot, 60000); updateShowDot(); setInterval(updateShowDot, 60000); updatePassDot(); updateBMBtn();
         startAdminEvents();
         cloudPull();   // 다른 기기에서 하던 기록이 더 많으면 불러옴
         if (!gameState.tutorialDone && !(gameState.rolls > 0)) setTimeout(() => startTutorial(true), 900);   // 처음 온 사람은 튜토리얼부터
@@ -1574,6 +1594,7 @@ $('aura-dialog').addEventListener('click', e => {
 function sellAura(id) {
     const a = AURA_BY_ID[id], count = gameState.inventory[id];
     if (!a || !count) return;
+    if (a.pass) { toast('시즌 패스 칭호는 팔 수 없어요', 'bad'); return; }
     openQtyDialog({
         title: `${a.name}`,
         sub: `${a.grade} 칭호 판매 (보유 ${fmt(count)}개)`,
@@ -1690,6 +1711,9 @@ ui.craftGrid.addEventListener('click', e => {
         return;
     } else if (d.gotogacha) {
         closeSheet('sheet-craft'); openSheet('sheet-shop'); setShopTab(d.gotogacha);
+        return;
+    } else if ('gotopass' in d) {
+        closeSheet('sheet-craft'); openSheet('sheet-pass');
         return;
     } else if (d.equip) {
         equip(CRAFT_BY_ID[d.equip]);
@@ -2085,6 +2109,7 @@ const box_isHatch = () => $('gacha-result').classList.contains('egg-mode');
 const petStarHtml = s => `<span class="pet-star">${'★'.repeat(s)}<i>${'★'.repeat(STAR_MAX - s)}</i></span>`;
 const fmtLeft = ms => { const m = Math.ceil(ms / 60000), h = Math.floor(m / 60); return h ? `${h}시간 ${m % 60}분` : `${m}분`; };
 let petTab = 'nest', petPickNest = -1, petTimer = 0;
+const NEST_PRICE = [500000, 2000000];   // 4번째·5번째 둥지 (최대 5개)
 function updatePetDot() {
     const st = petState();
     const ready = st.nests.some(n => n && n.end <= Date.now());
@@ -2108,6 +2133,9 @@ function renderPets() {
                     <div class="nest-name">${egg.name}</div>
                     ${ready ? '<div class="nest-ready">부화!</div>' : `<div class="nest-bar"><i style="width:${pct}%"></i></div><small class="nest-left" data-left="${n.end}">${fmtLeft(left)}</small>`}
                 </button>`;
+            }).join('')}${NEST_PRICE.slice(st.nests.length - 3).map((price, k) => {
+                const i = st.nests.length + k;
+                return `<button class="nest nest-locked" ${k === 0 ? `data-nestbuy="${i}"` : 'disabled'}><div class="nest-view"><canvas data-gear="nest::idle" aria-hidden="true"></canvas><span class="nest-plus">🔒</span></div><div class="nest-name">${i + 1}번 둥지</div><small>${k === 0 ? `${fmt(price)} JC` : '앞 둥지 먼저'}</small></button>`;
             }).join('')}</div>
             <div class="glabel">가진 알 ${petPickNest >= 0 ? '<span class="pet-hint">· 넣을 알을 골라요</span>' : ''}</div>
             ${eggsOwned.length ? `<div class="egg-inv">${eggsOwned.map(e => `
@@ -2295,6 +2323,15 @@ $('sheet-pet').addEventListener('click', e => {
     const tab = e.target.closest('#sheet-pet .tab');
     if (tab) { petTab = tab.dataset.tab; petPickNest = -1; renderPets(); stagger($('pet-panel')); return; }
     const st = petState();
+    const nb = e.target.closest('[data-nestbuy]');
+    if (nb) {
+        const price = NEST_PRICE[+nb.dataset.nestbuy - 3];
+        if (gameState.jc < price) { toast('JC가 부족해요', 'bad'); return; }
+        gameState.jc -= price; st.nests.push(null);
+        saveGame(); renderStats(); renderPets(); updatePetDot();
+        toast(`🪺 ${st.nests.length}번 둥지를 열었어요`, 'good');
+        return;
+    }
     const nest = e.target.closest('[data-nest]');
     if (nest) {
         const i = +nest.dataset.nest, n = st.nests[i];
@@ -2951,11 +2988,12 @@ function rewardChips(r) {
    🏛 전시장: 가진 칭호를 올려 두면 시간마다 JC가 쌓임 (게임 꺼도 최대 12시간)
    ========================================================= */
 const SHOW_CAP_H = 12;
-const SHOW_SLOT_PRICE = [0, 0, 0, 300000, 1500000];   // 4번째·5번째 받침대는 사서 열기
+const SHOW_SLOTS = 3;   // 신전 받침대는 3개
 const showIncome = a => a ? Math.round(Math.pow(a.in, 0.35) * 30) : 0;   // 시간당 JC
 function showState() {
     const g = gameState;
     if (!g.show) g.show = { slots: [null, null, null], at: Date.now(), bank: 0 };
+    if (g.show.slots.length > SHOW_SLOTS) g.show.slots.length = SHOW_SLOTS;
     return g.show;
 }
 const showAura = id => (id && gameState.inventory[id] > 0) ? AURA_BY_ID[id] : null;   // 팔았으면 빠짐
@@ -2979,25 +3017,33 @@ function renderShowcase() {
     const owned = Object.keys(gameState.inventory).filter(id => gameState.inventory[id] > 0 && AURA_BY_ID[id]).map(id => AURA_BY_ID[id]).sort((a, b) => b.in - a.in);
     const used = new Set(st.slots.filter(Boolean));
     el.innerHTML = `
+        <div class="temple">
+            <div class="tp-roof"><span>전시의 신전</span></div>
+            <div class="tp-frieze">${'<i></i>'.repeat(9)}</div>
+            <div class="tp-hall">
+                <div class="tp-col"></div>
+                ${st.slots.map((id, i) => {
+                    const a = showAura(id);
+                    return `<button class="tp-alcove ${a ? 'on' : ''} ${showPick === i ? 'pick' : ''}" data-showslot="${i}" ${a ? `style="--c:${a.color}"` : ''}>
+                        <div class="tp-beam"></div>
+                        <div class="tp-gem"><i></i></div>
+                        <div class="tp-ped"></div>
+                    </button><div class="tp-col"></div>`;
+                }).join('')}
+            </div>
+            <div class="tp-steps"><i></i><i></i><i></i></div>
+        </div>
+        <div class="tp-labels">${st.slots.map((id, i) => {
+            const a = showAura(id);
+            return `<button class="tp-label ${showPick === i ? 'pick' : ''}" data-showslot="${i}">${a ? `<b class="${gradeCol(a.grade)}">${a.name}</b><small>${a.grade} · 시간당 ${fmt(showIncome(a))}</small>` : `<b>빈 받침대</b><small>눌러서 올리기</small>`}</button>`;
+        }).join('')}</div>
         <div class="show-bank">
             <div class="show-bank-top"><span>쌓인 JC</span><b>${fmt(Math.floor(st.bank))}</b></div>
             <div class="gpity-bar"><div style="width:${cap ? Math.min(100, st.bank / cap * 100) : 0}%"></div></div>
             <div class="show-bank-note">시간당 <b>${fmt(ph)} JC</b> · 게임을 꺼도 최대 ${SHOW_CAP_H}시간치(${fmt(cap)})까지 쌓여요</div>
             <button class="btn btn-block btn-gold" data-showcollect ${st.bank >= 1 ? '' : 'disabled'}>💰 받기</button>
         </div>
-        <div class="glabel">받침대</div>
-        <div class="show-slots">${SHOW_SLOT_PRICE.map((price, i) => {
-            if (i >= st.slots.length) {
-                const next = i === st.slots.length;
-                return `<button class="show-slot locked" ${next ? `data-showbuy="${i}"` : 'disabled'}><span>🔒</span><small>${next ? `${fmt(price)} JC로 열기` : '잠김'}</small></button>`;
-            }
-            const a = showAura(st.slots[i]);
-            return `<button class="show-slot ${a ? 'on' : ''} ${showPick === i ? 'pick' : ''}" data-showslot="${i}" ${a ? `style="--c:${a.color}"` : ''}>
-                <div class="show-ped"><i></i></div>
-                ${a ? `<div class="show-name ${gradeCol(a.grade)}">${a.name}</div><small>${a.grade} · 시간당 ${fmt(showIncome(a))}</small>` : `<div class="show-name">비어 있음</div><small>눌러서 올리기</small>`}
-            </button>`;
-        }).join('')}</div>
-        ${showPick >= 0 ? `<div class="glabel">올릴 칭호 고르기 <span class="pet-hint">· 희귀할수록 많이 벌어요</span></div>
+        ${showPick >= 0 ? `<div class="glabel">${showPick + 1}번 받침대에 올릴 칭호 <span class="pet-hint">· 희귀할수록 많이 벌어요</span></div>
         <div class="show-pick">
             ${st.slots[showPick] ? `<button class="show-opt off" data-showset="">받침대 비우기</button>` : ''}
             ${owned.filter(a => !used.has(a.id) || a.id === st.slots[showPick]).slice(0, 40).map(a => `
@@ -3018,15 +3064,6 @@ $('show-panel').addEventListener('click', e => {
         playTone(880, 'triangle', 0.1 * soundSettings.master, 0.005, 0.15);
         return;
     }
-    const buy = e.target.closest('[data-showbuy]');
-    if (buy) {
-        const i = +buy.dataset.showbuy, price = SHOW_SLOT_PRICE[i];
-        if (gameState.jc < price) { toast('JC가 부족해요', 'bad'); return; }
-        gameState.jc -= price; st.slots.push(null);
-        saveGame(); renderStats(); renderShowcase();
-        toast(`🏛 받침대 ${i + 1}번을 열었어요`, 'good');
-        return;
-    }
     const sl = e.target.closest('[data-showslot]');
     if (sl) { showPick = showPick === +sl.dataset.showslot ? -1 : +sl.dataset.showslot; renderShowcase(); return; }
     const set = e.target.closest('[data-showset]');
@@ -3037,6 +3074,268 @@ $('show-panel').addEventListener('click', e => {
     }
 });
 $('show-btn').addEventListener('click', () => { showPick = -1; openSheet('sheet-show'); });
+
+/* =========================================================
+   🎫 시즌 패스 (BASIC 무료 / PRO 1천만 JC)
+   - 롤 1번 = 1 XP, 출석 = 50 XP. 레벨마다 BASIC·PRO 보상
+   - PRO는 언제 사도 지난 레벨 보상까지 다 받을 수 있음
+   ========================================================= */
+const SEASON = { id: 's1', name: '시즌 1 · 개척의 시대', end: new Date('2026-12-01T00:00:00+09:00').getTime(), xp: 500, pro: 10000000 };
+const PASS_BASIC = [
+    { jc: 10000 }, { items: { luck_3: 3 } }, { jc: 20000 }, { eggs: { egg_basic: 1 } }, { items: { limit_potion: 1 } },
+    { items: { speed_3: 3 } }, { jc: 40000 }, { items: { dice_potion: 1 } }, { eggs: { egg_basic: 2 } }, { eggs: { egg_rare: 1 }, big: true },
+    { jc: 60000 }, { items: { star_potion: 1 } }, { items: { limit_potion: 2 } }, { items: { warp_potion: 1 } }, { jc: 100000, big: true },
+    { eggs: { egg_rare: 1 } }, { items: { biome_potion: 1 } }, { items: { dice_potion: 2 } }, { jc: 120000 }, { items: { overcome_potion: 1 }, big: true },
+    { items: { star_potion: 2 } }, { eggs: { egg_rare: 1 } }, { jc: 150000 }, { items: { limit_potion: 3 } }, { eggs: { egg_legend: 1 }, big: true },
+    { jc: 200000 }, { items: { dice_potion: 2 } }, { items: { heaven_potion: 1 } }, { jc: 300000 }, { aura: 'pass_pioneer', big: true }
+];
+const PASS_PRO = [
+    { jc: 100000 }, { items: { limit_potion: 3 } }, { eggs: { egg_rare: 1 } }, { jc: 150000 }, { items: { heaven_potion: 1 }, big: true },
+    { items: { star_potion: 3 } }, { jc: 200000 }, { eggs: { egg_rare: 2 } }, { items: { overcome_potion: 2 } }, { eggs: { egg_legend: 1 }, big: true },
+    { jc: 250000 }, { items: { dice_potion: 3 } }, { items: { warp_potion: 3 } }, { jc: 300000 }, { gear: 'pass_gauntlet', big: true },
+    { items: { heaven_potion: 1 } }, { eggs: { egg_legend: 1 } }, { jc: 400000 }, { items: { overcome_potion: 2 } }, { eggs: { egg_mythic: 1 }, big: true },
+    { jc: 500000 }, { items: { void_potion: 1 } }, { items: { star_potion: 4 } }, { jc: 600000 }, { eggs: { egg_legend: 2 }, big: true },
+    { items: { heaven_potion: 2 } }, { jc: 800000 }, { items: { void_potion: 1 } }, { jc: 1000000 }, { aura: 'pass_goldking', big: true }
+];
+const PASS_MAX = PASS_BASIC.length;
+function passState() {
+    const g = gameState;
+    if (!g.pass || g.pass.season !== SEASON.id) g.pass = { season: SEASON.id, xp: 0, pro: false, b: [], p: [] };
+    return g.pass;
+}
+const passLevel = () => Math.min(PASS_MAX, Math.floor(passState().xp / SEASON.xp));
+const passEnded = () => Date.now() >= SEASON.end;
+function passAddXp(n) {
+    if (passEnded()) return;
+    const st = passState(), before = passLevel();
+    st.xp += n;
+    if (passLevel() > before) { toast(`🎫 시즌 패스 ${passLevel()}레벨!`, 'gold'); updatePassDot(); }
+}
+function passClaimable() {
+    const st = passState(), lv = passLevel();
+    let n = 0;
+    for (let i = 0; i < lv; i++) { if (!st.b.includes(i)) n++; if (st.pro && !st.p.includes(i)) n++; }
+    return n;
+}
+function updatePassDot() {
+    const lvEl = $('pass-lv'); if (lvEl) lvEl.textContent = passLevel();
+    document.querySelector('.pass-dot')?.classList.toggle('hidden', !passClaimable());
+}
+// 보상 지급 (JC·물약·알·장비·칭호)
+function grantReward(r) {
+    if (r.jc) gameState.jc += r.jc;
+    if (r.items) addItems(r.items);
+    if (r.eggs) { const eg = petState().eggs; for (const id in r.eggs) eg[id] = (eg[id] || 0) + r.eggs[id]; updatePetDot(); }
+    if (r.gear && !gameState.craftedGears.includes(r.gear)) gameState.craftedGears.push(r.gear);
+    if (r.aura) { gameState.inventory[r.aura] = (gameState.inventory[r.aura] || 0) + 1; if (!gameState.discoveredAuras.includes(r.aura)) gameState.discoveredAuras.push(r.aura); }
+}
+function rewardText(r) {
+    return [r.jc ? `${fmt(r.jc)} JC` : '', ...Object.entries(r.items || {}).map(([id, n]) => `${SHOP_BY_ID[id].name} ×${n}`), ...Object.entries(r.eggs || {}).map(([id, n]) => `${EGG_BY_ID[id].name} ×${n}`), r.gear ? CRAFT_BY_ID[r.gear].name : '', r.aura ? `칭호 「${AURA_BY_ID[r.aura].name}」` : ''].filter(Boolean).join(' · ');
+}
+function passCell(r, track, i, lv, st) {
+    const got = (track === 'p' ? st.p : st.b).includes(i);
+    const can = i < lv && !got && (track === 'b' || st.pro);
+    const lockedPro = track === 'p' && !st.pro;
+    let icon = '';
+    if (r.aura) { const a = AURA_BY_ID[r.aura]; icon = `<span class="ps-aura ${gradeCol(a.grade)}" style="--c:${a.color}">✦</span><small class="ps-name">${a.name}</small>`; }
+    else if (r.gear) icon = `<span class="ps-gear"><canvas data-gear="${r.gear}" aria-hidden="true"></canvas></span><small class="ps-name">${CRAFT_BY_ID[r.gear].name}</small>`;
+    else icon = rewardChips(r);
+    return `<button class="ps-cell ${track} ${r.big ? 'big' : ''} ${got ? 'got' : ''} ${can ? 'can' : ''} ${lockedPro ? 'lock' : ''}" ${can ? `data-passclaim="${track}:${i}"` : ''} title="${escapeHtml(rewardText(r))}">${icon}${got ? '<i class="at-check"></i>' : ''}${lockedPro ? '<em>🔒</em>' : ''}</button>`;
+}
+function renderPass() {
+    const st = passState(), lv = passLevel(), el = $('pass-panel');
+    const inLv = lv >= PASS_MAX ? SEASON.xp : st.xp - lv * SEASON.xp;
+    const days = Math.max(0, Math.ceil((SEASON.end - Date.now()) / 86400000));
+    const claim = passClaimable();
+    el.innerHTML = `
+        <div class="ps-head">
+            <div class="ps-season"><b>${SEASON.name}</b><small>${passEnded() ? '시즌 종료' : `${days}일 남음`}</small></div>
+            <div class="ps-lv"><span>LV</span><b>${lv}</b><small>/ ${PASS_MAX}</small></div>
+            <div class="ps-bar"><div style="width:${inLv / SEASON.xp * 100}%"></div></div>
+            <div class="ps-xp">${lv >= PASS_MAX ? '최고 레벨!' : `${fmt(inLv)} / ${fmt(SEASON.xp)} XP · 롤 1번 = 1 XP · 출석 = 50 XP`}</div>
+        </div>
+        <div class="ps-tracks-head"><span>LV</span><span class="b">BASIC <small>무료</small></span><span class="p">PRO ${st.pro ? '<small>보유 중</small>' : ''}</span></div>
+        ${st.pro ? '' : `<button class="btn btn-block ps-buy" data-passbuy ${gameState.jc >= SEASON.pro ? '' : 'disabled'}>👑 PRO 패스 열기 · ${fmt(SEASON.pro)} JC<small>지난 레벨 PRO 보상도 전부 받을 수 있어요 · 전용 건틀렛·칭호</small></button>`}
+        ${claim ? `<button class="btn btn-block btn-gold" data-passall>🎁 받을 수 있는 보상 전부 받기 (${claim})</button>` : ''}
+        <div class="ps-rows">${PASS_BASIC.map((r, i) => `
+            <div class="ps-row ${i < lv ? 'reached' : ''} ${i === lv ? 'next' : ''}">
+                <div class="ps-num">${i + 1}</div>
+                ${passCell(r, 'b', i, lv, st)}
+                ${passCell(PASS_PRO[i], 'p', i, lv, st)}
+            </div>`).join('')}</div>
+        <div class="set-note">시즌이 끝나면 레벨과 보상이 새 시즌으로 바뀌어요. 받은 칭호·장비는 계속 가져요.</div>`;
+    attachGearPreviews(el);
+    // 다음 레벨 줄이 보이게
+    requestAnimationFrame(() => {
+        const row = el.querySelector('.ps-row.next'), body = el.closest('.sheet-body');
+        if (row && body) body.scrollTop = Math.max(0, row.offsetTop - body.offsetTop - body.clientHeight / 2);
+    });
+}
+function passClaim(track, i) {
+    const st = passState();
+    const list = track === 'p' ? st.p : st.b, r = (track === 'p' ? PASS_PRO : PASS_BASIC)[i];
+    if (list.includes(i) || i >= passLevel() || (track === 'p' && !st.pro)) return null;
+    list.push(i); grantReward(r);
+    return r;
+}
+$('pass-panel').addEventListener('click', e => {
+    const st = passState();
+    if (e.target.closest('[data-passbuy]')) {
+        if (gameState.jc < SEASON.pro) { toast('JC가 부족해요', 'bad'); return; }
+        ask({ title: 'PRO 패스를 열까요?', message: `${fmt(SEASON.pro)} JC를 써요.\n지난 레벨 PRO 보상도 바로 받을 수 있어요.`, okText: '열기' }).then(ok => {
+            if (!ok || gameState.jc < SEASON.pro) return;
+            gameState.jc -= SEASON.pro; st.pro = true;
+            saveGame(); renderStats(); renderPass(); updatePassDot();
+            playDropSound('LEGEND'); toast('👑 PRO 패스를 열었어요!', 'gold');
+        });
+        return;
+    }
+    if (e.target.closest('[data-passall]')) {
+        const got = [];
+        for (let i = 0; i < passLevel(); i++) for (const tr of ['b', 'p']) { const r = passClaim(tr, i); if (r) got.push(r); }
+        if (!got.length) return;
+        saveGame(); renderStats(); renderPass(); updatePassDot(); applyGear();
+        toast(`🎁 보상 ${got.length}개를 받았어요`, 'gold');
+        if (got.some(r => r.aura || r.gear)) playDropSound('MYTHIC');
+        return;
+    }
+    const c = e.target.closest('[data-passclaim]');
+    if (c) {
+        const [tr, i] = c.dataset.passclaim.split(':');
+        const r = passClaim(tr, +i);
+        if (!r) return;
+        saveGame(); renderStats(); renderPass(); updatePassDot();
+        toast(`🎫 ${rewardText(r)}`, 'gold');
+        if (r.aura || r.gear) playDropSound('MYTHIC');
+    }
+});
+$('pass-btn').addEventListener('click', () => openSheet('sheet-pass'));
+
+/* =========================================================
+   🕶 암시장: 매일 08:00 / 20:00 (한국 시간)에 10분 동안만 열림
+   - 그 회차마다 모두에게 같은 물건 6개 (날짜로 정해지는 랜덤)
+   - 10% ~ 70% 할인, 한 사람당 한정 수량
+   ========================================================= */
+const BM_HOURS = [8, 20], BM_MIN = 10;
+const kstNow = () => new Date(Date.now() + 9 * 3600000);   // UTC 기준으로 9시간 더한 '한국 시각'
+function bmSession(t = Date.now()) {
+    const k = new Date(t + 9 * 3600000);
+    const day = k.toISOString().slice(0, 10), h = k.getUTCHours(), m = k.getUTCMinutes();
+    for (const H of BM_HOURS) if (h === H && m < BM_MIN) {
+        const start = Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate(), H) - 9 * 3600000;
+        return { key: `${day}-${H}`, end: start + BM_MIN * 60000 };
+    }
+    return null;
+}
+let bmForced = null;   // 개발자 모드에서 강제로 열기
+function bmCurrent() { return bmSession() || (bmForced && bmForced.end > Date.now() ? bmForced : null); }
+function bmNextOpen() {
+    const k = kstNow();
+    for (let d = 0; d < 2; d++) for (const H of BM_HOURS) {
+        const t = Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate() + d, H) - 9 * 3600000;
+        if (t > Date.now()) return t;
+    }
+    return Date.now() + 86400000;
+}
+// 암시장에 나올 수 있는 물건 (가치 = 원래 가격 기준)
+const BM_POOL = [
+    { kind: 'items', items: { luck_3: 5 }, v: 10000 }, { kind: 'items', items: { speed_3: 5 }, v: 15000 },
+    { kind: 'items', items: { limit_potion: 1 }, v: 40000 }, { kind: 'items', items: { overcome_potion: 1 }, v: 250000 },
+    { kind: 'items', items: { heaven_potion: 1 }, v: 400000 }, { kind: 'items', items: { void_potion: 1 }, v: 2000000, rare: true },
+    { kind: 'items', items: { dice_potion: 1 }, v: 90000 }, { kind: 'items', items: { star_potion: 1 }, v: 60000 },
+    { kind: 'items', items: { warp_potion: 1 }, v: 60000 }, { kind: 'items', items: { biome_potion: 1 }, v: 120000 },
+    { kind: 'egg', id: 'egg_basic', v: 40000 }, { kind: 'egg', id: 'egg_rare', v: 220000 }, { kind: 'egg', id: 'egg_legend', v: 1200000, rare: true },
+    { kind: 'egg', id: 'egg_mythic', v: 5000000, rare: true },
+    { kind: 'gear', id: 'gacha_clover', v: 600000, dupe: 60000 }, { kind: 'gear', id: 'gacha_dice', v: 700000, dupe: 80000 },
+    { kind: 'gear', id: 'gacha_compass', v: 1500000, dupe: 150000, rare: true }, { kind: 'gear', id: 'gacha_jackpot', v: 2500000, dupe: 300000, rare: true }
+];
+function bmOffers(key) {
+    // 회차 이름으로 정해지는 랜덤 → 모두가 같은 물건을 봄
+    let h = 2166136261; for (const ch of key) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+    const rnd = () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909)) >>> 0) / 4294967296;
+    const pool = BM_POOL.slice(), out = [];
+    let rares = 0;
+    while (out.length < 6 && pool.length) {
+        const e = pool.splice(Math.floor(rnd() * pool.length), 1)[0];
+        if (e.rare && rares >= 2) continue;
+        if (e.rare) rares++;
+        const off = 10 + Math.floor(rnd() * 13) * 5;                 // 10% ~ 70%
+        const stock = e.v >= 1000000 ? 1 : e.v >= 200000 ? 1 + Math.floor(rnd() * 2) : 2 + Math.floor(rnd() * 4);
+        out.push({ ...e, off, stock, price: Math.round(e.v * (100 - off) / 100 / 100) * 100 });
+    }
+    return out;
+}
+function bmEntryName(e) { return e.kind === 'items' ? gachaEntryName(e) : e.kind === 'egg' ? '🥚 ' + EGG_BY_ID[e.id].name : CRAFT_BY_ID[e.id].name; }
+function bmEntryIcon(e) {
+    if (e.kind === 'items') return vialHtml(SHOP_BY_ID[Object.keys(e.items)[0]]);
+    if (e.kind === 'egg') return `<canvas data-gear="egg:${e.id}" aria-hidden="true"></canvas>`;
+    return `<canvas data-gear="${e.id}" aria-hidden="true"></canvas>`;
+}
+let bmTimer = 0;
+function renderBM() {
+    const el = $('bm-panel'), cur = bmCurrent();
+    clearInterval(bmTimer);
+    if (!cur) {
+        const nx = bmNextOpen(), d = new Date(nx + 9 * 3600000);
+        el.innerHTML = `<div class="bm-closed">
+            <div class="bm-sign">CLOSED</div>
+            <div class="bm-next">다음 오픈 <b>${d.getUTCHours() === 8 ? '오전 8시' : '오후 8시'}</b> · ${fmtLeft(nx - Date.now())} 뒤</div>
+            <div class="set-note">암시장은 매일 오전 8시와 오후 8시에 딱 10분만 열려요.<br>열릴 때마다 물건과 할인율이 바뀌어요 (10% ~ 70%).</div>
+            ${backupGameState !== null ? '<button class="btn btn-block" data-bmforce>🛠 개발자: 지금 열어 보기</button>' : ''}
+        </div>`;
+        return;
+    }
+    const st = gameState.bm && gameState.bm.key === cur.key ? gameState.bm : (gameState.bm = { key: cur.key, bought: {} });
+    const offers = bmOffers(cur.key);
+    el.innerHTML = `
+        <div class="bm-top"><span>🕶 지금 열려 있어요</span><b class="bm-left" data-bmend="${cur.end}">${fmtClock(cur.end - Date.now())}</b></div>
+        <div class="bm-grid">${offers.map((o, i) => {
+            const left = o.stock - (st.bought[i] || 0);
+            return `<div class="bm-item ${left <= 0 ? 'sold' : ''}">
+                <span class="bm-off">-${o.off}%</span>
+                <div class="bm-icon">${bmEntryIcon(o)}</div>
+                <div class="bm-name">${bmEntryName(o)}</div>
+                <div class="bm-price"><s>${fmt(o.v)}</s><b>${fmt(o.price)} JC</b></div>
+                <button class="btn btn-sm ${left > 0 ? 'btn-gold' : ''}" data-bmbuy="${i}" ${left > 0 && gameState.jc >= o.price ? '' : 'disabled'}>${left > 0 ? `구매 · 남은 ${left}개` : '품절'}</button>
+            </div>`;
+        }).join('')}</div>
+        <div class="set-note">수량은 한 사람당이에요. 이미 가진 장비를 사면 강화 +1 (MAX면 JC로 돌려줘요).</div>`;
+    attachGearPreviews(el);
+    bmTimer = setInterval(() => {
+        const t = el.querySelector('[data-bmend]');
+        if ($('sheet-bm').classList.contains('hidden') || !t) return clearInterval(bmTimer);
+        const left = +t.dataset.bmend - Date.now();
+        if (left <= 0) { renderBM(); updateBMBtn(); return; }
+        t.textContent = fmtClock(left);
+    }, 1000);
+}
+const fmtClock = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+$('bm-panel').addEventListener('click', e => {
+    if (e.target.closest('[data-bmforce]')) { bmForced = { key: 'dev-' + Date.now(), end: Date.now() + BM_MIN * 60000 }; renderBM(); updateBMBtn(); return; }
+    const b = e.target.closest('[data-bmbuy]');
+    if (!b) return;
+    const cur = bmCurrent();
+    if (!cur) { renderBM(); return; }
+    const st = gameState.bm, i = +b.dataset.bmbuy, o = bmOffers(cur.key)[i];
+    if ((st.bought[i] || 0) >= o.stock) return;
+    if (gameState.jc < o.price) { toast('JC가 부족해요', 'bad'); return; }
+    gameState.jc -= o.price;
+    st.bought[i] = (st.bought[i] || 0) + 1;
+    const res = gachaGrant({ ...o, tier: 'EPIC' });
+    trackQuestProgress('shopPurchases', 1);
+    saveGame(); renderStats(); renderBM(); applyGear();
+    toast(`🕶 ${bmEntryName(o)}${res.sub ? ` · ${res.sub}` : ''}`, 'gold');
+});
+function updateBMBtn() {
+    const btn = $('bm-btn'), lab = $('bm-label');
+    if (!btn) return;
+    const cur = bmCurrent(), nx = bmNextOpen();
+    btn.classList.toggle('open', !!cur);
+    btn.classList.toggle('soon', !cur && nx - Date.now() < 30 * 60000);
+    lab.textContent = cur ? fmtClock(cur.end - Date.now()) : (nx - Date.now() < 30 * 60000 ? `곧 열림` : '암시장');
+}
+$('bm-btn').addEventListener('click', () => openSheet('sheet-bm'));
+setInterval(updateBMBtn, 1000);
 
 /* ---------- 📖 스포트라이트 튜토리얼 (누를 곳만 밝게) ---------- */
 const TUT_STEPS = [
@@ -3161,6 +3460,7 @@ $('attend-panel').addEventListener('click', e => {
     if (r.items) addItems(r.items);
     if (r.eggs) { const eg = petState().eggs; for (const id in r.eggs) eg[id] = (eg[id] || 0) + r.eggs[id]; updatePetDot(); }
     st.last = todayKey(); st.count++; st.total++;
+    passAddXp(50);
     saveGame(); renderStats(); renderAttend(); updateAttendDot();
     playDropSound('LEGEND');
     toast(`📅 출석 ${st.total}일째!\n${[r.jc ? `${fmt(r.jc)} JC` : '', ...Object.entries(r.items || {}).map(([id, n]) => `${SHOP_BY_ID[id].name} ×${n}`), ...Object.entries(r.eggs || {}).map(([id, n]) => `${EGG_BY_ID[id].name} ×${n}`)].filter(Boolean).join(' · ')}`, 'gold');
@@ -3358,7 +3658,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=44')
+import('./aura3d.js?v=45')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {
