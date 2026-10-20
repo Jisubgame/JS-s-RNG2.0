@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Orbit&display=swap" rel="stylesheet">
     <!-- 업데이트할 때: 아래 ?v= 숫자 3곳과 version.json 숫자를 똑같이 올리기 -->
-    <link rel="stylesheet" href="style.css?v=43">
-    <link rel="stylesheet" href="rarity.css?v=43">
+    <link rel="stylesheet" href="style.css?v=44">
+    <link rel="stylesheet" href="rarity.css?v=44">
     <script type="importmap">{ "imports": { "three": "./lib/three.module.js" } }</script>
 </head>
 <body>
@@ -81,6 +81,10 @@
                 </button>
                 <button id="admin-btn" class="icon-btn admin-crown hidden" aria-label="관리자 패널">
                     <svg viewBox="0 0 24 24"><path d="M3 18h18M4 16l-1-9 5 4 4-7 4 7 5-4-1 9z"/></svg>
+                </button>
+                <button id="show-btn" class="icon-btn" aria-label="전시장">
+                    <svg viewBox="0 0 24 24"><path d="M3 9l9-5 9 5M4 9h16M6 9v8M10 9v8M14 9v8M18 9v8M3 20h18M4 17h16"/></svg>
+                    <i class="show-dot attend-dot hidden"></i>
                 </button>
                 <button id="attend-btn" class="icon-btn" aria-label="출석 체크">
                     <svg viewBox="0 0 24 24"><path d="M4 6h16v14H4z"/><path d="M4 10h16M8 3v5M16 3v5"/><path d="M9 15l2 2 4-4"/></svg>
@@ -190,6 +194,14 @@
         <div class="sheet">
             <div class="sheet-head"><h2>출석 체크</h2><button class="sheet-close" data-close aria-label="닫기">✕</button></div>
             <div class="sheet-body"><div id="attend-panel"></div></div>
+        </div>
+    </div>
+
+    <!-- 🏛 전시장 -->
+    <div id="sheet-show" class="sheet-backdrop hidden">
+        <div class="sheet">
+            <div class="sheet-head"><h2>전시장</h2><button class="sheet-close" data-close aria-label="닫기">✕</button></div>
+            <div class="sheet-body"><div id="show-panel"></div></div>
         </div>
     </div>
 
@@ -494,6 +506,6 @@
 
     <div id="toast-wrap"></div>
 
-    <script type="module" src="script.js?v=43"></script>
+    <script type="module" src="script.js?v=44"></script>
 </body>
 </html>
