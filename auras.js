@@ -335,6 +335,28 @@ export const AURA_DATA = [
     { id: "abs_valkyrie_minchae", name: "발키리 김민채", grade: "ABSOLUTE", in: 61616161, color: "#fff3c0", line: "날개를 펼치는 순간, 전장의 운명이 정해진다",
       fx: { signature: "valkyrie", colors: ["#fff3c0", "#ffd23a", "#7ad0ff"], glow: 0.9 } },
 
+    // 🆕 UPDATE 6 칭호 10개
+    { id: "rare_painter_gaeun", name: "그림 그리는 김가은", grade: "RARE", in: 515, color: "#ff8ac8",
+      fx: { colors: ["#ff8ac8", "#7ad0ff", "#ffe14d"], particles: 20, rise: 0.6, orbit: 4, glow: 0.6 } },
+    { id: "ep_ghostbuster_jisung", name: "유령 사냥꾼 박지성", grade: "EPIC", in: 1414, color: "#7dff9a",
+      fx: { colors: ["#7dff9a", "#ffffff", "#3a8a5a"], particles: 22, rise: 1.0, shards: 3, rings: 2, glow: 0.9 } },
+    { id: "ep_magnet_tv", name: "자석 인간 김티비", grade: "EPIC", in: 3737, color: "#ff4a4a",
+      fx: { colors: ["#ff4a4a", "#4a8aff", "#ffffff"], particles: 18, rise: 0.4, orbit: 6, rings: 2, glow: 0.9 } },
+    { id: "leg_puppeteer_gaeun", name: "인형술사 김가은", grade: "LEGEND", in: 41414, color: "#ff5a7a",
+      fx: { signature: "puppeteer", colors: ["#ff5a7a", "#ffd8e8", "#ffd23a"], glow: 0.7 } },
+    { id: "leg_archer_byungeun", name: "별빛 궁수 공병은", grade: "LEGEND", in: 63636, color: "#ffd98a",
+      fx: { signature: "starArcher", colors: ["#ffd98a", "#9fe8ff", "#ffffff"], glow: 0.7 } },
+    { id: "myth_inkdragon_jisung", name: "먹물 용 박지성", grade: "MYTHIC", in: 383838, color: "#c0202a", line: "붓끝이 지나간 자리에서 용이 깨어난다",
+      fx: { signature: "inkDragon", colors: ["#c0202a", "#2a2a2a", "#f0e6d0"], glow: 0.6 } },
+    { id: "myth_glitch_tv", name: "글리치 김티비", grade: "MYTHIC", in: 909090, color: "#2affff", line: "ERROR: 김티비.exe 가 응답하지 않습니다",
+      fx: { signature: "glitch", colors: ["#2affff", "#ff2a4a", "#7dff6a"], glow: 0.8 } },
+    { id: "anc_worldserpent_minchae", name: "세계뱀 김민채", grade: "ANCIENT", in: 5151515, color: "#5ad68a", line: "끝과 시작이 그녀의 둘레에서 이어진다",
+      fx: { signature: "ouroboros", colors: ["#5ad68a", "#d9b84a", "#ffffff"], glow: 0.8 } },
+    { id: "abs_seraph_tv", name: "세라핌 김티비", grade: "ABSOLUTE", in: 81818181, color: "#ffb03a", line: "여섯 날개가 펼쳐질 때 하늘이 불탄다",
+      fx: { signature: "seraph", colors: ["#ffb03a", "#ff5a1a", "#fff3c0"], glow: 0.9 } },
+    { id: "jxs_dreamweaver_minchae", name: "꿈을 엮는 김민채", grade: "JXS", in: 987654321, color: "#b08aff", line: "잠든 세상의 꿈이 모두 그녀의 실 끝에 매달려 있다",
+      fx: { signature: "dreamWeaver", colors: ["#b08aff", "#ff9ad8", "#9fe8ff"], particles: 20, rise: 0.4, glow: 0.8 } },
+
     // 🌀 레이드 보스 드롭 (롤로는 안 나옴)
     { id: "dng_riftwalker", name: "균열을 걷는 자", grade: "MYTHIC", in: 700000, color: "#ff6ad8", line: "한 걸음마다 세상이 갈라진다", dungeon: true,
       fx: { signature: "riftWalker", colors: ["#ff6ad8", "#c070ff", "#ffffff"], glow: 0.8 } },

@@ -63,7 +63,8 @@ export const RAID_AURAS = {
     dng_riftwalker: 'rift', dng_riftlord: 'rift',
     dng_frostheart: 'ice', dng_dragonheir: 'fire', dng_stormrider: 'volt',
     leg_shadowblade_gunwoo: 'dark', myth_starforger_jisung: 'fire', myth_tidecaller_gaeun: 'ice', anc_clockmaster_byungeun: 'light', jxs_eclipse_gunwoo: 'dark',
-    leg_lantern_minchae: 'fire', leg_mecha_byungeun: 'volt', myth_crystalwitch_tv: 'dark', anc_skywhale_gaeun: 'ice', abs_valkyrie_minchae: 'light'
+    leg_lantern_minchae: 'fire', leg_mecha_byungeun: 'volt', myth_crystalwitch_tv: 'dark', anc_skywhale_gaeun: 'ice', abs_valkyrie_minchae: 'light',
+    leg_archer_byungeun: 'light', myth_glitch_tv: 'rift', anc_worldserpent_minchae: 'dark', abs_seraph_tv: 'fire', jxs_dreamweaver_minchae: 'ice'
 };
 // 등급 차이는 작게 (JXS 하나로 다 이기지 않게) — 속성·팀 구성이 더 중요
 const GRADE_STAT = { EPIC: [900, 6000], LEGEND: [980, 6400], MYTHIC: [1060, 6800], ANCIENT: [1140, 7200], ABSOLUTE: [1220, 7600], JXS: [1300, 8000] };
@@ -539,7 +540,7 @@ export function createDungeon(api) {
         wireNet();
         api.setBusy(true);
         buildBattleUI();
-        import('./boss3d.js?v=63').then(({ createBossScene }) => {
+        import('./boss3d.js?v=64').then(({ createBossScene }) => {
             if (!B || B.net !== net) return;
             B.scene = createBossScene(B.bd.id);
             api.setTakeover(B.scene);

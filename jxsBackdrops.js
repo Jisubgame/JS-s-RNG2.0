@@ -424,5 +424,38 @@ export const JXS_BACKDROPS = {
             ash.instanceMatrix.needsUpdate = true;
             horizon.material.opacity = 0.3 + 0.1 * Math.sin(t * 0.8);
         });
+    },
+    /* 꿈을 엮는 자 — 보랏빛 꿈 하늘에 걸린 거대한 초승달, 폭포가 흘러내리는 떠 있는 섬들, 구름 바다와 쏟아지는 별똥별 */
+    dreamWeaver(ctx) {
+        const { kit, tick, pick } = ctx;
+        const { THREE, glowMat, rand } = kit;
+        const { far, box, std } = setup(ctx);
+        const moon = new THREE.Group(); moon.position.set(-8, 17, -28); far.add(moon);
+        const m1 = disc(kit, 5, glowMat(0xfff3c0, 0.95)); moon.add(m1);
+        const cut = disc(kit, 4.6, new THREE.MeshBasicMaterial({ color: 0x140a24 })); cut.position.set(1.8, 1.0, 0.1); moon.add(cut);
+        const mg = disc(kit, 8, glowMat(pick(0), 0.15)); mg.position.z = -0.2; moon.add(mg);
+        const isles = [[-14, 8, -22, 1.4], [12, 11, -24, 1.8], [4, 5, -18, 1.0], [-4, 13, -26, 1.2]].map(([x, y, z, s2]) => {
+            const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(s2); far.add(g);
+            box(std(0x7ad65a, 0x1a4a1a, 0.4), 4, 0.6, 4, 0, 0, 0, g); box(std(0x8a6a4a), 3.2, 1.4, 3.2, 0, -1, 0, g); box(std(0x6a4a3a), 1.6, 1.4, 1.6, 0, -2.4, 0, g);
+            box(std(0xff9ac8, 0x6a2a4a, 0.5), 0.8, 1.6, 0.8, 0.8, 1.1, 0.3, g); box(std(0x5a3a2a), 0.25, 1, 0.25, 0.8, 0.5, 0.3, g);
+            const fall = box(glowMat(0x9fe8ff, 0.5), 0.5, 6, 0.3, -1.6, -3.3, 1.4, g);
+            return { g, y, fall };
+        });
+        const C = 40, cloud = inst(kit, C, std(0xe8d8ff, 0x6a5aaa, 0.5), far);
+        const cp = Array.from({ length: C }, () => ({ x: rand(-40, 40), z: rand(-32, -16), s: rand(2, 5), ph: rand(0, 6) }));
+        const S2 = 6, shoot = inst(kit, S2, glowMat(0xffffff, 0.9), far);
+        const sp = Array.from({ length: S2 }, () => ({ x: rand(-30, 30), y: rand(18, 28), ph: Math.random() }));
+        const ST = 80, stars = inst(kit, ST, glowMat(pick(1), 0.85), far);
+        const stp = Array.from({ length: ST }, () => ({ x: rand(-40, 40), y: rand(10, 34), z: rand(-34, -24), s: rand(0.08, 0.2), ph: rand(0, 6) }));
+        tick(t => {
+            moon.rotation.z = Math.sin(t * 0.2) * 0.05;
+            isles.forEach((o, i) => { o.g.position.y = o.y + Math.sin(t * 0.5 + i) * 0.6; o.fall.material.opacity = 0.35 + 0.15 * Math.sin(t * 3 + i); });
+            cp.forEach((o, i) => put(kit, cloud, i, o.x + Math.sin(t * 0.1 + o.ph) * 2, 1.5 + Math.sin(t * 0.3 + o.ph) * 0.3, o.z, o.s, 0, o.ph, 0, o.s * 0.35, o.s * 0.7));
+            cloud.instanceMatrix.needsUpdate = true;
+            sp.forEach((o, i) => { const k = (t * 0.3 + o.ph) % 1; put(kit, shoot, i, o.x + k * 14, o.y - k * 8, -26, k < 0.6 ? 2.4 : 0.01, 0, 0, -0.5, 0.1, 0.1); });
+            shoot.instanceMatrix.needsUpdate = true;
+            stp.forEach((o, i) => put(kit, stars, i, o.x, o.y, o.z, o.s * (0.6 + 0.4 * Math.sin(t * 2 + o.ph))));
+            stars.instanceMatrix.needsUpdate = true;
+        });
     }
 };

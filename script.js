@@ -1,9 +1,9 @@
-import { AURA_DATA } from './auras.js?v=63';
-import { CRAFT_ITEMS } from './craftItems.js?v=63';
-import { createMusicPlayer, coverArt } from './music.js?v=63';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=63';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=63';
-import { createDungeon, raidInfo, bossesWeakTo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=63';
+import { AURA_DATA } from './auras.js?v=64';
+import { CRAFT_ITEMS } from './craftItems.js?v=64';
+import { createMusicPlayer, coverArt } from './music.js?v=64';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=64';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=64';
+import { createDungeon, raidInfo, bossesWeakTo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=64';
 
 /* =========================================================
    📦 게임 데이터
@@ -1217,7 +1217,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=63').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=64').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -2182,7 +2182,7 @@ function renderGacha() {
         <div class="gpity ${pityHelpOpen ? 'open' : ''}">
             <div class="gpity-top"><span>장비 천장 <button class="gpity-help" data-pityhelp aria-label="천장 확률 보기">?</button></span><span><b>${pity}</b> / ${B.pity}</span></div>
             <div class="gpity-bar"><div style="width:${pity / B.pity * 100}%"></div></div>
-            <div class="gpity-note">${B.pity}번 안에 <b>새 장비</b>가 안 나오면 ${B.pity}번째에 아직 없는 장비 하나가 확정! (이미 있는 장비가 나오면 강화되고 천장은 그대로)</div>
+            <div class="gpity-note">${B.pity}번 안에 <b>새 장비</b>가 안 나오면 ${B.pity}번째에 장비 하나가 확정! (천장 땐 가진 장비도 나와요 · 평소에 가진 장비가 나오면 강화되고 천장은 그대로)</div>
             <div class="gpity-odds">${gears.map(e => `<span style="--c:${TIER_COL[e.tier]}"><i></i>${CRAFT_BY_ID[e.id].name.replace(/ (건틀렛|부적)$/, '')}<b>${pityPct(B, e)}</b></span>`).join('')}</div>
         </div>
         ${!hw && (gameState.tickets || 0) > 0 ? `<button class="gbtn gbtn-ticket" data-ticket><i class="ticket-ico"></i><span>뽑기권으로 뽑기</span><b>${fmt(gameState.tickets)}장 남음</b></button>` : ''}
@@ -2213,15 +2213,12 @@ function renderGacha() {
     attachGearPreviews(el.querySelector('.ggears'));
 }
 
-// 천장 때 나올 수 있는 장비: 아직 없는 장비만 (다 모았으면 전부)
+// 천장 뽑기: 이미 가진 장비 포함, 모든 장비가 원래 천장 확률대로 나옴 (가진 건 강화)
 function pityPool(B) {
-    const gears = B.pool.filter(e => e.kind === 'gear');
-    const fresh = gears.filter(e => !gameState.craftedGears.includes(e.id));
-    return fresh.length ? fresh : gears;
+    return B.pool.filter(e => e.kind === 'gear');
 }
 function pityPct(B, e) {
     const pool = pityPool(B);
-    if (!pool.includes(e)) return '보유 · 제외';
     return gachaPct(e.pw ?? e.w, pool.reduce((s, x) => s + (x.pw ?? x.w), 0));
 }
 // 천장은 '새 장비'가 나올 때만 초기화 (이미 있는 장비가 나오면 강화만 되고 천장은 그대로)
@@ -4068,7 +4065,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=63')
+import('./aura3d.js?v=64')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {

@@ -801,6 +801,54 @@ export const POSES = {
         d.root.position.y += 0.8 + k * 0.6 + S(t * 1.3) * 0.1; d.head.rotation.x = -0.15 - k * 0.1;
         set(d.legL, 0.2, 0, -0.06); set(d.legR, -0.1, 0, 0.06);
     },
+    // 인형술사 김가은: 두 팔을 들어 조종대를 번갈아 당김
+    leg_puppeteer_gaeun(t, d, _r, sig) {
+        const k = sig?.pull ?? 0;
+        set(d.armL, -2.3 + k * 0.25, 0, -0.4); set(d.armR, -2.3 - k * 0.25, 0, 0.4);
+        d.head.rotation.x = -0.25; d.root.rotation.y = k * 0.1;
+        set(d.legL, 0, 0, -0.08); set(d.legR, 0, 0, 0.08);
+    },
+    // 별빛 궁수 공병은: 활을 앞으로 겨누고 시위를 당겼다 놓으며 하늘로 쏨
+    leg_archer_byungeun(t, d, _r, sig) {
+        const k = sig?.draw ?? 0;
+        set(d.armL, -2.6, 0, -0.1); set(d.armR, -2.4 + k * 0.4, 0, 0.6 - k * 0.3);
+        d.root.rotation.y = 0.5; d.head.rotation.set(-0.5, -0.3, 0);
+        set(d.legL, -0.25, 0, -0.12); set(d.legR, 0.2, 0, 0.12);
+    },
+    // 먹물 용 박지성: 붓을 크게 휘두르며 획을 그음
+    myth_inkdragon_jisung(t, d, _r, sig) {
+        const k = sig?.stroke ?? 0;
+        set(d.armR, -1.6 + k * 0.6, 0, 0.5 + k * 0.4); set(d.armL, -0.3, 0, -0.4);
+        d.root.rotation.y = k * 0.25; d.root.rotation.x = 0.06;
+        set(d.legL, -0.2, 0, -0.12); set(d.legR, 0.15, 0, 0.12);
+    },
+    // 글리치 김티비: 뻣뻣하게 서 있다 끊길 때 관절이 엉뚱하게 꺾임
+    myth_glitch_tv(t, d, _r, sig) {
+        const g = sig?.glitch ?? 0;
+        set(d.armL, g ? -1.7 : -0.1, 0, g ? -0.3 : -0.08); set(d.armR, g ? 0.6 : -0.1, 0, g ? 1.4 : 0.08);
+        d.head.rotation.set(g ? 0.4 : 0, g ? 0.8 : 0, g ? -0.3 : 0);
+        set(d.legL, 0, 0, -0.05); set(d.legR, g ? -0.4 : 0, 0, 0.05);
+    },
+    // 세계뱀 김민채: 팔짱을 낀 채 뱀 고리 안에 떠 있음
+    anc_worldserpent_minchae(t, d, _r, sig) {
+        set(d.armL, -1.4, 0, 0.9); set(d.armR, -1.4, 0, -0.9);
+        d.root.position.y += 0.5 + S(t * 0.8) * 0.12; d.head.rotation.x = -0.1 + (sig?.coil ?? 0) * 0.05;
+        set(d.legL, 0.1, 0, -0.04); set(d.legR, -0.05, 0, 0.04);
+    },
+    // 세라핌 김티비: 불타는 검을 하늘로 높이 치켜들고 공중에 뜸
+    abs_seraph_tv(t, d, _r, sig) {
+        const k = sig?.raise ?? 0;
+        set(d.armR, 0, 0, mix(2.4, 2.9, k)); set(d.armL, -0.4, 0, -0.9);
+        d.root.position.y += 1.0 + S(t * 1.1) * 0.15; d.head.rotation.x = -0.3;
+        set(d.legL, 0.2, 0, -0.04); set(d.legR, -0.1, 0, 0.04);
+    },
+    // 꿈을 엮는 김민채: 손끝을 돌리며 실을 엮고, 잠든 듯 둥실
+    jxs_dreamweaver_minchae(t, d, _r, sig) {
+        const w = sig?.weave ?? 0;
+        set(d.armL, -1.2 + w * 0.3, 0, -0.6); set(d.armR, -1.2 - w * 0.3, 0, 0.6);
+        d.root.position.y += 1.0 + S(t * 0.8) * 0.15; d.root.rotation.z = S(t * 0.6) * 0.06; d.head.rotation.z = 0.15;
+        set(d.legL, 0.3, 0, -0.05); set(d.legR, 0.1, 0, 0.05);
+    },
     // 시즌1 개척자: 한 손을 이마에 대고 먼 곳을 바라보며 걷는 듯 살랑
     pass_pioneer(t, d, _r, sig) {
         const w = sig?.step ?? 0;
