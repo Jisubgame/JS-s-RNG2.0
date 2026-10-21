@@ -1,9 +1,9 @@
-import { AURA_DATA } from './auras.js?v=62';
-import { CRAFT_ITEMS } from './craftItems.js?v=62';
-import { createMusicPlayer, coverArt } from './music.js?v=62';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=62';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=62';
-import { createDungeon, raidInfo, bossesWeakTo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=62';
+import { AURA_DATA } from './auras.js?v=63';
+import { CRAFT_ITEMS } from './craftItems.js?v=63';
+import { createMusicPlayer, coverArt } from './music.js?v=63';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=63';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=63';
+import { createDungeon, raidInfo, bossesWeakTo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=63';
 
 /* =========================================================
    📦 게임 데이터
@@ -58,6 +58,8 @@ const GACHA_POOL = [
     { kind: 'egg', id: 'egg_rare', w: 32, tier: 'EPIC' },
     { kind: 'egg', id: 'egg_legend', w: 9, tier: 'LEGEND' },
     { kind: 'egg', id: 'egg_mythic', w: 2, tier: 'MYTHIC' },
+    { kind: 'egg', id: 'egg_forest', w: 45, tier: 'RARE' },
+    { kind: 'egg', id: 'egg_ancient', w: 0.4, tier: 'ANCIENT' },
     { kind: 'items', items: { luck_3: 2, speed_3: 2 }, w: 230, tier: 'COMMON', label: '물약 꾸러미' },
     { kind: 'items', items: { limit_potion: 1 }, w: 100, tier: 'RARE' },
     { kind: 'items', items: { dice_potion: 1 }, w: 60, tier: 'RARE' },
@@ -1215,7 +1217,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=62').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=63').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -2536,7 +2538,7 @@ function renderPets() {
         attachGearPreviews(el);
     } else {
         el.innerHTML = `<div class="glabel">펫 도감 <span style="letter-spacing:0">${PETS.filter(p => st.petList.some(x => x.id === p.id)).length} / ${PETS.length}</span></div>
-        <div class="ggears">${PETS.map(p => {
+        <div class="ggears">${[...PETS].sort((a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier)).map(p => {
             const best = Math.max(0, ...st.petList.filter(x => x.id === p.id).map(x => x.s));
             return `<div class="ggear ${best ? 'own' : 'locked'}" style="--c:${TIER_COL[p.tier]}">
                 <div class="ggear-view"><canvas data-gear="${p.id}" aria-hidden="true"></canvas>${best ? `<span class="ggear-own">★${best}</span>` : ''}</div>
@@ -2594,7 +2596,7 @@ function devHatch(kind) {
     showHatch(best, got);
 }
 // 펫 판매가: 등급 기본값 × 2^(성-1)
-const PET_SELL = { COMMON: 3000, RARE: 12000, EPIC: 45000, LEGEND: 180000, MYTHIC: 700000 };
+const PET_SELL = { COMMON: 3000, RARE: 12000, EPIC: 45000, LEGEND: 180000, MYTHIC: 700000, ANCIENT: 3000000, ABSOLUTE: 12000000 };
 const petSellPrice = (id, s) => PET_SELL[PET_BY_ID[id].tier] * Math.pow(2, s - 1);
 function sellPet(u) {
     const st = petState(), p = st.petList.find(x => x.u === u);
@@ -3650,7 +3652,8 @@ const BM_POOL = [
     { kind: 'items', items: { dice_potion: 1 }, v: 90000 }, { kind: 'items', items: { star_potion: 1 }, v: 60000 },
     { kind: 'items', items: { warp_potion: 1 }, v: 60000 }, { kind: 'items', items: { biome_potion: 1 }, v: 120000 },
     { kind: 'egg', id: 'egg_basic', v: 40000 }, { kind: 'egg', id: 'egg_rare', v: 220000 }, { kind: 'egg', id: 'egg_legend', v: 1200000, rare: true },
-    { kind: 'egg', id: 'egg_mythic', v: 5000000, rare: true },
+    { kind: 'egg', id: 'egg_mythic', v: 5000000, rare: true }, { kind: 'egg', id: 'egg_forest', v: 120000 },
+    { kind: 'egg', id: 'egg_ancient', v: 15000000, rare: true },
     { kind: 'items', items: { nebula_potion: 1 }, v: 7000000, rare: true }, { kind: 'items', items: { genesis_potion: 1 }, v: 35000000, rare: true },
     { kind: 'gear', id: 'gacha_clover', v: 600000, dupe: 60000 }, { kind: 'gear', id: 'gacha_dice', v: 700000, dupe: 80000 },
     { kind: 'gear', id: 'gacha_compass', v: 1500000, dupe: 150000, rare: true }, { kind: 'gear', id: 'gacha_jackpot', v: 2500000, dupe: 300000, rare: true }
@@ -4065,7 +4068,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=62')
+import('./aura3d.js?v=63')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {

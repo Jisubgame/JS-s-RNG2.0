@@ -6,7 +6,7 @@
    ========================================================= */
 
 import * as THREE from 'three';
-import { EGG_BY_ID } from './petsData.js?v=62';
+import { EGG_BY_ID } from './petsData.js?v=63';
 
 // 위아래가 다른 달걀 모양 (깎은 보석처럼 각지게)
 const EGG_GEO = (() => {
@@ -26,16 +26,18 @@ function rng(seed) {
     return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
 }
 
+const HI = ['MYTHIC', 'ANCIENT', 'ABSOLUTE'];
 function buildEgg(egg, sparkle) {
+    const hi = HI.includes(egg.tier), top = egg.tier === 'ANCIENT' || egg.tier === 'ABSOLUTE';
     const g = new THREE.Group();
     const col = new THREE.Color(egg.color);
     const shell = new THREE.Mesh(EGG_GEO, new THREE.MeshStandardMaterial({
-        color: col, flatShading: true, roughness: 0.45, metalness: egg.tier === 'MYTHIC' || egg.tier === 'LEGEND' ? 0.35 : 0.05,
-        emissive: col, emissiveIntensity: egg.tier === 'MYTHIC' ? 0.35 : egg.tier === 'LEGEND' ? 0.18 : 0.04
+        color: col, flatShading: true, roughness: 0.45, metalness: hi || egg.tier === 'LEGEND' ? (top ? 0.6 : 0.35) : 0.05,
+        emissive: col, emissiveIntensity: top ? 0.5 : hi ? 0.35 : egg.tier === 'LEGEND' ? 0.18 : 0.04
     }));
     g.add(shell);
     // 무늬: 껍데기 표면에 붙은 네모 점
-    const spotMat = new THREE.MeshStandardMaterial({ color: egg.spot, flatShading: true, roughness: 0.5, emissive: egg.spot, emissiveIntensity: egg.tier === 'MYTHIC' ? 0.6 : 0.1 });
+    const spotMat = new THREE.MeshStandardMaterial({ color: egg.spot, flatShading: true, roughness: 0.5, emissive: egg.spot, emissiveIntensity: hi ? (top ? 1.2 : 0.6) : 0.1 });
     const r = rng(egg.id.length * 977 + egg.hours * 31);
     for (let i = 0; i < 9; i++) {
         const y = -0.65 + r() * 1.3, a = r() * Math.PI * 2;
@@ -48,14 +50,21 @@ function buildEgg(egg, sparkle) {
         g.add(m);
     }
     // 띠 (전설·신화 알)
-    if (egg.tier === 'LEGEND' || egg.tier === 'MYTHIC') {
+    if (egg.tier === 'LEGEND' || hi) {
         const band = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.045, 4, 20), new THREE.MeshStandardMaterial({ color: '#fff3c0', emissive: egg.spot, emissiveIntensity: 0.7, metalness: 0.6, roughness: 0.3 }));
         band.rotation.x = Math.PI / 2; band.position.y = 0.05;
         g.add(band);
     }
     // 반짝이 (신화 알은 항상, 다 깐 알도)
     const sparks = [];
-    if (sparkle || egg.tier === 'MYTHIC') {
+    // 고대·우주의 알: 띠 하나 더 + 둘레를 도는 고리
+    if (top) {
+        const band2 = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.04, 4, 20), new THREE.MeshStandardMaterial({ color: '#fff3c0', emissive: egg.spot, emissiveIntensity: 0.9, metalness: 0.7, roughness: 0.3 }));
+        band2.rotation.x = Math.PI / 2; band2.position.y = -0.35; g.add(band2);
+        const halo = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.03, 4, 32), new THREE.MeshBasicMaterial({ color: egg.spot, transparent: true, opacity: 0.7, toneMapped: false }));
+        halo.rotation.x = 1.2; g.add(halo); g.userData.halo = halo;
+    }
+    if (sparkle || hi) {
         const sm = new THREE.MeshBasicMaterial({ color: sparkle ? '#fff6b0' : egg.spot });
         for (let i = 0; i < 6; i++) {
             const m = new THREE.Mesh(BOX, sm);
@@ -63,12 +72,12 @@ function buildEgg(egg, sparkle) {
             g.add(m); sparks.push(m);
         }
     }
-    g.userData.update = t => sparks.forEach((m, i) => {
+    g.userData.update = t => { if (g.userData.halo) g.userData.halo.rotation.z = t * 0.8; sparks.forEach((m, i) => {
         const a = t * 1.6 + i * 1.05;
         m.position.set(Math.cos(a) * 1.15, Math.sin(t * 2 + i) * 0.7, Math.sin(a) * 1.15);
         m.rotation.set(t * 2, t * 3, 0);
         m.scale.setScalar(0.06 + 0.05 * (0.5 + 0.5 * Math.sin(t * 5 + i * 2)));
-    });
+    }); };
     return g;
 }
 

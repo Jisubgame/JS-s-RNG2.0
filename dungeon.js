@@ -97,7 +97,10 @@ export const CHESTS = {
         { kind: 'egg', id: 'egg_rare', w: 18, tier: 'RARE' },
         { kind: 'dtk', n: 1, w: 10, tier: 'RARE' },
         { kind: 'egg', id: 'egg_legend', w: 7, tier: 'EPIC' },
-        { kind: 'egg', id: 'egg_mythic', w: 1.6, tier: 'LEGEND' }] },
+        { kind: 'egg', id: 'egg_forest', w: 14, tier: 'RARE' },
+        { kind: 'egg', id: 'egg_mythic', w: 1.6, tier: 'LEGEND' },
+        { kind: 'egg', id: 'egg_ancient', w: 0.6, tier: 'MYTHIC' },
+        { kind: 'egg', id: 'egg_cosmic', w: 0.08, tier: 'ABSOLUTE' }] },
     magma: { name: '용암의 상자', theme: 'JC · 주사위', pool: [
         { kind: 'jc', min: 80000, max: 180000, w: 42, tier: 'COMMON', label: '녹은 금화' },
         { kind: 'items', items: { dice_potion: 3 }, w: 20, tier: 'RARE' },
@@ -536,7 +539,7 @@ export function createDungeon(api) {
         wireNet();
         api.setBusy(true);
         buildBattleUI();
-        import('./boss3d.js?v=62').then(({ createBossScene }) => {
+        import('./boss3d.js?v=63').then(({ createBossScene }) => {
             if (!B || B.net !== net) return;
             B.scene = createBossScene(B.bd.id);
             api.setTakeover(B.scene);
