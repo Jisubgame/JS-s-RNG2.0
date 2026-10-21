@@ -457,5 +457,41 @@ export const JXS_BACKDROPS = {
             stp.forEach((o, i) => put(kit, stars, i, o.x, o.y, o.z, o.s * (0.6 + 0.4 * Math.sin(t * 2 + o.ph))));
             stars.instanceMatrix.needsUpdate = true;
         });
-    }
+    },
+
+    /* 태초의 박지성 — 뒤에서 우주가 막 태어남: 빛나는 원초의 점, 퍼져 나가는 충격파, 성운 구름, 생겨나는 행성들 */
+    genesis(ctx) {
+        const { kit, tick, pick } = ctx;
+        const { THREE, glowMat, rand } = kit;
+        const { far, box, std } = setup(ctx);
+        const core = new THREE.Group(); core.position.set(0, 13, -30); far.add(core);
+        const c1 = disc(kit, 3, glowMat(0xffffff, 1)); core.add(c1);
+        const c2 = disc(kit, 6, glowMat(pick(0), 0.35)); c2.position.z = -0.2; core.add(c2);
+        const c3 = disc(kit, 11, glowMat(pick(1), 0.12)); c3.position.z = -0.4; core.add(c3);
+        const waves = Array.from({ length: 4 }, (_, i) => { const m = new THREE.Mesh(new THREE.RingGeometry(0.96, 1, 64), glowMat(i % 2 ? pick(1) : 0xfff3c0, 0.6)); core.add(m); return m; });
+        const RAY = 16, rays = inst(kit, RAY, glowMat(0xfff3d0, 0.35), core);
+        const C = 60, neb = inst(kit, C, glowMat(0xffffff, 0.22), far);
+        const cols = [new THREE.Color(pick(0)), new THREE.Color(pick(1)), new THREE.Color('#ff5ab0'), new THREE.Color('#5ab0ff')];
+        const np = Array.from({ length: C }, (_, i) => { const a = rand(0, Math.PI * 2), r = rand(6, 30); neb.setColorAt(i, cols[i % 4]); return { a, r, y: rand(-8, 10), s: rand(2, 5), ph: rand(0, 6) }; });
+        const planets = [[9, 0.8, '#ff7a3a', 1.6], [14, 0.5, '#4ab0ff', 2.2], [20, 0.35, '#7ad65a', 1.3], [26, 0.25, '#e8d8ff', 2.8]].map(([r, sp, c, sz], i) => {
+            const g = new THREE.Group(); core.add(g);
+            const pl = box(std(new THREE.Color(c), new THREE.Color(c), 0.35, 0.6), sz, sz, sz, r, 0, 0, g); pl.rotation.set(0.5, 0.5, 0);
+            if (i === 1) { box(glowMat(c, 0.6), sz * 2.2, 0.08, sz * 2.2, r, 0, 0, g).rotation.set(0.4, 0, 0.3); }
+            return { g, pl, sp, i };
+        });
+        const ST = 90, stars = inst(kit, ST, glowMat(0xffffff, 0.9), far);
+        const sp = Array.from({ length: ST }, () => ({ x: rand(-45, 45), y: rand(4, 36), z: rand(-36, -26), s: rand(0.08, 0.22), ph: rand(0, 6) }));
+        tick(t => {
+            c1.scale.setScalar(1 + Math.sin(t * 2.2) * 0.08);
+            c2.scale.setScalar(1 + Math.sin(t * 1.3) * 0.1);
+            waves.forEach((w, i) => { const k = (t * 0.18 + i / 4) % 1; w.scale.setScalar(3 + k * 34); w.material.opacity = 0.55 * (1 - k); });
+            for (let i = 0; i < RAY; i++) { const a = i / RAY * Math.PI * 2 + t * 0.05; put(kit, rays, i, Math.cos(a) * 14, Math.sin(a) * 14, -0.5, 0.6, 0, 0, a + Math.PI / 2, 22 + Math.sin(t * 2 + i) * 4, 0.1); }
+            rays.instanceMatrix.needsUpdate = true;
+            np.forEach((o, i) => { const a = o.a + t * 0.02; put(kit, neb, i, Math.cos(a) * o.r, 13 + o.y + Math.sin(t * 0.3 + o.ph), -32 + Math.sin(a) * 4, o.s * (1 + 0.15 * Math.sin(t + o.ph)), 0, 0, o.ph, o.s * 0.6, o.s * 0.3); });
+            neb.instanceMatrix.needsUpdate = true;
+            planets.forEach(o => { o.g.rotation.z = t * o.sp * 0.25 + o.i * 1.6; o.pl.rotation.y = t; });
+            sp.forEach((o, i) => put(kit, stars, i, o.x, o.y, o.z, o.s * (0.6 + 0.4 * Math.sin(t * 2 + o.ph))));
+            stars.instanceMatrix.needsUpdate = true;
+        });
+    },
 };

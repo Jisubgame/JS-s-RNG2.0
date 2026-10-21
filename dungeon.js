@@ -64,7 +64,8 @@ export const RAID_AURAS = {
     dng_frostheart: 'ice', dng_dragonheir: 'fire', dng_stormrider: 'volt',
     leg_shadowblade_gunwoo: 'dark', myth_starforger_jisung: 'fire', myth_tidecaller_gaeun: 'ice', anc_clockmaster_byungeun: 'light', jxs_eclipse_gunwoo: 'dark',
     leg_lantern_minchae: 'fire', leg_mecha_byungeun: 'volt', myth_crystalwitch_tv: 'dark', anc_skywhale_gaeun: 'ice', abs_valkyrie_minchae: 'light',
-    leg_archer_byungeun: 'light', myth_glitch_tv: 'rift', anc_worldserpent_minchae: 'dark', abs_seraph_tv: 'fire', jxs_dreamweaver_minchae: 'ice'
+    leg_archer_byungeun: 'light', myth_glitch_tv: 'rift', anc_worldserpent_minchae: 'dark', abs_seraph_tv: 'fire', jxs_dreamweaver_minchae: 'ice',
+    leg_icarus_tv: 'fire', leg_moonspider_gaeun: 'dark', myth_kaleido_minchae: 'rift', myth_crane_gaeun: 'ice', anc_titan_jisung: 'fire', abs_meteor_byungeun: 'volt', jxs_genesis_jisung: 'light'
 };
 // 등급 차이는 작게 (JXS 하나로 다 이기지 않게) — 속성·팀 구성이 더 중요
 const GRADE_STAT = { EPIC: [900, 6000], LEGEND: [980, 6400], MYTHIC: [1060, 6800], ANCIENT: [1140, 7200], ABSOLUTE: [1220, 7600], JXS: [1300, 8000] };
@@ -258,14 +259,30 @@ export function createDungeon(api) {
         const s = st();
         return `<div class="rd-stars">${DIFFS.map((d, i) => `<button class="rd-star ${i === selDiff ? 'on' : ''} ${unlocked(i) ? '' : 'lock'}" style="--dc:${d.color}" data-dgdiff="${i}" ${disabled ? 'disabled' : ''}><b>${unlocked(i) ? stars(d.star) : '🔒'}</b><small>${d.label}${s.clears[ck(i)] ? ' ✓' : ''}</small></button>`).join('')}</div>`;
     }
+    // 보상 안내: 클리어 보상 / 상자 내용물 / 전용 드롭을 칸을 나눠 한눈에
+    const TCOL = { COMMON: '#9aa0ad', RARE: '#4da3ff', EPIC: '#b44dff', LEGEND: '#ff7a1a', MYTHIC: '#00e5ff', ANCIENT: '#ffe14d', ABSOLUTE: '#ff2a4a' };
+    const pctTxt = v => v >= 0.1 ? `${Math.round(v * 1000) / 10}%` : `${Math.round(v * 10000) / 100}%`;
     function rewardsHtml() {
         const D = DIFFS[selDiff], C = CHESTS[CUR.id], tot = C.pool.reduce((a, e) => a + e.w, 0);
-        return `<div class="rd-rw">
-            <div class="rd-rw-row"><span class="at-rw"><i class="coin"></i>${fmt(D.jc)}</span><span class="at-rw">🎫 ${fmt(D.xp)} XP</span><span class="at-rw rd-chestchip">${chestHtml(CUR.id, 'sm')} ${C.name} ×${D.chests}</span></div>
-            <div class="rd-rw-sub">${C.name} 안에 든 것 (${C.theme})</div>
-            <div class="rd-rw-row">${C.pool.map(e => `<span class="at-rw t-${e.tier.toLowerCase()}">${entryName(e)} <small>${Math.round(e.w / tot * 1000) / 10}%</small></span>`).join('')}</div>
-            <div class="rd-rw-sub">${CUR.name} 전용 드롭</div>
-            <div class="rd-rw-row">${CUR.drops.filter(x => x.p[selDiff]).map(x => `<span class="at-rw rd-gear">${x.kind === 'aura' ? '✦ ' + esc(api.aura(x.id).name) : '⚒ ' + esc(api.gearName(x.id))} ${Math.round(x.p[selDiff] * 1000) / 10}%</span>`).join('') || '<span class="rd-rw-note">★1은 전용 드롭이 없어요</span>'}</div>
+        const drops = CUR.drops.filter(x => x.p[selDiff]);
+        const maxP = Math.max(...C.pool.map(e => e.w / tot));
+        return `<div class="rw2">
+            <div class="rw2-sec">
+                <div class="rw2-h">🏆 클리어 보상 <small>${D.label} ${stars(D.star)}</small></div>
+                <div class="rw2-tiles">
+                    <div class="rw2-tile"><i class="coin"></i><b>${fmt(D.jc)}</b><small>JC</small></div>
+                    <div class="rw2-tile"><span class="rw2-ico">🎫</span><b>${fmt(D.xp)}</b><small>패스 XP</small></div>
+                    <div class="rw2-tile chest" style="--cc:${CUR.color}">${chestHtml(CUR.id)}<b>×${D.chests}</b><small>${C.name}</small></div>
+                </div>
+            </div>
+            <div class="rw2-sec">
+                <div class="rw2-h">🎁 ${C.name} 안에 든 것 <small>${C.theme} · 하나 열면 한 개</small></div>
+                <div class="rw2-list">${C.pool.map(e => { const v = e.w / tot; return `<div class="rw2-row" style="--tc:${TCOL[e.tier]}"><i class="rw2-dot"></i><span>${entryName(e)}</span><div class="rw2-bar"><i style="width:${v / maxP * 100}%"></i></div><b>${pctTxt(v)}</b></div>`; }).join('')}</div>
+            </div>
+            <div class="rw2-sec">
+                <div class="rw2-h">✦ ${CUR.name} 전용 드롭 <small>상자와 따로 · 클리어할 때마다</small></div>
+                ${drops.length ? `<div class="rw2-list">${drops.map(x => { const nm = x.kind === 'aura' ? api.aura(x.id).name : api.gearName(x.id), col = x.kind === 'aura' ? api.aura(x.id).color : CUR.color; return `<div class="rw2-row rare" style="--tc:${col}"><i class="rw2-dot"></i><span>${x.kind === 'aura' ? '✦ 칭호' : '⚒ 장비'} · ${esc(nm)}</span><b>${pctTxt(x.p[selDiff])}</b></div>`; }).join('')}</div>` : '<div class="rw2-none">★1은 전용 드롭이 없어요 · ★3부터 나와요</div>'}
+            </div>
         </div>`;
     }
     function entryName(e) {
@@ -294,8 +311,58 @@ export function createDungeon(api) {
             return api.gachaGrant(e);
         });
         api.save(); api.renderStats();
-        api.showGacha(results);
         render();
+        playChestOpen(id, results);
+    }
+    // 🎁 상자 열기 연출: 상자가 떨어져 흔들리다 뚜껑이 열리며 빛이 터지고, 보상 카드가 튀어나옴
+    const TIER_ORD = ['COMMON', 'RARE', 'EPIC', 'LEGEND', 'MYTHIC', 'ANCIENT', 'ABSOLUTE'];
+    function playChestOpen(id, results) {
+        const b = BOSS_BY_ID[id], best = results.reduce((m, r) => TIER_ORD.indexOf(r.tier) > TIER_ORD.indexOf(m) ? r.tier : m, 'COMMON');
+        const bi = TIER_ORD.indexOf(best), bc = TCOL[best];
+        let el = $('chest-open');
+        if (!el) { el = document.createElement('div'); el.id = 'chest-open'; document.body.appendChild(el); }
+        el.className = 'chest-open';
+        el.style.setProperty('--cc', b.color); el.style.setProperty('--cc2', b.color2); el.style.setProperty('--bc', bc);
+        el.innerHTML = `
+            <div class="co-bg"></div>
+            <div class="co-title">${CHESTS[id].name}${results.length > 1 ? ` ×${results.length}` : ''}</div>
+            <div class="co-stage">
+                <div class="co-rays"></div>
+                <div class="co-chest">
+                    <div class="co-lid"><i class="co-lid-band"></i><i class="co-lid-band r"></i></div>
+                    <div class="co-glow"></div>
+                    <div class="co-body"><i class="co-band"></i><i class="co-band r"></i><i class="co-lock"></i></div>
+                </div>
+                <div class="co-sparks">${Array.from({ length: 18 }, (_, i) => `<i style="--a:${i * 20}deg;--d:${0.4 + (i % 5) * 0.12}s"></i>`).join('')}</div>
+            </div>
+            <div class="co-hint">눌러서 열기</div>
+            <div class="co-cards ${results.length === 1 ? 'single' : ''}">${results.map((r, i) => `
+                <div class="co-card" style="--i:${i};--tc:${TCOL[r.tier] || '#9aa0ad'}">
+                    <div class="co-card-ico ${r.gear ? 'gear' : ''}">${r.icon}</div>
+                    <div class="co-card-tier">${r.tier}</div>
+                    <div class="co-card-name">${r.name}</div>
+                    ${r.sub ? `<div class="co-card-sub">${r.sub}</div>` : ''}
+                </div>`).join('')}</div>
+            <div class="co-btns"><button class="btn btn-block btn-gold" data-co="ok">확인</button>${(st().chests[id] || 0) > 0 ? `<button class="btn btn-block" data-co="again">하나 더 열기 <small>(${st().chests[id]}개 남음)</small></button>` : ''}</div>`;
+        const shakeMs = bi >= 4 ? 2100 : bi >= 3 ? 1600 : 1100;
+        let opened = false;
+        const open = () => {
+            if (opened) return;
+            opened = true;
+            el.classList.add('open');
+            api.dropSound(bi >= 5 ? 'MYTHIC' : bi >= 3 ? 'LEGEND' : null);
+            setTimeout(() => { el.classList.add('cards'); api.attachPreviews(el.querySelector('.co-cards')); }, 650);
+        };
+        requestAnimationFrame(() => el.classList.add('in'));
+        const timer = setTimeout(open, 700 + shakeMs);
+        setTimeout(() => el.classList.add('shake'), 700);
+        el.onclick = e => {
+            const btn = e.target.closest('[data-co]');
+            if (!opened) { clearTimeout(timer); open(); return; }
+            if (!btn) return;
+            el.className = 'chest-open hidden'; el.innerHTML = '';
+            if (btn.dataset.co === 'again') openChest(id, false);
+        };
     }
     function teamHtml(disabled) {
         return `<div class="rd-team">${team().map((id, i) => {
@@ -540,7 +607,7 @@ export function createDungeon(api) {
         wireNet();
         api.setBusy(true);
         buildBattleUI();
-        import('./boss3d.js?v=64').then(({ createBossScene }) => {
+        import('./boss3d.js?v=65').then(({ createBossScene }) => {
             if (!B || B.net !== net) return;
             B.scene = createBossScene(B.bd.id);
             api.setTakeover(B.scene);

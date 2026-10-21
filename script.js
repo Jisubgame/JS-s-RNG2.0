@@ -1,9 +1,9 @@
-import { AURA_DATA } from './auras.js?v=64';
-import { CRAFT_ITEMS } from './craftItems.js?v=64';
-import { createMusicPlayer, coverArt } from './music.js?v=64';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=64';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=64';
-import { createDungeon, raidInfo, bossesWeakTo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=64';
+import { AURA_DATA } from './auras.js?v=65';
+import { CRAFT_ITEMS } from './craftItems.js?v=65';
+import { createMusicPlayer, coverArt } from './music.js?v=65';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=65';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=65';
+import { createDungeon, raidInfo, bossesWeakTo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=65';
 
 /* =========================================================
    📦 게임 데이터
@@ -208,6 +208,7 @@ const dungeon = createDungeon({
     raidAura: id => stage3d?.setAura(AURA_BY_ID[id], { force: true }),
     raidPunch: k => stage3d?.raidPunch(k),
     gachaGrant: e => gachaGrant(e), gachaName: e => gachaEntryName(e), showGacha: r => showGachaResult(r),
+    attachPreviews: el => attachGearPreviews(el), dropSound: g => { try { g ? playDropSound(g) : playNormalDrop(); } catch (e) {} },
     openShop: () => { openSheet('sheet-shop'); setShopTab('potion'); },
     setBusy: v => {
         if (v && isAutoRolling) { isAutoRolling = false; autoWorker.postMessage({ command: 'stop' }); renderRollToggles(); }
@@ -855,7 +856,7 @@ async function finishRoll() {
     if (isNew) { gameState.discoveredAuras.push(rolled.id); setBonusCache = null; announceSetDone(rolled.id); }
 
     if (['ANCIENT', 'ABSOLUTE', 'JXS'].includes(rolled.grade)) broadcastRare(rolled);   // 접속한 모두에게 알림
-    if (CUT_CFG[rolled.grade] && stage3d) {
+    if (cutCfgOf(rolled) && stage3d) {
         await playCinematic(rolled);
     } else if (CUTSCENE_GRADES.includes(rolled.grade)) {
         // 3D를 못 쓰는 기기: 소리 + 화면 가장자리 빛만
@@ -927,8 +928,65 @@ const CUT_CFG = {
     MYTHIC:   { tier: 'MYTHIC',   hit: 2.3,  total: 4.4,  sound: null },
     ANCIENT:  { tier: 'ANCIENT',  hit: 9.5,  total: 19.6, sound: 'divine_all' },
     ABSOLUTE: { tier: 'ABSOLUTE', hit: 10.25, total: 18.6, sound: 'cosmic_all' },
-    JXS:      { tier: 'JXS',      hit: 9.5,  hit2: 16.0, total: 22.8, sound: 'js_all' }
+    JXS:      { tier: 'JXS',      hit: 9.5,  hit2: 16.0, total: 22.8, sound: 'js_all' },
+    // 1/10억 이상 전용: 심장 박동 → 등급 터널 → 황금 문 → 강림 (소리는 직접 합성)
+    BILLION:  { tier: 'BILLION',  hit: 11.2, hit2: 15.2, total: 26.0, sound: null }
 };
+const cutCfgOf = a => (a.in >= 1e9 && CUT_CFG.BILLION) || CUT_CFG[a.grade];
+
+/* ---------- 10억 전용 사운드 (전부 합성) ---------- */
+function billionAudio() {
+    if (!soundSettings.enabled) return null;
+    try {
+        initSynthAudio();
+        const ac = audioCtx, vol = soundSettings.master * soundSettings.cutscene;
+        const out = ac.createGain(); out.gain.value = vol; out.connect(ac.destination);
+        const node = (type, f, g0) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.value = f; g.gain.value = g0; o.connect(g); return { o, g }; };
+        // 낮게 깔리는 드론 (필터가 점점 열림)
+        const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 120; lp.Q.value = 6; lp.connect(out);
+        const dg = ac.createGain(); dg.gain.value = 0.0001; dg.connect(lp);
+        const drones = [[55, 'sawtooth'], [55.4, 'sawtooth'], [82.4, 'sawtooth'], [110, 'square']].map(([f, t]) => { const n = node(t, f, 0.12); n.g.connect(dg); n.o.start(); return n.o; });
+        const t0 = ac.currentTime;
+        dg.gain.setValueAtTime(0.0001, t0);
+        dg.gain.exponentialRampToValueAtTime(0.5, t0 + 2.6);
+        dg.gain.exponentialRampToValueAtTime(1.0, t0 + 11);
+        lp.frequency.setValueAtTime(120, t0);
+        lp.frequency.exponentialRampToValueAtTime(380, t0 + 2.6);
+        lp.frequency.exponentialRampToValueAtTime(3200, t0 + 15);
+        const hit = (f0, f1, len, v, type = 'sine') => {
+            const t = ac.currentTime, n = node(type, f0, 0);
+            n.o.frequency.setValueAtTime(f0, t); n.o.frequency.exponentialRampToValueAtTime(f1, t + len);
+            n.g.gain.setValueAtTime(v, t); n.g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+            n.g.connect(out); n.o.start(t); n.o.stop(t + len + 0.05);
+        };
+        const noise = (len, v, f = 800) => {
+            const t = ac.currentTime, buf = ac.createBuffer(1, ac.sampleRate * len, ac.sampleRate), d = buf.getChannelData(0);
+            for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+            const src = ac.createBufferSource(), bp = ac.createBiquadFilter(), g = ac.createGain();
+            src.buffer = buf; bp.type = 'lowpass'; bp.frequency.value = f; g.gain.value = v;
+            src.connect(bp); bp.connect(g); g.connect(out); src.start(t);
+        };
+        const chord = (fs, len, v, type = 'triangle') => fs.forEach(f => {
+            const t = ac.currentTime, n = node(type, f, 0);
+            n.g.gain.setValueAtTime(0, t); n.g.gain.linearRampToValueAtTime(v, t + len * 0.25); n.g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+            n.g.connect(out); n.o.start(t); n.o.stop(t + len + 0.05);
+        });
+        let stopped = false;
+        return {
+            beat(strong) { hit(strong ? 70 : 60, 30, 0.35, strong ? 0.9 : 0.6); },
+            ring(i) { const f = [196, 220, 262, 294, 330, 392, 440, 523][i]; hit(f, f, 0.9, 0.18, 'triangle'); hit(f * 2, f * 2, 0.6, 0.06, 'sine'); noise(0.5, 0.15, 3000); },
+            gate() { hit(48, 24, 2.5, 1.0); noise(1.6, 0.5, 400); chord([130.8, 196, 261.6, 329.6, 392], 4.2, 0.07); },
+            boom() {
+                if (stopped) return;
+                drones.forEach(o => { try { o.stop(); } catch (e) {} });
+                hit(90, 20, 3.5, 1.2); noise(2.5, 0.9, 2400);
+                chord([261.6, 329.6, 392, 523.2, 659.3, 784, 1046.5], 6, 0.06, 'sine');
+            },
+            stop() { if (stopped) return; stopped = true; drones.forEach(o => { try { o.stop(); } catch (e) {} }); out.gain.setTargetAtTime(0.0001, ac.currentTime, 0.4); }
+        };
+    } catch (e) { return null; }
+}
+const BILL_CAPS = [['COMMON', '#9aa0ad'], ['RARE', '#4da3ff'], ['EPIC', '#b44dff'], ['LEGEND', '#ff7a1a'], ['MYTHIC', '#00e5ff'], ['ANCIENT', '#ffe14d'], ['ABSOLUTE', '#ff2a4a'], ['JXS', '#ffffff']];
 
 const cine = {
     el: $('cine'),
@@ -994,7 +1052,7 @@ function cineFlash(strong) {
 }
 
 async function playCinematic(rolled) {
-    const cfg = CUT_CFG[rolled.grade];
+    const cfg = cutCfgOf(rolled);
     const finalHit = cfg.hit2 || cfg.hit;
 
     // 칭호 공개 글자 준비
@@ -1015,7 +1073,16 @@ async function playCinematic(rolled) {
     const getTime = () => (performance.now() - t0) / 1000 + offset;
 
     stopCutsceneAudio();
-    if (cfg.sound) cutsceneAudio = playClip(cfg.sound, soundSettings.master * soundSettings.cutscene);
+    const bill = cfg.tier === 'BILLION';
+    let bAud = null, capEl = null;
+    if (bill) {
+        bAud = billionAudio();
+        capEl = document.createElement('div');
+        capEl.className = 'cine-bcap';
+        cine.el.appendChild(capEl);
+        cine.chance.textContent = `1 in ${fmt(rolled.in)}  ·  10억 분의 1을 넘어서`;
+    }
+    else if (cfg.sound) cutsceneAudio = playClip(cfg.sound, soundSettings.master * soundSettings.cutscene);
     else playRiser(cfg.hit);
 
     let done = false;
@@ -1036,9 +1103,27 @@ async function playCinematic(rolled) {
     const loop = () => {
         if (done) return;
         const t = getTime();
+        if (bill) {
+            // 심장 박동 → 등급 고리마다 이름 → 문 → 강림
+            const beats = fired.beats || (fired.beats = new Set());
+            const bt = t < 2.6 ? Math.floor(t / 1.0) : 3 + Math.floor((t - 2.6) / 0.7);
+            if (t < cfg.hit && !beats.has(bt)) { beats.add(bt); bAud?.beat(t < 2.6); if (t < 2.6) setTimeout(() => bAud?.beat(false), 220); }
+            BILL_CAPS.forEach(([g, c], i) => {
+                const k = 'r' + i;
+                if (!fired[k] && t >= 2.6 + i * 1.0 - 0.15 && t < cfg.hit) {
+                    fired[k] = true;
+                    bAud?.ring(i);
+                    capEl.innerHTML = `<b style="--c:${c}">${g}</b>`;
+                    capEl.classList.remove('go'); void capEl.offsetWidth; capEl.classList.add('go');
+                }
+            });
+            if (!fired.gate && t >= cfg.hit) { fired.gate = true; bAud?.gate(); capEl.innerHTML = '<b class="beyond">BEYOND</b>'; capEl.classList.remove('go'); void capEl.offsetWidth; capEl.classList.add('go'); }
+            if (!fired.boom && t >= cfg.hit2) { fired.boom = true; bAud?.boom(); capEl.innerHTML = ''; drawCrack('#ffd23a'); setTimeout(() => drawCrack('#ffffff'), 120); }
+        }
         if (!fired.hit && t >= cfg.hit) {
             fired.hit = true;
             cineFlash(true);
+            if (bill) { requestAnimationFrame(loop); return; }
             if (cfg.tier === 'MYTHIC') playDropSound('MYTHIC');
             if (cfg.tier === 'ABSOLUTE' || (cfg.tier === 'JXS' && !cfg.hit2)) drawCrack('#ffffff');
             if (cfg.hit2) { drawCrack(rolled.color); cine.title.classList.add('pre'); }
@@ -1046,7 +1131,7 @@ async function playCinematic(rolled) {
         if (cfg.hit2 && !fired.hit2 && t >= cfg.hit2) {
             fired.hit2 = true;
             cineFlash(true);
-            drawCrack('#ffffff');
+            if (!bill) drawCrack('#ffffff');
             cine.title.classList.remove('pre');
         }
         if (!fired.title && t >= finalHit + 0.35) {
@@ -1066,6 +1151,8 @@ async function playCinematic(rolled) {
 
     done = true;
     cine.skip.removeEventListener('click', onSkip);
+    if (bAud) { if (getTime() < cfg.total - 0.5) bAud.stop(); else setTimeout(() => bAud.stop(), 3000); }
+    capEl?.remove();
     if (cutsceneAudio && getTime() < cfg.total - 0.5) {
         // 건너뛰어서 일찍 끝났으면 소리를 부드럽게 줄임
         const a = cutsceneAudio, v0 = a.volume;
@@ -1217,7 +1304,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=64').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=65').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -4065,7 +4152,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=64')
+import('./aura3d.js?v=65')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {

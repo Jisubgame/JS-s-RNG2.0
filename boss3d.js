@@ -237,7 +237,7 @@ export function createBossScene(bossId = 'rift') {
         setStun(v) { if (v && !stunned) { emit(30, { ...front(), spread: 2.5, speed: 5, life: 0.8, size: 0.3, color: [0xbff4ff, 0x7ae8ff, 0xffffff] }); chargeT = 0; } stunned = v; },
         setEnrage(v) { if (v && !enraged) { shake = 0.5; emit(50, { x: 0, y: 5, z: 1, spread: 2, speed: 10, life: 1, size: 0.3, color: [0xff3a3a, 0xff9a3a] }); } enraged = v; },
         setHp() {},
-        dodge(dir) { angT = Math.max(-1.1, Math.min(1.1, angT + dir * 0.55)); },
+        dodge(dir) { angT += dir * Math.PI / 4; },   // 한 번에 45도, 8번이면 보스 둘레 한 바퀴 (끝없이 돌 수 있음)
         lunge(color = 0xffffff, big = false) { lungeT = 0.25; shot(color, big ? 18 : 5, big ? 0.35 : 0.2); },
         recoil() { recoilT = 0.35; },
         hit(power = 0.3, color = 0xffffff) {

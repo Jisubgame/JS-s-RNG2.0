@@ -849,6 +849,77 @@ export const POSES = {
         d.root.position.y += 1.0 + S(t * 0.8) * 0.15; d.root.rotation.z = S(t * 0.6) * 0.06; d.head.rotation.z = 0.15;
         set(d.legL, 0.3, 0, -0.05); set(d.legR, 0.1, 0, 0.05);
     },
+    // 자전거 타는 공병은: 핸들 잡고 페달 밟기
+    rare_cyclist_byungeun(t, d) {
+        set(d.armL, -1.2, 0, -0.15); set(d.armR, -1.2, 0, 0.15);
+        d.root.rotation.x = 0.25; d.root.position.y += 0.6;
+        set(d.legL, -1.2 + S(t * 6) * 0.6, 0, -0.05); set(d.legR, -1.2 - S(t * 6) * 0.6, 0, 0.05);
+        d.head.rotation.x = -0.3;
+    },
+    // 비눗방울 김민채: 막대를 입 앞에 대고 후~ 불기
+    ep_bubble_minchae(t, d) {
+        const k = pulse(t, 2.4, 1.2);
+        set(d.armR, -2.0, 0, -0.3); set(d.armL, -0.3, 0, -0.2);
+        d.head.rotation.x = -0.15 - k * 0.15; d.root.rotation.y = S(t * 0.5) * 0.2;
+        set(d.legL, 0, 0, -0.06); set(d.legR, 0, 0, 0.06);
+    },
+    // 로봇 춤 박지성: 딱딱 끊기는 팝핀
+    ep_robot_jisung(t, d) {
+        const b = Math.floor(t * 2.5) % 4;
+        const A = [[-1.57, 0, 0, 0.3], [0, 1.57, 0.3, 0], [-1.57, -1.57, -0.3, 0], [0, 0, 0, -0.3]][b];
+        set(d.armL, A[0], 0, -0.1 - (b === 1 ? 1.4 : 0)); set(d.armR, A[1] ? -1.57 : 0, 0, 0.1 + (b === 2 ? 1.4 : 0));
+        d.head.rotation.y = A[2]; d.root.rotation.y = A[3];
+        set(d.legL, 0, 0, -0.06); set(d.legR, b % 2 ? -0.3 : 0, 0, 0.06);
+    },
+    // 달빛 거미 김가은: 실에 매달린 듯 살짝 떠서 흔들림
+    leg_moonspider_gaeun(t, d, _r, sig) {
+        const k = sig?.crawl ?? 0;
+        set(d.armL, -0.6, 0, -0.9 + k * 0.1); set(d.armR, -0.6, 0, 0.9 - k * 0.1);
+        d.root.position.y += 0.7 + S(t * 0.9) * 0.15; d.root.rotation.z = S(t * 0.7) * 0.05; d.head.rotation.x = 0.1;
+        set(d.legL, 0.3, 0, -0.15); set(d.legR, -0.1, 0, 0.15);
+    },
+    // 이카루스 김티비: 팔을 활짝 펴고 날갯짓에 맞춰 위아래로
+    leg_icarus_tv(t, d, _r, sig) {
+        const f = sig?.flap ?? 0;
+        set(d.armL, 0, 0, -1.4 - f * 0.35); set(d.armR, 0, 0, 1.4 + f * 0.35);
+        d.root.position.y += 1.0 + f * 0.25; d.root.rotation.x = 0.1; d.head.rotation.x = -0.35;
+        set(d.legL, 0.2, 0, -0.05); set(d.legR, 0.1, 0, 0.05);
+    },
+    // 종이학 김가은: 두 손을 모아 학을 접어 날려 보냄
+    myth_crane_gaeun(t, d, _r, sig) {
+        const k = sig?.fold ?? 0, rel = k > 0.8 ? (k - 0.8) / 0.2 : 0;
+        set(d.armL, -1.3 - rel * 0.8, 0, 0.35 - rel * 0.5); set(d.armR, -1.3 - rel * 0.8, 0, -0.35 + rel * 0.5);
+        d.head.rotation.x = 0.25 - rel * 0.6;
+        set(d.legL, 0, 0, -0.06); set(d.legR, 0, 0, 0.06);
+    },
+    // 만화경 김민채: 만화경을 눈에 대고 이리저리 돌려 봄
+    myth_kaleido_minchae(t, d, _r, sig) {
+        const k = sig?.peek ?? 0;
+        set(d.armR, -2.5, 0, -0.2); set(d.armL, -1.0, 0, 0.5);
+        d.head.rotation.set(-0.1, -0.15 + S(t * 0.8) * 0.2, k * 0.2); d.root.rotation.y = S(t * 0.4) * 0.3;
+        set(d.legL, 0, 0, -0.08); set(d.legR, -0.15, 0, 0.08);
+    },
+    // 티탄 박지성: 두 팔로 천구를 떠받치고 버팀
+    anc_titan_jisung(t, d, _r, sig) {
+        const k = sig?.strain ?? 0;
+        set(d.armL, 0, 0, -2.75 + k * 0.06); set(d.armR, 0, 0, 2.75 - k * 0.06);
+        d.root.position.y -= 0.15 + k * 0.05; d.head.rotation.x = -0.25;
+        set(d.legL, -0.3, 0, -0.3); set(d.legR, 0.3, 0, 0.3);
+    },
+    // 별을 떨어뜨리는 공병은: 지팡이를 하늘로 치켜들었다 내림
+    abs_meteor_byungeun(t, d, _r, sig) {
+        const k = sig?.cast ?? 0;
+        set(d.armR, 0, 0, mix(1.4, 2.9, k)); set(d.armL, -0.5, 0, -0.6 - k * 0.4);
+        d.root.position.y += 0.6 + S(t * 1.1) * 0.12; d.head.rotation.x = -0.2 - k * 0.3;
+        set(d.legL, 0.15, 0, -0.08); set(d.legR, -0.1, 0, 0.08);
+    },
+    // 태초의 박지성: 두 손바닥을 벌려 빛을 빚어내며 높이 떠 있음
+    jxs_genesis_jisung(t, d, _r, sig) {
+        const k = sig?.create ?? 0;
+        set(d.armL, -1.1 - k * 0.5, 0, -0.7 - k * 0.3); set(d.armR, -1.1 - k * 0.5, 0, 0.7 + k * 0.3);
+        d.root.position.y += 1.3 + S(t * 0.7) * 0.18; d.head.rotation.x = -0.15 - k * 0.15;
+        set(d.legL, 0.25, 0, -0.03); set(d.legR, 0.05, 0, 0.03);
+    },
     // 시즌1 개척자: 한 손을 이마에 대고 먼 곳을 바라보며 걷는 듯 살랑
     pass_pioneer(t, d, _r, sig) {
         const w = sig?.step ?? 0;

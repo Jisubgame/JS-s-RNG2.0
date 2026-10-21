@@ -357,6 +357,28 @@ export const AURA_DATA = [
     { id: "jxs_dreamweaver_minchae", name: "꿈을 엮는 김민채", grade: "JXS", in: 987654321, color: "#b08aff", line: "잠든 세상의 꿈이 모두 그녀의 실 끝에 매달려 있다",
       fx: { signature: "dreamWeaver", colors: ["#b08aff", "#ff9ad8", "#9fe8ff"], particles: 20, rise: 0.4, glow: 0.8 } },
 
+    // 🆕 UPDATE 7
+    { id: "rare_cyclist_byungeun", name: "자전거 타는 공병은", grade: "RARE", in: 727, color: "#5affc0",
+      fx: { colors: ["#5affc0", "#ffffff", "#ffd23a"], particles: 18, rise: 0.3, orbit: 5, glow: 0.6 } },
+    { id: "ep_bubble_minchae", name: "비눗방울 김민채", grade: "EPIC", in: 2121, color: "#9fe8ff",
+      fx: { colors: ["#9fe8ff", "#ff9ad8", "#ffffff"], particles: 26, rise: 0.5, orbit: 6, rings: 2, glow: 0.8 } },
+    { id: "ep_robot_jisung", name: "로봇 춤 박지성", grade: "EPIC", in: 4646, color: "#c0c8d8",
+      fx: { colors: ["#c0c8d8", "#2affff", "#ff2a8a"], particles: 20, rise: 0.6, shards: 4, rings: 2, glow: 0.9 } },
+    { id: "leg_moonspider_gaeun", name: "달빛 거미 김가은", grade: "LEGEND", in: 46464, color: "#c8d0ff",
+      fx: { signature: "moonSpider", colors: ["#8a7aff", "#e8ecff", "#ffffff"], glow: 0.7 } },
+    { id: "leg_icarus_tv", name: "이카루스 김티비", grade: "LEGEND", in: 72727, color: "#ffb84a",
+      fx: { signature: "icarus", colors: ["#ff8a2a", "#fff3c0", "#ffffff"], glow: 0.8 } },
+    { id: "myth_crane_gaeun", name: "종이학 김가은", grade: "MYTHIC", in: 141414, color: "#ff8aa8", line: "천 번째 학이 접히면 소원이 날아오른다",
+      fx: { signature: "paperCrane", colors: ["#ff8aa8", "#fff7ee", "#8ad0ff"], glow: 0.6 } },
+    { id: "myth_kaleido_minchae", name: "만화경 김민채", grade: "MYTHIC", in: 757575, color: "#ff5ad8", line: "한 번 돌릴 때마다 세상이 다시 피어난다",
+      fx: { signature: "kaleidoscope", colors: ["#ff5ad8", "#5ad8ff", "#ffe14d"], glow: 0.8 } },
+    { id: "anc_titan_jisung", name: "티탄 박지성", grade: "ANCIENT", in: 8181818, color: "#d9a04a", line: "하늘이 무너지지 않는 건 그가 떠받치고 있기 때문이다",
+      fx: { signature: "titan", colors: ["#ff6a1a", "#9fd8ff", "#ffffff"], glow: 0.8 } },
+    { id: "abs_meteor_byungeun", name: "별을 떨어뜨리는 공병은", grade: "ABSOLUTE", in: 90909090, color: "#8a6aff", line: "그가 지팡이를 들면 밤하늘이 비처럼 내린다",
+      fx: { signature: "meteorCaller", colors: ["#8a6aff", "#ffb03a", "#ffffff"], glow: 0.9 } },
+    { id: "jxs_genesis_jisung", name: "태초의 박지성", grade: "JXS", in: 1234567890, color: "#fff3c0", line: "아무것도 없던 곳에 처음으로 빛이 있으라 하였다",
+      fx: { signature: "genesis", colors: ["#ffd23a", "#9fe8ff", "#ffffff"], particles: 20, rise: 0.4, glow: 0.9 } },
+
     // 🌀 레이드 보스 드롭 (롤로는 안 나옴)
     { id: "dng_riftwalker", name: "균열을 걷는 자", grade: "MYTHIC", in: 700000, color: "#ff6ad8", line: "한 걸음마다 세상이 갈라진다", dungeon: true,
       fx: { signature: "riftWalker", colors: ["#ff6ad8", "#c070ff", "#ffffff"], glow: 0.8 } },

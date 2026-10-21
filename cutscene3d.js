@@ -14,7 +14,7 @@
      hit2 : JXS만. 두 번째 클라이맥스. hit~hit2 동안은 각성 직전 단계
    ========================================================= */
 
-import { buildLocomotive } from './auraSignatures.js?v=64';
+import { buildLocomotive } from './auraSignatures.js?v=65';
 
 export function createCutscene(ctx) {
     const { THREE, scene, camera, dummy, floor, stars, kit, bloom, stageApi } = ctx;
@@ -1330,6 +1330,223 @@ export function createCutscene(ctx) {
     };
 
     /* =========================================================
+       👁 10억 이상 전용 연출 (BILLION)
+         0~2.6   암전 + 심장 박동
+         2.6~10  등급 터널: COMMON → JXS 고리들을 뚫고 돌진
+         ~11.2   황금 문 앞에 멈춤 (hit) → 문이 열리며 빛이 쏟아짐
+         15.2    하얀 섬광 + 깨짐 (hit2) → 빛기둥 속 캐릭터, 카메라 360° 회전
+       ========================================================= */
+    const BILL_GRADES = ['#9aa0ad', '#4da3ff', '#b44dff', '#ff7a1a', '#00e5ff', '#ffe14d', '#ff2a4a'];
+    const BILL_RING_T = i => 2.6 + i * 1.0;
+    function buildBillion(colors) {
+        const g = new THREE.Group();
+        const gradeCols = BILL_GRADES.map(c => new THREE.Color(c)).concat([colors[0]]);
+        // 심장
+        const heart = new THREE.Group();
+        const hc = new THREE.Mesh(BOX, glowMat(colors[0], 1)); hc.scale.setScalar(0.5); hc.rotation.set(0.6, 0.6, 0);
+        const hs = new THREE.Mesh(BOX, glowMat(colors[1] || colors[0], 0.5)); hs.scale.setScalar(0.9); hs.rotation.set(0.2, 0.9, 0.4);
+        heart.add(hc, hs); heart.position.set(0, 3.5, -12); g.add(heart);
+        // 고리 8개 (등급 색)
+        const rings = gradeCols.map((c, i) => {
+            const r = new THREE.Group();
+            const n = 20 + i * 2, rad = 4.2 + i * 0.25;
+            for (let k = 0; k < n; k++) {
+                const a = (k / n) * Math.PI * 2;
+                const m = new THREE.Mesh(BOX, glowMat(c, 0.9));
+                m.scale.set(2 * Math.PI * rad / n * 0.72, 0.22 + (i === 7 ? 0.15 : 0), 0.22);
+                m.position.set(Math.cos(a) * rad, Math.sin(a) * rad, 0);
+                m.rotation.z = a + Math.PI / 2;
+                r.add(m);
+            }
+            // 안쪽 얇은 고리
+            for (let k = 0; k < 8; k++) {
+                const a = (k / 8) * Math.PI * 2;
+                const m = new THREE.Mesh(BOX, glowMat(c, 0.6));
+                m.scale.set(0.12, 1.4, 0.12);
+                m.position.set(Math.cos(a) * (rad - 0.9), Math.sin(a) * (rad - 0.9), 0);
+                m.rotation.z = a + Math.PI / 2;
+                r.add(m);
+            }
+            r.visible = false;
+            g.add(r);
+            return r;
+        });
+        // 속도선
+        const N = 160, warp = new THREE.InstancedMesh(BOX, glowMat(new THREE.Color('#ffffff'), 0.55), N);
+        const wp = Array.from({ length: N }, () => ({ a: rand(0, Math.PI * 2), r: rand(2.5, 9), z: rand(-120, 10) }));
+        warp.frustumCulled = false; g.add(warp);
+        const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), P = new THREE.Vector3(), S = new THREE.Vector3();
+        // 황금 문
+        const gate = new THREE.Group();
+        const solid = c => new THREE.MeshBasicMaterial({ color: c, toneMapped: false });
+        const goldM = solid('#a8781a'), slabM = solid('#2a1806'), trimM = solid('#5a3a0e');
+        const doors = [-1, 1].map(side => {
+            const hinge = new THREE.Group(); hinge.position.x = side * 6.4;
+            const d = new THREE.Group(); d.position.x = -side * 3.2; hinge.add(d);
+            const slab = new THREE.Mesh(BOX, slabM); slab.scale.set(6.3, 15, 0.4); d.add(slab);
+            const inset = new THREE.Mesh(BOX, trimM); inset.scale.set(5.2, 13.6, 0.45); d.add(inset);
+            for (let k = 0; k < 4; k++) {   // 가로 띠
+                const b = new THREE.Mesh(BOX, goldM); b.scale.set(6.3, 0.22, 0.5); b.position.y = -6 + k * 4; d.add(b);
+            }
+            const v = new THREE.Mesh(BOX, goldM); v.scale.set(0.25, 15, 0.5); v.position.x = -side * 3.05; d.add(v);
+            const emb = new THREE.Mesh(BOX, glowMat(colors[0], 0.6)); emb.scale.set(1.0, 1.0, 0.55); emb.rotation.z = Math.PI / 4; emb.position.set(-side * 2.2, 1, 0); d.add(emb);
+            gate.add(hinge);
+            return hinge;
+        });
+        const frame = [[0, 8.1, 14.4, 0.7], [-6.9, 0.3, 0.7, 16], [6.9, 0.3, 0.7, 16]].map(([x, y, w, h]) => {
+            const m = new THREE.Mesh(BOX, goldM); m.scale.set(w, h, 0.8); m.position.set(x, y, 0); gate.add(m); return m;
+        });
+        const light = new THREE.Mesh(BOX, glowMat(new THREE.Color('#fff6d8'), 0)); light.scale.set(12.4, 15, 0.1); light.position.z = -0.4; gate.add(light);
+        gate.position.set(0, 3.5, -60); gate.visible = false; g.add(gate);
+        // 공개 장면: 빛기둥 + 내려오는 고리 + 파편 + 등급 후광
+        const reveal = new THREE.Group(); reveal.visible = false;
+        const pillar = new THREE.Mesh(BOX, glowMat(new THREE.Color('#fff6d8'), 0.7)); pillar.scale.set(3, 40, 3); pillar.position.y = 20; reveal.add(pillar);
+        const scan = new THREE.Group();
+        for (let k = 0; k < 24; k++) {
+            const a = (k / 24) * Math.PI * 2, m = new THREE.Mesh(BOX, glowMat(colors[0], 1));
+            m.scale.set(0.5, 0.1, 0.1); m.position.set(Math.cos(a) * 2.4, 0, Math.sin(a) * 2.4); m.rotation.y = -a + Math.PI / 2; scan.add(m);
+        }
+        reveal.add(scan);
+        const halos = gradeCols.map((c, i) => {
+            const h = new THREE.Group();
+            for (let k = 0; k < 16; k++) {
+                const a = (k / 16) * Math.PI * 2, m = new THREE.Mesh(BOX, glowMat(c, 0.8));
+                m.scale.set(0.9, 0.08, 0.08); m.position.set(Math.cos(a) * 3, 0, Math.sin(a) * 3); m.rotation.y = -a + Math.PI / 2; h.add(m);
+            }
+            reveal.add(h); return h;
+        });
+        const SH = 70, shards = new THREE.InstancedMesh(BOX, glowMat(new THREE.Color('#ffffff'), 0.85), SH);
+        const sp = Array.from({ length: SH }, (_, i) => ({ x: rand(-9, 9), z: rand(-9, 4), y0: rand(4, 20), v: rand(1.5, 4), s: rand(0.1, 0.35), r: rand(0, 6), c: gradeCols[i % 8] }));
+        sp.forEach((p, i) => shards.setColorAt(i, p.c));
+        shards.frustumCulled = false; reveal.add(shards);
+        g.add(reveal);
+
+        return {
+            g, heart, rings, gate, reveal,
+            tunnel(t, dt) {
+                // 심장: 쿵-쿵
+                const beat = t < 2.6 ? (t % 1.0) : ((t - 2.6) % 0.7);
+                const pulse = Math.exp(-beat * 9) + 0.6 * Math.exp(-Math.max(0, beat - 0.22) * 9) * (beat > 0.22 ? 1 : 0);
+                heart.visible = t < 11;
+                heart.scale.setScalar(0.6 + pulse * 0.9 + (t > 2.6 ? 0 : 0));
+                heart.rotation.y += dt * (0.6 + Math.min(t, 11) * 0.3);
+                heart.position.z = t < 2.6 ? -12 : -12 - (t - 2.6) * 30;
+                // 고리: 정해진 시간에 카메라를 스쳐 지나감
+                const speed = 16;
+                rings.forEach((r, i) => {
+                    const z = 10 - (BILL_RING_T(i) - t) * speed;
+                    r.visible = t > 2.2 && z > -110 && z < 13;
+                    r.position.set(0, 3.5, z);
+                    r.rotation.z = t * (i % 2 ? -0.6 : 0.6) + i;
+                    const near = clamp01(1 - Math.abs(z - 10) / 6);
+                    r.scale.setScalar(1 + near * 0.15);
+                });
+                // 속도선
+                const wv = t < 2.6 ? 0 : Math.min(1, (t - 2.6) / 1.5) * (t < 11 ? 1 : Math.max(0, 1 - (t - 11) * 1.5));
+                warp.visible = wv > 0.01;
+                wp.forEach((p, i) => {
+                    p.z += dt * 60 * wv;
+                    if (p.z > 12) { p.z = -120; p.a = rand(0, Math.PI * 2); p.r = rand(2.5, 9); }
+                    P.set(Math.cos(p.a) * p.r, 3.5 + Math.sin(p.a) * p.r, p.z);
+                    S.set(0.05, 0.05, 0.4 + wv * 5);
+                    M.compose(P, Q, S); warp.setMatrixAt(i, M);
+                });
+                warp.instanceMatrix.needsUpdate = true;
+                // 문: 다가와서 멈춘 뒤 열림
+                const H = 11.2;
+                gate.visible = t > 8.6;
+                gate.position.z = t < H ? -40 - Math.pow(H - t, 1.6) * 16 : -40 + (t - H) * 1.4;
+                const open = ease.inOut(clamp01((t - H - 0.4) / 3.0));
+                doors[0].rotation.y = open * 1.7;
+                doors[1].rotation.y = -open * 1.7;
+                light.material.opacity = Math.min(0.9, open * 1.1);
+                light.scale.x = 12.4 * (0.05 + open);
+                            },
+            reveal2(r, dt, time) {
+                reveal.visible = true;
+                pillar.material.opacity = 0.4 * Math.max(0, 1 - r * 3);
+                pillar.scale.x = pillar.scale.z = 3 * (1 - r * 0.6);
+                const sk = clamp01(r / 0.3);
+                scan.position.y = THREE.MathUtils.lerp(14, 0.1, ease.out(sk));
+                scan.visible = sk < 1;
+                scan.rotation.y = time * 2;
+                halos.forEach((h, i) => {
+                    const k = clamp01((r - 0.05 - i * 0.025) / 0.5);
+                    h.visible = k > 0 && k < 1;
+                    h.position.y = 0.3 + ease.out(k) * (1 + i * 0.8);
+                    h.scale.setScalar(0.6 + ease.out(k) * (1.6 + i * 0.15));
+                    h.children.forEach(m => m.material.opacity = 0.8 * (1 - k));
+                    h.rotation.y = time * (i % 2 ? -1 : 1) * 0.8;
+                });
+                sp.forEach((p, i) => {
+                    const y = p.y0 - (time * p.v) % 22;
+                    P.set(p.x, y < -1 ? y + 22 : y, p.z);
+                    Q.setFromEuler(new THREE.Euler(time * p.r, time, 0));
+                    const fade = Math.max(0, 1 - Math.max(0, r - 0.6) * 2.5);
+                    S.setScalar(p.s * fade + 0.0001);
+                    M.compose(P, Q, S); shards.setMatrixAt(i, M);
+                });
+                shards.instanceMatrix.needsUpdate = true;
+                Q.identity();
+            }
+        };
+    }
+
+    function updateBillion(dt) {
+        const { cfg, bill, hooks } = st;
+        const time = st.getTime();
+        const H = cfg.hit, H2 = cfg.hit2, T = cfg.total;
+        const view = ctx.getNormalView(), tgt = view.target;
+        if (st.stage === 0 && time >= H) { st.stage = 1; ctx.flash(0.8); hooks.shake(0.5); }
+        if (st.stage <= 1 && time >= H2) {
+            st.stage = 2; ctx.flash(2.5); hooks.shake(1.4);
+            bill.heart.visible = false; bill.gate.visible = false; bill.rings.forEach(r => r.visible = false);
+            bill.g.children.forEach(o => { if (o.isInstancedMesh && o.parent === bill.g) o.visible = false; });
+            dummy.root.visible = true; floor.visible = true; stars.scale.setScalar(1);
+            ctx.setAura(st.aura, { force: true });
+            st.revealAt = time;
+        }
+        if (time < H2) {
+            bill.tunnel(time, dt);
+            stars.scale.setScalar(time < 2.6 ? 0.001 : 1);
+            // 카메라: 터널 정면, 살짝 흔들리며 돌기
+            const k = clamp01((time - 2.6) / 8);
+            camera.position.set(Math.sin(time * 0.7) * 0.4 * k, 3.5 + Math.cos(time * 0.9) * 0.3 * k, 10);
+            ctx.setCenter?.(1);
+            const look = -50;
+            camera.lookAt(0, 3.5, look);
+            camera.rotateZ(time < 2.6 ? 0 : (time - 2.6) * 0.35 * (time < H ? 1 : Math.max(0, 1 - (time - H))));
+            if (time > H) {
+                // 문 안으로 빨려 들어감
+                const q = clamp01((time - H - 1.5) / (H2 - H - 1.5));
+                camera.position.z = 10 - ease.in(q) * 50;
+                bloom.strength = 0.9 + ease.in(q) * 1.2;
+                hooks.shake(0.02 + q * 0.2);
+            } else {
+                bloom.strength = time > 9 ? 0.8 : 1.15;
+                if (time > 2.6) hooks.shake(0.03);
+            }
+        } else {
+            const r = clamp01((time - H2) / (T - H2));
+            bill.reveal2(r, dt, time);
+            // 카메라: 아래에서 한 바퀴(360°) 돌며 평소 화면으로
+            const orbit = ease.inOut(clamp01(r / 0.62));
+            const settle = ease.inOut(clamp01((r - 0.55) / 0.4));
+            const a = -Math.PI * 2 * (1 - orbit);
+            const d = THREE.MathUtils.lerp(view.dist * 0.95, view.dist, settle);
+            const y = THREE.MathUtils.lerp(tgt.y + 0.2, tgt.y + view.dist * 0.14, ease.inOut(clamp01(r / 0.9)));
+            camera.position.set(Math.sin(a) * d, y, Math.cos(a) * d);
+            ctx.setCenter?.(1 - settle);
+            camera.lookAt(tgt);
+            bloom.strength = THREE.MathUtils.lerp(1.5, st.bloomBase, ease.out(clamp01(r / 0.7)));
+        }
+        if (time >= T) {
+            const done = st.resolve;
+            cleanup(); st = null; api.active = false; done();
+        }
+    }
+
+    /* =========================================================
        재생
        ========================================================= */
     let st = null;
@@ -1352,6 +1569,16 @@ export function createCutscene(ctx) {
         const fx = aura.fx || {};
         const colors = (fx.colors || [aura.color]).map(c => new THREE.Color(c));
         const tier = cfg.tier;
+        if (tier === 'BILLION') {
+            const bill = buildBillion(colors);
+            root.add(bill.g);
+            ctx.setAura(null);
+            dummy.root.visible = false;
+            floor.visible = false;
+            st = { aura, cfg, getTime, hooks, resolve, bill, colors, stage: 0, bloomBase: bloom.strength };
+            api.active = true;
+            return;
+        }
         const star = buildStar(tier, colors);
         star.g.position.set(0, 3.5, 0);
         root.add(star.g);
@@ -1377,6 +1604,7 @@ export function createCutscene(ctx) {
 
     api.update = dt => {
         if (!st) return;
+        if (st.bill) return updateBillion(dt);
         const { cfg, star, streaks, floorLight, motif, hooks } = st;
         const time = st.getTime();
         const H = cfg.hit, H2 = cfg.hit2 || cfg.hit, T = cfg.total;
