@@ -62,7 +62,8 @@ export const RAID_AURAS = {
     js_lightning_jisung: 'volt', jxs_creator_gaeun: 'light',
     dng_riftwalker: 'rift', dng_riftlord: 'rift',
     dng_frostheart: 'ice', dng_dragonheir: 'fire', dng_stormrider: 'volt',
-    leg_shadowblade_gunwoo: 'dark', myth_starforger_jisung: 'fire', myth_tidecaller_gaeun: 'ice', anc_clockmaster_byungeun: 'light', jxs_eclipse_gunwoo: 'dark'
+    leg_shadowblade_gunwoo: 'dark', myth_starforger_jisung: 'fire', myth_tidecaller_gaeun: 'ice', anc_clockmaster_byungeun: 'light', jxs_eclipse_gunwoo: 'dark',
+    leg_lantern_minchae: 'fire', leg_mecha_byungeun: 'volt', myth_crystalwitch_tv: 'dark', anc_skywhale_gaeun: 'ice', abs_valkyrie_minchae: 'light'
 };
 // 등급 차이는 작게 (JXS 하나로 다 이기지 않게) — 속성·팀 구성이 더 중요
 const GRADE_STAT = { EPIC: [900, 6000], LEGEND: [980, 6400], MYTHIC: [1060, 6800], ANCIENT: [1140, 7200], ABSOLUTE: [1220, 7600], JXS: [1300, 8000] };
@@ -75,11 +76,45 @@ export function raidInfo(a, bossId) {
 }
 
 export const DIFFS = [
-    { id: 'easy',   star: 1, label: '쉬움',   color: '#5fe08a', hp: 20000,  hit: 120, slam: 600,  jc: 60000,   xp: 1500, items: { limit_potion: 1 },                    egg: ['egg_basic', 0.2] },
-    { id: 'normal', star: 3, label: '보통',   color: '#ffd23a', hp: 60000,  hit: 300, slam: 1200, jc: 200000,  xp: 3000, items: { limit_potion: 2, star_potion: 1 },    egg: ['egg_rare', 0.25] },
-    { id: 'hard',   star: 5, label: '어려움', color: '#ff8a3a', hp: 120000, hit: 500, slam: 2200, jc: 600000,  xp: 5000, items: { overcome_potion: 1, dice_potion: 1 }, egg: ['egg_legend', 0.25] },
-    { id: 'hell',   star: 6, label: '지옥',   color: '#ff2a4a', hp: 250000, hit: 800, slam: 3500, jc: 1800000, xp: 8000, items: { heaven_potion: 1 },                   egg: ['egg_mythic', 0.25], extra: ['void_potion', 0.3] }
+    { id: 'easy',   star: 1, label: '쉬움',   color: '#5fe08a', hp: 20000,  hit: 120, slam: 600,  jc: 60000,   xp: 1500, chests: 1 },
+    { id: 'normal', star: 3, label: '보통',   color: '#ffd23a', hp: 60000,  hit: 300, slam: 1200, jc: 200000,  xp: 3000, chests: 2 },
+    { id: 'hard',   star: 5, label: '어려움', color: '#ff8a3a', hp: 120000, hit: 500, slam: 2200, jc: 600000,  xp: 5000, chests: 3 },
+    { id: 'hell',   star: 6, label: '지옥',   color: '#ff2a4a', hp: 250000, hit: 800, slam: 3500, jc: 1800000, xp: 8000, chests: 4 }
 ];
+// 🎁 레이드 상자: 보스마다 다른 상자, 열면 보스마다 다른 보상 (뽑기처럼 하나씩)
+//   kind: items/egg/jc/gear 는 상점 뽑기와 같은 방식, tickets(뽑기권)/dtk(던전 티켓)/xp(패스 XP)는 여기서 직접
+export const CHESTS = {
+    rift: { name: '균열의 상자', theme: '배수 물약', pool: [
+        { kind: 'items', items: { limit_potion: 2 }, w: 40, tier: 'COMMON' },
+        { kind: 'items', items: { dice_potion: 2 }, w: 18, tier: 'RARE' },
+        { kind: 'items', items: { overcome_potion: 1 }, w: 22, tier: 'RARE' },
+        { kind: 'items', items: { heaven_potion: 1 }, w: 8, tier: 'EPIC' },
+        { kind: 'items', items: { void_potion: 1 }, w: 2.2, tier: 'LEGEND' },
+        { kind: 'items', items: { nebula_potion: 1 }, w: 0.25, tier: 'MYTHIC' }] },
+    frost: { name: '서리의 상자', theme: '시간 물약 · 알', pool: [
+        { kind: 'items', items: { star_potion: 2 }, w: 32, tier: 'COMMON' },
+        { kind: 'items', items: { warp_potion: 2 }, w: 28, tier: 'COMMON' },
+        { kind: 'egg', id: 'egg_rare', w: 18, tier: 'RARE' },
+        { kind: 'dtk', n: 1, w: 10, tier: 'RARE' },
+        { kind: 'egg', id: 'egg_legend', w: 7, tier: 'EPIC' },
+        { kind: 'egg', id: 'egg_mythic', w: 1.6, tier: 'LEGEND' }] },
+    magma: { name: '용암의 상자', theme: 'JC · 주사위', pool: [
+        { kind: 'jc', min: 80000, max: 180000, w: 42, tier: 'COMMON', label: '녹은 금화' },
+        { kind: 'items', items: { dice_potion: 3 }, w: 20, tier: 'RARE' },
+        { kind: 'jc', min: 300000, max: 600000, w: 18, tier: 'RARE', label: '용암 금괴' },
+        { kind: 'items', items: { biome_potion: 2 }, w: 10, tier: 'EPIC' },
+        { kind: 'jc', min: 1500000, max: 3000000, w: 2.5, tier: 'LEGEND', label: '화룡의 보물' },
+        { kind: 'gear', id: 'gacha_jackpot', w: 0.8, tier: 'MYTHIC', dupe: 300000 }] },
+    storm: { name: '폭풍의 상자', theme: '뽑기권 · 패스 XP', pool: [
+        { kind: 'tickets', n: 1, w: 34, tier: 'COMMON' },
+        { kind: 'xp', n: 3000, w: 30, tier: 'COMMON' },
+        { kind: 'tickets', n: 3, w: 15, tier: 'RARE' },
+        { kind: 'xp', n: 10000, w: 11, tier: 'RARE' },
+        { kind: 'dtk', n: 1, w: 6, tier: 'EPIC' },
+        { kind: 'tickets', n: 10, w: 1.4, tier: 'LEGEND' }] }
+};
+const chestPick = pool => { let r = Math.random() * pool.reduce((a, e) => a + e.w, 0); for (const e of pool) if ((r -= e.w) < 0) return e; return pool[0]; };
+const chestHtml = (id, cls = '') => `<span class="rchest ${cls}" style="--cc:${BOSS_BY_ID[id].color};--cc2:${BOSS_BY_ID[id].color2}"><i class="rc-lid"></i><i class="rc-body"></i><i class="rc-lock"></i></span>`;
 export const TICKET_DAILY = 2, TICKET_PRICE = 250000, RUN_CAP = 3;
 const TIME = 180, MAX_PARTY = 4, TEAM = 6, REJOIN_MS = 8000;
 const stars = n => '★'.repeat(n);
@@ -159,6 +194,7 @@ export function createDungeon(api) {
         if (!gs.dng) gs.dng = { tk: TICKET_DAILY, day: '', clears: {} };
         const s = gs.dng;
         if (!s.clears) s.clears = {};
+        if (!s.chests) s.chests = {};
         if (!Array.isArray(s.team) || s.team.length !== TEAM) s.team = Array(TEAM).fill(null);
         const today = api.today();
         if (s.day !== today) { s.day = today; s.tk = Math.max(s.tk || 0, TICKET_DAILY); s.runs = 0; }
@@ -219,12 +255,43 @@ export function createDungeon(api) {
         return `<div class="rd-stars">${DIFFS.map((d, i) => `<button class="rd-star ${i === selDiff ? 'on' : ''} ${unlocked(i) ? '' : 'lock'}" style="--dc:${d.color}" data-dgdiff="${i}" ${disabled ? 'disabled' : ''}><b>${unlocked(i) ? stars(d.star) : '🔒'}</b><small>${d.label}${s.clears[ck(i)] ? ' ✓' : ''}</small></button>`).join('')}</div>`;
     }
     function rewardsHtml() {
-        const D = DIFFS[selDiff];
+        const D = DIFFS[selDiff], C = CHESTS[CUR.id], tot = C.pool.reduce((a, e) => a + e.w, 0);
         return `<div class="rd-rw">
-            <div class="rd-rw-row">${api.rewardChips({ jc: D.jc, items: D.items })}<span class="at-rw">🎫 ${fmt(D.xp)} XP</span></div>
-            <div class="rd-rw-row"><span class="at-rw">🥚 ${api.eggName(D.egg[0])} ${Math.round(D.egg[1] * 100)}%</span>${D.extra ? `<span class="at-rw">${api.itemName(D.extra[0])} ${Math.round(D.extra[1] * 100)}%</span>` : ''}</div>
-            <div class="rd-rw-row">${CUR.drops.filter(x => x.p[selDiff]).map(x => `<span class="at-rw rd-gear">${x.kind === 'aura' ? '✦ ' + esc(api.aura(x.id).name) : '⚒ ' + esc(api.gearName(x.id))} ${Math.round(x.p[selDiff] * 1000) / 10}%</span>`).join('') || '<span class="rd-rw-note">★1은 레이드 전용 드롭이 없어요</span>'}</div>
+            <div class="rd-rw-row"><span class="at-rw"><i class="coin"></i>${fmt(D.jc)}</span><span class="at-rw">🎫 ${fmt(D.xp)} XP</span><span class="at-rw rd-chestchip">${chestHtml(CUR.id, 'sm')} ${C.name} ×${D.chests}</span></div>
+            <div class="rd-rw-sub">${C.name} 안에 든 것 (${C.theme})</div>
+            <div class="rd-rw-row">${C.pool.map(e => `<span class="at-rw t-${e.tier.toLowerCase()}">${entryName(e)} <small>${Math.round(e.w / tot * 1000) / 10}%</small></span>`).join('')}</div>
+            <div class="rd-rw-sub">${CUR.name} 전용 드롭</div>
+            <div class="rd-rw-row">${CUR.drops.filter(x => x.p[selDiff]).map(x => `<span class="at-rw rd-gear">${x.kind === 'aura' ? '✦ ' + esc(api.aura(x.id).name) : '⚒ ' + esc(api.gearName(x.id))} ${Math.round(x.p[selDiff] * 1000) / 10}%</span>`).join('') || '<span class="rd-rw-note">★1은 전용 드롭이 없어요</span>'}</div>
         </div>`;
+    }
+    function entryName(e) {
+        if (e.kind === 'tickets') return `뽑기권 ×${e.n}`;
+        if (e.kind === 'dtk') return `던전 티켓 ×${e.n}`;
+        if (e.kind === 'xp') return `패스 ${fmt(e.n)} XP`;
+        if (e.kind === 'jc') return `${e.label} ${fmt(e.min / 10000)}~${fmt(e.max / 10000)}만`;
+        return api.gachaName(e);
+    }
+    // 가진 상자 (눌러서 열기)
+    function chestRow() {
+        const s = st();
+        return `<div class="rd-head"><span>레이드 상자</span><small>보스를 잡으면 그 보스의 상자를 줘요</small></div>
+            <div class="rd-chests">${BOSSES.map(b => { const n = s.chests[b.id] || 0; return `<button class="rd-chest ${n ? 'has' : ''}" data-dgchest="${b.id}" ${n ? '' : 'disabled'} style="--cc:${b.color}">${chestHtml(b.id)}<b>${CHESTS[b.id].name}</b><small>${n ? `${n}개 · 열기` : '없음'}</small>${n > 1 ? `<em data-dgchestall="${b.id}">모두</em>` : ''}</button>`; }).join('')}</div>`;
+    }
+    function openChest(id, all) {
+        const s = st(), have = s.chests[id] || 0;
+        if (!have) return;
+        const n = all ? Math.min(have, 10) : 1;
+        s.chests[id] = have - n;
+        const results = Array.from({ length: n }, () => {
+            const e = chestPick(CHESTS[id].pool);
+            if (e.kind === 'tickets') { api.gs().tickets = (api.gs().tickets || 0) + e.n; return { tier: e.tier, name: `뽑기권 ×${e.n}`, icon: '<i class="ticket-ico big"></i>', sub: '상점 행운 뽑기에서 써요' }; }
+            if (e.kind === 'dtk') { s.tk += e.n; return { tier: e.tier, name: `던전 티켓 ×${e.n}`, icon: '<i class="dtk-ico"></i>', sub: '레이드 입장권' }; }
+            if (e.kind === 'xp') { api.passAddXp(e.n); return { tier: e.tier, name: `패스 ${fmt(e.n)} XP`, icon: '<b class="gr-xp">XP</b>', sub: '시즌 패스 경험치' }; }
+            return api.gachaGrant(e);
+        });
+        api.save(); api.renderStats();
+        api.showGacha(results);
+        render();
     }
     function teamHtml(disabled) {
         return `<div class="rd-team">${team().map((id, i) => {
@@ -245,6 +312,7 @@ export function createDungeon(api) {
             ${showRw ? rewardsHtml() : ''}
             <div class="rd-head"><span>레이드 팀</span><small>전투력 ${fmt(power())}</small><button class="rd-auto" data-dg="auto">자동 편성</button></div>
             ${teamHtml(false)}
+            ${chestRow()}
             <div class="rd-mult">장비 ×${m.gm.toFixed(2)} · 부적 ×${m.amm.toFixed(2)} · 펫 ×${m.pm.toFixed(2)}</div>
             <div class="rd-foot">
                 <div class="rd-count">
@@ -317,11 +385,14 @@ export function createDungeon(api) {
 
     /* ---------- 창 클릭 ---------- */
     function onClick(e) {
-        const t = e.target.closest('[data-dg],[data-dgslot],[data-dgdiff],[data-dgpick],[data-dgroom],[data-dgboss]');
+        const all = e.target.closest('[data-dgchestall]');
+        if (all) { openChest(all.dataset.dgchestall, true); return; }
+        const t = e.target.closest('[data-dg],[data-dgslot],[data-dgdiff],[data-dgpick],[data-dgroom],[data-dgboss],[data-dgchest]');
         if (!t) { if (e.target.classList.contains('dg-picker')) { picking = -1; render(); } return; }
         const d = t.dataset, s = st();
         if (d.dgslot !== undefined) { picking = +d.dgslot; render(); return; }
         if (d.dgpick !== undefined) { s.team[picking] = d.dgpick || null; picking = -1; api.save(); render(); return; }
+        if (d.dgchest) { openChest(d.dgchest, false); return; }
         if (d.dgboss) { pickBoss(d.dgboss); while (selDiff > 0 && !unlocked(selDiff)) selDiff--; render(); return; }
         if (d.dgdiff !== undefined) { const i = +d.dgdiff; if (!unlocked(i)) { api.toast(`${DIFFS[i - 1].label}을 먼저 깨야 해요`, 'bad'); return; } selDiff = i; render(); return; }
         if (d.dgroom) { joinParty(d.dgroom); return; }
@@ -465,7 +536,7 @@ export function createDungeon(api) {
         wireNet();
         api.setBusy(true);
         buildBattleUI();
-        import('./boss3d.js?v=61').then(({ createBossScene }) => {
+        import('./boss3d.js?v=62').then(({ createBossScene }) => {
             if (!B || B.net !== net) return;
             B.scene = createBossScene(B.bd.id);
             api.setTakeover(B.scene);
@@ -802,9 +873,8 @@ export function createDungeon(api) {
             B.scene?.die();
             gs.jc += D.jc; B.lines.push(`<span class="at-rw"><i class="coin"></i>${fmt(D.jc)}</span>`);
             api.passAddXp(D.xp); B.lines.push(`<span class="at-rw">🎫 ${fmt(D.xp)} XP</span>`);
-            api.addItems(D.items); B.lines.push(api.rewardChips({ items: D.items }));
-            if (D.extra && Math.random() < D.extra[1]) { api.addItems({ [D.extra[0]]: 1 }); B.lines.push(api.rewardChips({ items: { [D.extra[0]]: 1 } })); }
-            if (Math.random() < D.egg[1]) { api.addEgg(D.egg[0]); B.lines.push(api.rewardChips({ eggs: { [D.egg[0]]: 1 } })); }
+            s.chests[B.bd.id] = (s.chests[B.bd.id] || 0) + D.chests;
+            B.lines.push(`<span class="at-rw rd-chestchip">${chestHtml(B.bd.id, 'sm')} ${CHESTS[B.bd.id].name} ×${D.chests}</span>`);
             for (const x of CUR.drops) {
                 if (!(Math.random() < x.p[B.diff])) continue;
                 if (x.kind === 'aura') {

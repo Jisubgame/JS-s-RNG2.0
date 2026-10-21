@@ -1,9 +1,9 @@
-import { AURA_DATA } from './auras.js?v=61';
-import { CRAFT_ITEMS } from './craftItems.js?v=61';
-import { createMusicPlayer, coverArt } from './music.js?v=61';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=61';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=61';
-import { createDungeon, raidInfo, bossesWeakTo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=61';
+import { AURA_DATA } from './auras.js?v=62';
+import { CRAFT_ITEMS } from './craftItems.js?v=62';
+import { createMusicPlayer, coverArt } from './music.js?v=62';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=62';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=62';
+import { createDungeon, raidInfo, bossesWeakTo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=62';
 
 /* =========================================================
    📦 게임 데이터
@@ -205,6 +205,7 @@ const dungeon = createDungeon({
     },
     raidAura: id => stage3d?.setAura(AURA_BY_ID[id], { force: true }),
     raidPunch: k => stage3d?.raidPunch(k),
+    gachaGrant: e => gachaGrant(e), gachaName: e => gachaEntryName(e), showGacha: r => showGachaResult(r),
     openShop: () => { openSheet('sheet-shop'); setShopTab('potion'); },
     setBusy: v => {
         if (v && isAutoRolling) { isAutoRolling = false; autoWorker.postMessage({ command: 'stop' }); renderRollToggles(); }
@@ -1214,7 +1215,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=61').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=62').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -2337,6 +2338,7 @@ $('gacha-result').addEventListener('click', e => {
     $('gacha-result').classList.add('hidden');
     $('gacha-result').classList.remove('egg-mode');
     if (hatch) { renderPets(); stagger($('pet-panel')); } else renderGacha();
+    if (!$('sheet-dungeon').classList.contains('hidden')) dungeon.render();
 });
 
 /* =========================================================
@@ -3310,6 +3312,21 @@ $('avatar-file').addEventListener('change', async e => {
 });
 $('profile-btn').addEventListener('click', () => openSheet('sheet-profile'));
 $('rank-btn').addEventListener('click', () => { profTab = 'rank'; openSheet('sheet-profile'); });
+// 메뉴: 버튼 하나를 누르면 6개가 펼쳐짐 (안에서 하나 고르거나 바깥을 누르면 닫힘)
+function setMenu(open) {
+    $('dock-menu').classList.toggle('hidden', !open);
+    $('menu-btn').classList.toggle('on', open);
+    $('menu-btn').setAttribute('aria-expanded', open);
+}
+$('menu-btn').addEventListener('click', e => { e.stopPropagation(); setMenu($('dock-menu').classList.contains('hidden')); });
+$('dock-menu').addEventListener('click', e => { if (e.target.closest('.dock-btn')) setTimeout(() => setMenu(false), 0); });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#dock-menu, #menu-btn')) setMenu(false); });
+// 안쪽 버튼에 빨간 점이 있거나 암시장이 열려 있으면 메뉴 버튼에도 표시
+setInterval(() => {
+    const dot = [...document.querySelectorAll('#dock-menu .attend-dot')].some(d => !d.classList.contains('hidden'));
+    $('menu-dot').classList.toggle('hidden', !dot);
+    $('menu-btn').classList.toggle('bm-open', $('bm-btn').classList.contains('open'));
+}, 1000);
 renderProfileBtn();
 if (session) setTimeout(() => cloudUpload(true), 8000);   // 켜고 조금 뒤 한 번 맞춰 둠
 
@@ -3735,7 +3752,7 @@ const TUT_STEPS = [
     { sel: '.bottom-nav', text: '<b>가방</b> 아우라·장비 · <b>제작</b> 건틀릿·부적 · <b>상점</b> 물약·뽑기<br><b>퀘스트</b> · <b>펫</b> 알 부화·합성 · <b>도감</b> 세트 버프', pad: 4 },
     { sel: '.nav-btn[data-sheet="sheet-shop"]', text: '상점을 눌러 볼까요?', click: true, wait: 450 },
     { sel: '#sheet-shop .sheet', text: '물약으로 행운·속도를 올리고<br><b>뽑기</b>에선 장비랑 <b>🥚 펫 알</b>도 나와요.', close: 'sheet-shop', pad: -2 },
-    { sel: '#attend-btn', text: '매일 <b>출석</b>하면 보상을 받아요. 7일째가 제일 커요!' },
+    { sel: '#menu-btn', text: '<b>메뉴</b>를 누르면 출석 · 시즌 패스 · 레이드 · 신전 · 암시장 · 랭킹이 나와요.<br>빨간 점이 뜨면 받을 게 있다는 뜻!' },
     { sel: '#settings-btn', text: '<b>설정</b>에서 로그인·랭킹·소리·화질을 바꿀 수 있어요.<br>튜토리얼도 여기서 다시 볼 수 있어요.' },
     { sel: null, text: '준비 끝! 🎉<br>희귀한 아우라를 찾아 떠나 볼까요?', last: true }
 ];
@@ -4048,7 +4065,7 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=61')
+import('./aura3d.js?v=62')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {

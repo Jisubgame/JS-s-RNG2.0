@@ -313,6 +313,28 @@ export const AURA_DATA = [
     { id: "jxs_eclipse_gunwoo", name: "일식의 김건우", grade: "JXS", in: 888888888, color: "#ff9a3a", line: "태양이 등을 돌린 순간, 그가 하늘을 가졌다",
       fx: { signature: "eclipse", colors: ["#ff9a3a", "#ff3a2a", "#ffe0a0"], particles: 20, rise: 0.5, glow: 0.8 } },
 
+    // 🆕 UPDATE 5 칭호 10개
+    { id: "rare_gamer_tv", name: "밤샘 게이머 김티비", grade: "RARE", in: 393, color: "#7dff6a",
+      fx: { colors: ["#7dff6a", "#b44dff", "#ffffff"], particles: 18, rise: 0.6, orbit: 3, rings: 1, glow: 0.7 } },
+    { id: "rare_baker_minchae", name: "빵 굽는 김민채", grade: "RARE", in: 818, color: "#ffc27a",
+      fx: { colors: ["#ffc27a", "#fff3d0", "#c8823a"], particles: 16, rise: 0.5, orbit: 4, glow: 0.6 } },
+    { id: "ep_rocker_gaeun", name: "기타 치는 김가은", grade: "EPIC", in: 2929, color: "#ff3ad0",
+      fx: { colors: ["#ff3ad0", "#7af7ff", "#ffffff"], particles: 24, rise: 1.4, rings: 3, orbit: 3, glow: 1 } },
+    { id: "ep_detective_byungeun", name: "탐정 공병은", grade: "EPIC", in: 4040, color: "#d9a84a",
+      fx: { colors: ["#d9a84a", "#5a3a20", "#fff3c0"], particles: 16, rise: 0.5, shards: 3, rings: 1, glow: 0.8 } },
+    { id: "leg_lantern_minchae", name: "등불지기 김민채", grade: "LEGEND", in: 23232, color: "#ff7a3a",
+      fx: { signature: "lanternKeeper", colors: ["#ff7a3a", "#7ad0ff", "#fff0b0"], glow: 0.7 } },
+    { id: "leg_mecha_byungeun", name: "메카 조종사 공병은", grade: "LEGEND", in: 67676, color: "#5ac8ff",
+      fx: { signature: "mechaPilot", colors: ["#5ac8ff", "#ff7a1a", "#ffffff"], glow: 0.7 } },
+    { id: "myth_cherryblade_gunwoo", name: "벚꽃 검성 김건우", grade: "MYTHIC", in: 432432, color: "#ffb0d0", line: "칼끝이 지나간 자리에 봄이 내린다",
+      fx: { signature: "sakuraBlade", colors: ["#ffb0d0", "#c0202a", "#ffffff"], glow: 0.8 } },
+    { id: "myth_crystalwitch_tv", name: "수정 마녀 김티비", grade: "MYTHIC", in: 818181, color: "#c08aff", line: "수정 구슬 속에서 내일이 소용돌이친다",
+      fx: { signature: "crystalWitch", colors: ["#c08aff", "#7af7ff", "#ffffff"], glow: 0.8 } },
+    { id: "anc_skywhale_gaeun", name: "하늘고래와 김가은", grade: "ANCIENT", in: 2727272, color: "#7ab0ff", line: "구름 바다 위로 고래의 노래가 울린다",
+      fx: { signature: "skyWhale", colors: ["#7ab0ff", "#d8f8ff", "#ffffff"], glow: 0.8 } },
+    { id: "abs_valkyrie_minchae", name: "발키리 김민채", grade: "ABSOLUTE", in: 61616161, color: "#fff3c0", line: "날개를 펼치는 순간, 전장의 운명이 정해진다",
+      fx: { signature: "valkyrie", colors: ["#fff3c0", "#ffd23a", "#7ad0ff"], glow: 0.9 } },
+
     // 🌀 레이드 보스 드롭 (롤로는 안 나옴)
     { id: "dng_riftwalker", name: "균열을 걷는 자", grade: "MYTHIC", in: 700000, color: "#ff6ad8", line: "한 걸음마다 세상이 갈라진다", dungeon: true,
       fx: { signature: "riftWalker", colors: ["#ff6ad8", "#c070ff", "#ffffff"], glow: 0.8 } },

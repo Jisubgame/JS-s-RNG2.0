@@ -2677,3 +2677,39 @@ body.in-dng #biome-banner, body.in-dng #border-glow-overlay, body.in-dng #rare-b
 .db-intro-in span { font-size: 10px; letter-spacing: 0.5em; color: var(--muted); }
 .db-intro-in em { font-style: normal; font-size: 12px; color: #fff3a0; margin-top: 4px; }
 @keyframes intro-show { 0% { opacity: 0; transform: scaleY(0.2); } 12% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
+
+/* ---------- 메뉴 (버튼 6개를 하나로) ---------- */
+.dock-btn.menu { color: var(--text); }
+.dock-btn.menu.on { color: #fff; border-color: rgba(255, 255, 255, 0.45); background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05)), rgba(8, 8, 20, 0.8); }
+.dock-btn.menu.bm-open { border-color: #ff5ad8; box-shadow: 0 0 14px rgba(255, 90, 216, 0.5); }
+.dock-btn.menu #menu-dot { top: 4px; right: 4px; }
+.dock-menu { position: absolute; left: 58px; top: 96px; z-index: 4; display: grid; grid-template-columns: repeat(3, 50px); gap: 8px; padding: 10px;
+    background: rgba(8, 7, 20, 0.86); border: 1px solid var(--line-2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    clip-path: var(--chamfer); --cut: 8px; transform-origin: 0 0; animation: menu-in 0.18s ease-out; }
+.dock-menu.hidden { display: none; }
+@keyframes menu-in { from { opacity: 0; transform: scale(0.85); } }
+
+/* ---------- 레이드 상자 ---------- */
+.rchest { position: relative; display: inline-block; width: 40px; height: 34px; flex: none; }
+.rchest.sm { width: 18px; height: 15px; vertical-align: -3px; }
+.rchest .rc-body { position: absolute; left: 0; right: 0; bottom: 0; height: 60%; background: linear-gradient(180deg, color-mix(in srgb, var(--cc) 55%, #2a1a10), #1a1008); border: 2px solid var(--cc); box-sizing: border-box; }
+.rchest .rc-lid { position: absolute; left: -2%; right: -2%; top: 4%; height: 42%; background: linear-gradient(180deg, var(--cc), color-mix(in srgb, var(--cc) 50%, #1a1008)); border: 2px solid var(--cc2); border-radius: 40% 40% 0 0 / 70% 70% 0 0; box-sizing: border-box; }
+.rchest .rc-lock { position: absolute; left: 50%; top: 36%; width: 22%; height: 26%; transform: translateX(-50%); background: var(--cc2); box-shadow: 0 0 6px var(--cc2); }
+.rchest.sm .rc-body, .rchest.sm .rc-lid { border-width: 1px; }
+.rd-chests { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.rd-chest { position: relative; padding: 9px 3px 7px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: inherit; color: var(--text); background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); cursor: pointer; }
+.rd-chest b { font-weight: 400; font-size: 10.5px; white-space: nowrap; }
+.rd-chest small { font-size: 9.5px; color: var(--faint); }
+.rd-chest.has { border-color: color-mix(in srgb, var(--cc) 55%, transparent); background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--cc) 16%, transparent), transparent 70%); }
+.rd-chest.has small { color: var(--cc); }
+.rd-chest.has .rchest { animation: chest-bob 1.6s ease-in-out infinite; }
+.rd-chest:disabled { opacity: 0.45; cursor: default; }
+.rd-chest em { position: absolute; top: 3px; right: 3px; font-style: normal; font-size: 9px; padding: 1px 4px; color: #1a1503; background: var(--gold); cursor: pointer; }
+@keyframes chest-bob { 50% { transform: translateY(-2px) rotate(-3deg); } }
+.rd-rw-sub { font-size: 10px; letter-spacing: 0.1em; color: var(--muted); margin-top: 2px; }
+.rd-rw .at-rw small { color: var(--faint); font-size: 9.5px; }
+.rd-rw .t-rare { border-color: rgba(77, 163, 255, 0.45); } .rd-rw .t-epic { border-color: rgba(180, 77, 255, 0.5); } .rd-rw .t-legend { border-color: rgba(255, 122, 26, 0.55); } .rd-rw .t-mythic { border-color: rgba(0, 229, 255, 0.6); }
+.rd-chestchip { color: #fff3c0; }
+.gr-icon .ticket-ico.big { transform: scale(2.4); }
+.gr-icon .dtk-ico { width: 46px; height: 32px; margin: 0; }
+.gr-xp { font-family: var(--display); font-weight: 400; font-size: 26px; color: #b9a8ff; text-shadow: 0 0 12px #b9a8ff; }

@@ -761,6 +761,46 @@ export const POSES = {
         d.root.position.y += 0.9 + S(t * 0.9) * 0.12; d.head.rotation.x = -0.12;
         set(d.legL, 0.15, 0, -0.05); set(d.legR, -0.1, 0, 0.05);
     },
+    // 등불지기 김민채: 장대 등불을 앞으로 내밀고 살랑살랑
+    leg_lantern_minchae(t, d, _r, sig) {
+        set(d.armL, -1.3 + (sig?.sway ?? 0) * 0.08, 0, -0.2); set(d.armR, -0.2, 0, 0.25);
+        d.head.rotation.set(-0.15, 0.15, 0); d.root.rotation.y = 0.2;
+        set(d.legL, 0, 0, -0.05); set(d.legR, 0, 0, 0.05);
+    },
+    // 메카 조종사 공병은: 조종간을 잡듯 두 팔을 앞으로, 발사 때 몸을 앞으로 숙임
+    leg_mecha_byungeun(t, d, _r, sig) {
+        const f = sig?.fire ?? 0;
+        set(d.armL, -1.2, 0, -0.15); set(d.armR, -1.2, 0, 0.15);
+        d.root.rotation.x = 0.08 + f * 0.08; d.root.position.y += 0.3 + S(t * 6) * 0.03 * f;
+        set(d.legL, -0.15, 0, -0.1); set(d.legR, 0.1, 0, 0.1);
+    },
+    // 벚꽃 검성 김건우: 칼을 비스듬히 내린 채 서 있다가 꽃잎 베기 때 크게 휘두름
+    myth_cherryblade_gunwoo(t, d, _r, sig) {
+        const k = sig?.cut ?? 0;
+        set(d.armR, mix(-0.5, -2.4, k), 0, mix(0.5, -0.6, k)); set(d.armL, -0.3, 0, -0.3);
+        d.root.rotation.y = mix(0.3, -0.4, k); d.root.position.y -= 0.15;
+        set(d.legL, -0.4, 0, -0.1); set(d.legR, 0.3, 0, 0.1);
+    },
+    // 수정 마녀 김티비: 수정 구슬 위로 두 손을 펼쳐 주문을 욈
+    myth_crystalwitch_tv(t, d, _r, sig) {
+        const c = sig?.cast ?? 0;
+        set(d.armL, -1.4, 0, -0.4 - c * 0.2); set(d.armR, -1.4, 0, 0.4 + c * 0.2);
+        d.root.position.y += 0.5 + S(t * 1.5) * 0.1; d.head.rotation.x = 0.2;
+        set(d.legL, 0.2, 0, -0.05); set(d.legR, -0.1, 0, 0.05);
+    },
+    // 하늘고래와 김가은: 고래를 올려다보며 손을 흔듦
+    anc_skywhale_gaeun(t, d, _r, sig) {
+        set(d.armR, -0.3 + S(t * 4) * 0.2, 0, 2.6); set(d.armL, -0.2, 0, -0.3);
+        d.head.rotation.set(-0.5, S(t * 0.35) * 0.6, 0); d.root.position.y += 0.3 + S(t * 1.2) * 0.1;
+        set(d.legL, 0, 0, -0.05); set(d.legR, 0, 0, 0.05);
+    },
+    // 발키리 김민채: 방패를 앞에 들고 창을 높이 세움, 날개를 펼칠 때 하늘로 솟음
+    abs_valkyrie_minchae(t, d, _r, sig) {
+        const k = sig?.spread ?? 0;
+        set(d.armL, -2.4, 0, -0.2); set(d.armR, -1.1, 0, 0.3);
+        d.root.position.y += 0.8 + k * 0.6 + S(t * 1.3) * 0.1; d.head.rotation.x = -0.15 - k * 0.1;
+        set(d.legL, 0.2, 0, -0.06); set(d.legR, -0.1, 0, 0.06);
+    },
     // 시즌1 개척자: 한 손을 이마에 대고 먼 곳을 바라보며 걷는 듯 살랑
     pass_pioneer(t, d, _r, sig) {
         const w = sig?.step ?? 0;

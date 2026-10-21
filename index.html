@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Orbit&display=swap" rel="stylesheet">
     <!-- 업데이트할 때: 아래 ?v= 숫자 3곳과 version.json 숫자를 똑같이 올리기 -->
-    <link rel="stylesheet" href="style.css?v=61">
-    <link rel="stylesheet" href="rarity.css?v=61">
+    <link rel="stylesheet" href="style.css?v=62">
+    <link rel="stylesheet" href="rarity.css?v=62">
     <script type="importmap">{ "imports": { "three": "./lib/three.module.js" } }</script>
 </head>
 <body>
@@ -90,8 +90,15 @@
 
         <!-- 3D 캐릭터가 이 영역 가운데에 서 있음. 안의 글자는 전부 겹쳐 띄워서 크기가 변해도 아래 버튼이 안 움직임 -->
         <section class="stage">
-            <!-- 양옆 대칭 메뉴: 왼쪽 출석·패스·던전 / 오른쪽 신전·암시장·랭킹 -->
+            <!-- 메뉴 버튼 하나 → 누르면 출석·패스·던전·신전·암시장·랭킹이 펼쳐짐 -->
             <div class="side-dock left">
+                <button id="menu-btn" class="dock-btn menu" aria-label="메뉴" aria-expanded="false">
+                    <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+                    <span>메뉴</span><i id="menu-dot" class="attend-dot hidden"></i>
+                </button>
+            </div>
+            <div id="dock-menu" class="dock-menu hidden">
+
                 <button id="attend-btn" class="dock-btn" aria-label="출석 체크">
                     <svg viewBox="0 0 24 24"><path d="M4 6h16v14H4z"/><path d="M4 10h16M8 3v5M16 3v5"/><path d="M9 15l2 2 4-4"/></svg>
                     <span>출석</span><i class="attend-dot hidden"></i>
@@ -104,8 +111,7 @@
                     <svg viewBox="0 0 24 24"><path d="M12 2.5l1.6 4.2-1.9 3 2.4 3.4-2.2 3.6 1.4 4.8"/><path d="M5 21V9l7-6 7 6v12"/><path d="M3 21h18"/></svg>
                     <span>던전</span>
                 </button>
-            </div>
-            <div class="side-dock right">
+
                 <button id="show-btn" class="dock-btn temple" aria-label="신전">
                     <svg viewBox="0 0 24 24"><path d="M3 9l9-5 9 5M4 9h16M6 9v8M10 9v8M14 9v8M18 9v8M3 20h18M4 17h16"/></svg>
                     <span>신전</span><i class="show-dot attend-dot hidden"></i>
@@ -565,6 +571,6 @@
 
     <div id="toast-wrap"></div>
 
-    <script type="module" src="script.js?v=61"></script>
+    <script type="module" src="script.js?v=62"></script>
 </body>
 </html>
