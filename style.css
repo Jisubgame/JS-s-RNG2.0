@@ -2395,16 +2395,6 @@ body.in-dng #biome-banner, body.in-dng #border-glow-overlay, body.in-dng #rare-b
 @keyframes rift-breathe { 50% { transform: translateX(-50%) scaleX(1.25); } }
 @keyframes fade-in { from { opacity: 0; } }
 
-.rd-boss { display: flex; align-items: stretch; gap: 12px; padding: 12px; background: radial-gradient(ellipse 50% 120% at 12% 50%, rgba(255, 106, 216, 0.16), transparent 70%), rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 106, 216, 0.25); }
-.rd-boss-art { position: relative; flex: none; width: 64px; height: 78px; overflow: hidden; background: radial-gradient(circle, #3a0f4a, #08040f 75%); border: 1px solid rgba(255, 106, 216, 0.3); }
-.rd-boss-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
-.rd-boss-txt small { font-size: 9.5px; letter-spacing: 0.3em; color: var(--muted); }
-.rd-boss-txt small span { color: var(--dc); letter-spacing: 0.05em; }
-.rd-boss-txt b { font-family: var(--display); font-weight: 400; font-size: 23px; line-height: 1.1; }
-.rd-tags { display: flex; gap: 5px; flex-wrap: wrap; }
-.rd-tag { font-size: 10.5px; padding: 2px 7px; border: 1px solid; }
-.rd-tag.weak { color: #fff3a0; border-color: rgba(255, 243, 160, 0.4); background: rgba(255, 243, 160, 0.06); }
-.rd-tag.resist { color: #a89ac8; border-color: rgba(160, 112, 255, 0.3); }
 .rd-stars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
 .rd-star { padding: 7px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 1px; font-family: inherit; color: var(--dc); background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); cursor: pointer; }
 .rd-star b { font-weight: 400; font-size: 12px; letter-spacing: -0.05em; }
@@ -2559,15 +2549,6 @@ body.in-dng #biome-banner, body.in-dng #border-glow-overlay, body.in-dng #rare-b
 .db-swapbtn { right: 16px; }
 .db-quit svg, .db-swapbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .db-swapbtn small { font-size: 9px; }
-.db-charged { position: absolute; left: 50%; bottom: calc(16px + var(--safe-b)); transform: translateX(-50%); width: 92px; height: 92px; border-radius: 50%; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-family: inherit; color: var(--text); cursor: pointer;
-    background: radial-gradient(circle, rgba(20, 16, 40, 0.95), rgba(8, 6, 20, 0.95)); border: 3px solid color-mix(in srgb, var(--ec, #888) 40%, rgba(255, 255, 255, 0.25)); }
-.db-charged b { font-weight: 400; font-size: 11px; max-width: 78px; text-align: center; line-height: 1.2; opacity: 0.55; }
-.db-charged.ready { border-color: var(--ec); box-shadow: 0 0 24px color-mix(in srgb, var(--ec) 60%, transparent), inset 0 0 20px color-mix(in srgb, var(--ec) 30%, transparent); animation: ch-pulse 0.9s ease-in-out infinite; }
-.db-charged.ready b { opacity: 1; }
-@keyframes ch-pulse { 50% { transform: translateX(-50%) scale(1.06); } }
-.db-ch-segs { display: flex; gap: 3px; width: 62px; }
-.db-ch-segs i { flex: 1; height: 7px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
-.db-ch-segs b { display: block; height: 100%; background: var(--ec); box-shadow: 0 0 6px var(--ec); }
 /* 교체 목록 */
 .db-swappanel { position: absolute; right: 12px; bottom: calc(86px + var(--safe-b)); width: min(260px, calc(100% - 24px)); padding: 8px; display: flex; flex-direction: column; gap: 4px; background: rgba(8, 6, 20, 0.92); border: 1px solid var(--line-2); animation: fade-in 0.15s; }
 .db-sw-head { font-size: 10px; letter-spacing: 0.25em; color: var(--muted); padding: 2px 4px 4px; }
@@ -2619,3 +2600,80 @@ body.in-dng #biome-banner, body.in-dng #border-glow-overlay, body.in-dng #rare-b
 .db-dodge small { font-size: 9.5px; color: rgba(255, 255, 255, 0.75); }
 .db-dodge.fire { animation: dodge-fire 0.35s ease-out; }
 @keyframes dodge-fire { 0% { background: rgba(191, 230, 255, 0.55); } 100% { background: rgba(8, 6, 20, 0.45); } }
+
+/* ---------- 속성 문양 · 보스 문양 ---------- */
+.emb { width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -0.2em; overflow: visible; }
+.emb .f { fill: var(--ec); filter: drop-shadow(0 0 3px var(--ec)); }
+.emb .i { fill: #fff; opacity: 0.85; }
+.emb .s { fill: none; stroke: var(--ec); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 3px var(--ec)); }
+.boss-art { width: 100%; height: 100%; overflow: visible; }
+.boss-art .f { fill: var(--bc); filter: drop-shadow(0 0 6px var(--bc)); }
+.boss-art .i { fill: var(--bc2); }
+.boss-art .k { fill: #1a0a0a; }
+.boss-art .s { fill: none; stroke: var(--bc2); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 5px var(--bc)); }
+
+/* 보스 고르기 */
+.rd-bosses { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.rd-bcard { position: relative; padding: 10px 4px 7px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: inherit; color: var(--text); cursor: pointer; overflow: hidden;
+    background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--bc) 22%, transparent), rgba(0, 0, 0, 0.35) 75%); border: 1px solid color-mix(in srgb, var(--bc) 30%, transparent); }
+.rd-bcard .boss-art { width: 38px; height: 38px; transition: transform 0.3s; }
+.rd-bcard b { font-weight: 400; font-size: 11px; white-space: nowrap; }
+.rd-bcard small { font-size: 9px; color: var(--bc); letter-spacing: -0.05em; }
+.rd-bcard.on { border-color: var(--bc); box-shadow: 0 0 16px color-mix(in srgb, var(--bc) 40%, transparent), inset 0 0 18px color-mix(in srgb, var(--bc) 18%, transparent); }
+.rd-bcard.on .boss-art { transform: scale(1.12); }
+.rd-bcard:not(.on) { filter: saturate(0.6) brightness(0.85); }
+
+/* 보스 소개 카드 */
+.rd-boss { position: relative; display: flex; align-items: stretch; gap: 12px; padding: 12px; overflow: hidden;
+    background: radial-gradient(ellipse 45% 110% at 14% 50%, color-mix(in srgb, var(--bc) 24%, transparent), transparent 70%), linear-gradient(120deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.25));
+    border: 1px solid color-mix(in srgb, var(--bc) 35%, transparent); }
+.rd-boss::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, transparent 0 14px, color-mix(in srgb, var(--bc) 5%, transparent) 14px 15px); pointer-events: none; }
+.rd-boss-art { position: relative; flex: none; width: 84px; height: 84px; display: flex; align-items: center; justify-content: center; }
+.rd-boss-art .boss-art { width: 64px; height: 64px; position: relative; z-index: 1; animation: art-float 3s ease-in-out infinite; }
+@keyframes art-float { 50% { transform: translateY(-3px) scale(1.04); } }
+.rd-art-ring { position: absolute; inset: 4px; border: 1px solid color-mix(in srgb, var(--bc) 60%, transparent); transform: rotate(45deg); animation: art-spin 9s linear infinite; }
+.rd-art-ring.r2 { inset: 14px; border-color: color-mix(in srgb, var(--bc2) 50%, transparent); animation-direction: reverse; animation-duration: 6s; }
+@keyframes art-spin { to { transform: rotate(405deg); } }
+.rd-boss-txt { position: relative; z-index: 1; flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+.rd-boss-txt small { font-size: 9.5px; letter-spacing: 0.28em; color: var(--muted); }
+.rd-boss-txt small span { color: var(--dc); letter-spacing: 0.05em; }
+.rd-boss-txt b { font-family: var(--display); font-weight: 400; font-size: 24px; line-height: 1.1; color: #fff; text-shadow: 0 0 14px color-mix(in srgb, var(--bc) 70%, transparent); }
+.rd-boss-txt em { font-style: normal; font-size: 11px; color: #b9b9d2; }
+.rd-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 2px; }
+.rd-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; padding: 2px 7px; border: 1px solid var(--line-2); background: rgba(0, 0, 0, 0.3); }
+.rd-tag.weak { color: #fff3a0; border-color: rgba(255, 243, 160, 0.4); }
+.rd-tag.resist { color: #a89ac8; }
+.rd-mem-el .emb { width: 18px; height: 18px; }
+.rd-pk-el .emb { width: 22px; height: 22px; }
+.db-sw-el .emb { width: 16px; height: 16px; }
+.db-mine-top .emb { width: 16px; height: 16px; flex: none; }
+
+/* 필살기 버튼: 속성 문양 + 둥근 에너지 칸 */
+.db-charged { position: absolute; left: 50%; bottom: calc(26px + var(--safe-b)); transform: translateX(-50%); width: 96px; height: 96px; border-radius: 50%; padding: 0; border: none; cursor: pointer; background: none; }
+.db-ch-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.db-ch-ring circle { fill: none; stroke-width: 7; }
+.db-ch-ring .tr { stroke: rgba(255, 255, 255, 0.14); }
+.db-ch-ring .fl { stroke: var(--ec); filter: drop-shadow(0 0 4px var(--ec)); transition: stroke-dasharray 0.15s; }
+.db-ch-ring .fl.full { stroke: #fff; filter: drop-shadow(0 0 6px var(--ec)) drop-shadow(0 0 10px var(--ec)); }
+.db-ch-core { position: absolute; inset: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--ec, #888) 35%, #1a1430), #08061a 75%); border: 2px solid color-mix(in srgb, var(--ec, #888) 45%, transparent); box-shadow: inset 0 -6px 14px rgba(0, 0, 0, 0.5); }
+.db-ch-core .emb { width: 42px; height: 42px; opacity: 0.45; transition: opacity 0.2s, transform 0.2s; }
+.db-charged.ready .db-ch-core { border-color: var(--ec); box-shadow: 0 0 22px color-mix(in srgb, var(--ec) 70%, transparent), inset 0 0 20px color-mix(in srgb, var(--ec) 40%, transparent); }
+.db-charged.ready .db-ch-core .emb { opacity: 1; transform: scale(1.08); animation: emb-pulse 0.9s ease-in-out infinite; }
+.db-charged.ready { animation: ch-pulse2 0.9s ease-in-out infinite; }
+.db-charged:active .db-ch-core { transform: scale(0.92); }
+@keyframes emb-pulse { 50% { transform: scale(1.2); filter: brightness(1.4); } }
+@keyframes ch-pulse2 { 50% { transform: translateX(-50%) scale(1.05); } }
+.db-ch-name { position: absolute; left: 50%; bottom: calc(8px + var(--safe-b)); transform: translateX(-50%); font-family: var(--display); font-size: 13px; color: #fff; text-shadow: 0 0 8px var(--ec, #fff), 0 1px 3px #000; white-space: nowrap; pointer-events: none; }
+
+/* 보스 등장 카드 */
+.db-intro { position: absolute; left: 0; right: 0; top: 30%; display: flex; justify-content: center; pointer-events: none; opacity: 0; }
+.db-intro.on { animation: intro-show 2.6s ease forwards; }
+.db-intro-in { position: relative; width: 100%; padding: 16px 20px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center;
+    background: linear-gradient(90deg, transparent, rgba(5, 3, 14, 0.85) 18%, rgba(5, 3, 14, 0.85) 82%, transparent); border-top: 1px solid color-mix(in srgb, var(--bc) 60%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--bc) 60%, transparent); }
+.db-intro-in .boss-art { width: 54px; height: 54px; margin-bottom: 4px; }
+.db-intro-in small { font-size: 10px; letter-spacing: 0.4em; color: var(--bc2); }
+.db-intro-in b { font-family: var(--display); font-weight: 400; font-size: 34px; color: #fff; text-shadow: 0 0 20px var(--bc); }
+.db-intro-in span { font-size: 10px; letter-spacing: 0.5em; color: var(--muted); }
+.db-intro-in em { font-style: normal; font-size: 12px; color: #fff3a0; margin-top: 4px; }
+@keyframes intro-show { 0% { opacity: 0; transform: scaleY(0.2); } 12% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }

@@ -231,5 +231,23 @@ export const CRAFT_ITEMS = [
         name: "균열의 핵 부적",
         desc: "보스의 가슴에서 꺼낸 핵. 행운 +100%. 레이드 공격력 ×1.2, 체력 ×1.2.",
         luckBonus: 1, speedBonus: 0, riftAtk: 1.2, riftHp: 1.2, req: {}
+    },
+    {
+        id: "gear_glacierfist", category: "gauntlet", gacha: "dungeon",
+        name: "빙하 거신의 주먹",
+        desc: "서리 거신의 팔에서 떨어져 나온 얼음 주먹. 행운 400%, 속도 25%. 레이드 공격력 +20%, 체력 +25%.",
+        luckBonus: 4, speedBonus: 0.25, dngAtk: 0.2, dngHp: 0.25, req: {}
+    },
+    {
+        id: "amu_dragonheart", category: "amulet", gacha: "dungeon", abil: "rift",
+        name: "화룡의 심장 부적",
+        desc: "용암 비룡의 가슴에서 꺼낸 불씨. 행운 +120%. 레이드 공격력 ×1.15, 체력 ×1.25.",
+        luckBonus: 1.2, speedBonus: 0, riftAtk: 1.15, riftHp: 1.25, req: {}
+    },
+    {
+        id: "gear_stormtalon", category: "gauntlet", gacha: "dungeon",
+        name: "뇌조의 발톱",
+        desc: "천공의 뇌조가 남긴 금빛 발톱. 행운 500%, 속도 30%. 레이드 공격력 +20%, 체력 +15%.",
+        luckBonus: 5, speedBonus: 0.3, dngAtk: 0.2, dngHp: 0.15, req: {}
     }
 ];

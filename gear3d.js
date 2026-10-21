@@ -529,6 +529,37 @@ const GAUNTLETS = {
             });
         });
     },
+    // ❄ 빙하 거신의 주먹: 서리 낀 바위 판금 + 손등에 솟은 얼음 결정, 손목의 빛나는 서리 띠, 날리는 눈송이
+    gear_glacierfist(g, up, side) {
+        const rock = std('#dbe7f3', { rough: 0.85, metal: 0.05, emissive: '#1a2a3a', ei: 0.2 });
+        const ice = std('#9fd8ff', { rough: 0.1, metal: 0.2, emissive: '#2a7ab0', ei: 0.6 });
+        const crys = std('#e0fbff', { emissive: '#5ad8ff', ei: 1.2, rough: 0.05 });
+        shell(g, ice, { top: -0.8, grow: 0.18 });
+        box(g, rock, 1.3, 0.35, 1.3, 0, -0.9, 0); box(g, rock, 1.32, 0.3, 1.32, 0, -1.9, 0);
+        const band = box(g, glow('#9ff0ff', 0.9), 1.3, 0.07, 1.3, 0, -1.15, 0);
+        for (let i = 0; i < 4; i++) box(g, crys, 0.14, 0.42 - Math.abs(i - 1.5) * 0.08, 0.14, (i - 1.5) * 0.26, -1.5, 0.7, 0.7, 0, 0);
+        for (let i = 0; i < 3; i++) box(g, crys, 0.12, 0.5 - i * 0.1, 0.12, side * 0.68, -1.1 - i * 0.3, (i - 1) * 0.3, 0, 0, side * -0.8);
+        const flakes = Array.from({ length: 5 }, () => box(g, glow('#ffffff', 0.9), 0.05, 0.05, 0.05, 0, 0, 0));
+        up.push(t => {
+            band.material.opacity = 0.6 + 0.3 * Math.sin(t * 3);
+            flakes.forEach((f, i) => { const k = (t * 0.5 + i / 5) % 1; f.position.set(Math.sin(i * 2.3 + t) * 0.7, -0.8 - k * 1.4, Math.cos(i * 1.7 + t) * 0.7); f.scale.setScalar(0.05 * (1 - k) + 0.01); });
+        });
+    },
+    // ⚡ 뇌조의 발톱: 남색 깃털 판금 + 금빛 갈고리 발톱 셋, 손등 위로 튀는 전류
+    gear_stormtalon(g, up, side) {
+        const plume = std('#1a2a6a', { metal: 0.3, rough: 0.4, emissive: '#0a1a5a', ei: 0.6 });
+        const gold = std('#ffd23a', { metal: 0.85, rough: 0.2, emissive: '#6a4a00', ei: 0.5 });
+        shell(g, plume, { top: -0.8, grow: 0.14 });
+        box(g, gold, 1.22, 0.1, 1.22, 0, -0.84, 0); box(g, gold, 1.22, 0.1, 1.22, 0, -1.95, 0);
+        for (let i = 0; i < 4; i++) box(g, i % 2 ? gold : plume, 0.2, 0.5, 0.06, side * 0.62, -1.0 - i * 0.24, 0.3 - i * 0.12, 0, 0, side * 0.3);
+        for (let i = 0; i < 3; i++) { box(g, gold, 0.12, 0.12, 0.45, (i - 1) * 0.32, -2.05, 0.55, 0.7, 0, 0); box(g, gold, 0.09, 0.09, 0.25, (i - 1) * 0.32, -2.25, 0.78, 1.4, 0, 0); }
+        const gem = box(g, glow('#ffe14d', 1), 0.22, 0.22, 0.05, 0, -1.4, 0.63, 0, 0, Math.PI / 4);
+        const arcs = Array.from({ length: 4 }, () => box(g, glow('#bfe6ff', 1), 0.04, 0.04, 0.4, 0, 0, 0));
+        up.push(t => {
+            gem.scale.setScalar(1 + Math.sin(t * 8) * 0.15);
+            arcs.forEach((a, i) => { a.visible = Math.random() < 0.6; a.position.set(Math.sin(t * 7 + i * 2) * 0.55, -1.2 - i * 0.2, 0.65 + Math.random() * 0.1); a.rotation.set(Math.random() * 3, Math.random() * 3, 0); });
+        });
+    },
     // 🌀 균열파괴자: 흑요석 판금에 보라 균열, 손등의 핵이 맥박치고 수정 가시 셋, 주위에 열리는 작은 틈
     gear_riftbreaker(g, up, side) {
         const obs = std('#1b1428', { metal: 0.55, rough: 0.3, emissive: '#2a0a4a', ei: 0.5 });
@@ -861,6 +892,21 @@ const AMULETS = {
                 c.position.set(Math.sin(i * 2.3) * 0.18 * kk, -0.75 + kk * 0.5 - kk * kk * 0.55, 0.68 + kk * 0.12);
                 c.rotation.set(t * 6, t * 4, 0);
             });
+        });
+    },
+    // 🔥 화룡의 심장: 현무암 띠에 매달린 용암 심장, 숨 쉬듯 달아오르고 불씨가 피어오름
+    amu_dragonheart(g, up, side) {
+        box(g, std('#2a1610', { metal: 0.4, rough: 0.5, emissive: '#3a0a00', ei: 0.5 }), 1.1, 0.28, 1.1, 0, -0.42, 0);
+        box(g, glow('#ff7a2a', 0.9), 1.12, 0.05, 1.12, 0, -0.32, 0);
+        const charm = new THREE.Group(); charm.position.set(0, -0.6, 0.64); g.add(charm);
+        const coreM = std('#ffb03a', { emissive: '#ff7a1a', ei: 2.2 });
+        const heart = new THREE.Group(); heart.position.y = -0.3; charm.add(heart);
+        box(heart, coreM, 0.16, 0.16, 0.12, -0.07, 0.04, 0, 0, 0, Math.PI / 4); box(heart, coreM, 0.16, 0.16, 0.12, 0.07, 0.04, 0, 0, 0, Math.PI / 4); box(heart, coreM, 0.2, 0.2, 0.12, 0, -0.05, 0, 0, 0, Math.PI / 4);
+        for (let i = 0; i < 4; i++) box(charm, std('#1a1210', { metal: 0.6 }), 0.05, 0.05, 0.05, 0, -i * 0.07 + 0.05, 0);
+        const embers = Array.from({ length: 4 }, () => box(g, glow('#ffc24a', 1), 0.04, 0.04, 0.04, 0, 0, 0));
+        up.push(t => {
+            const b = 1 + Math.max(0, Math.sin(t * 3)) * 0.2; heart.scale.setScalar(b); coreM.emissiveIntensity = 1.6 + b * 1.2;
+            embers.forEach((e, i) => { const k = (t * 0.7 + i / 4) % 1; e.position.set(Math.sin(t * 3 + i * 2) * 0.12, -0.9 + k * 0.6, 0.7); e.scale.setScalar(0.05 * (1 - k) + 0.01); });
         });
     },
     // 🌀 균열의 핵: 흑요석 띠 위에 떠서 도는 분홍 핵 + 둘레를 도는 수정 파편

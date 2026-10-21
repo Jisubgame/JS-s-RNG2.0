@@ -17,8 +17,40 @@ export const ELEMENTS = {
     dark:  { name: '어둠', icon: '🌑', color: '#a070ff', fx: 'drain',  fast: { name: '그림자 할퀴기', pw: 10, t: 0.7, en: 7 }, charged: { name: '암흑 파동',     pw: 70,  cost: 33 } },
     rift:  { name: '균열', icon: '🌀', color: '#ff6ad8', fx: 'rend',   fast: { name: '균열 손톱',     pw: 12, t: 0.7, en: 8 }, charged: { name: '차원 붕괴',     pw: 160, cost: 100 } }
 };
-export const BOSS = { name: '균열의 군주', weak: 'light', resist: 'dark' };
-const effOf = el => el === BOSS.weak ? 1.6 : el === BOSS.resist ? 0.625 : 1;
+// 레이드 보스 (hp·dmg = 기본 난이도 수치에 곱하는 배율)
+// 속성 문양 (SVG)
+const EMB = {
+    fire:  '<path class="f" d="M12 1.5c.6 3.6 4.6 5.6 5.4 9.6.9 4.5-2 9.4-5.4 9.4s-6.6-3-6.1-7.6c.3-2.8 2.3-4 2.6-6.6 1.3 1.1 1.9 2.6 1.9 4.2 1.5-2.2 2-5.3 1.6-9z"/><path class="i" d="M12 12.5c.4 1.9 2.4 2.9 2.4 5.1 0 1.6-1.1 2.8-2.4 2.8s-2.4-1.1-2.4-2.6c0-1.6 1.4-2.4 2.4-5.3z"/>',
+    ice:   '<g class="s"><path d="M12 2v20M3.3 7l17.4 10M3.3 17l17.4-10"/><path d="M9.3 3.6L12 6l2.7-2.4M9.3 20.4L12 18l2.7 2.4M3.6 10.1l3.5-.9-.9-3.5M20.4 13.9l-3.5.9.9 3.5M6.2 18.3l.9-3.5-3.5-.9M17.8 5.7l-.9 3.5 3.5.9"/></g><circle class="f" cx="12" cy="12" r="2.2"/>',
+    volt:  '<path class="f" d="M13.5 1.5L4 13.6h6.6l-1.6 8.9 10-12.6h-6.7z"/>',
+    light: '<path class="f" d="M12 1.8l1.9 6.2 6.3-1.6-4.5 4.6 4.5 4.6-6.3-1.6L12 20.2 10.1 14l-6.3 1.6 4.5-4.6-4.5-4.6 6.3 1.6z"/><circle class="i" cx="12" cy="11" r="2.6"/>',
+    dark:  '<path class="f" d="M15.5 2.2a9.6 9.6 0 100 19.6 8 8 0 01-.3-19.6z"/><path class="i" d="M18.5 6l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/>',
+    rift:  '<path class="f" d="M12 1l2.2 5.4-1.5 3 2.3 3.6-2.3 3.4 1.2 6.6-1.9-6.2-2.4-3.8 2.2-3.4-1.7-3.3z"/><path class="s" d="M6 8l2 1M18 8l-2 1M6 16l2-1M18 16l-2-1"/>'
+};
+export const embSvg = (el, cls = '') => `<svg class="emb ${cls}" viewBox="0 0 24 24" style="--ec:${ELEMENTS[el].color}" aria-hidden="true">${EMB[el]}</svg>`;
+// 보스 문양 (선택 카드·소개 화면)
+const BOSS_ART = {
+    rift:  '<path class="f" d="M50 4l7 20-5 10 8 14-8 12 4 36-6-34-8-14 7-12-6-12z"/><path class="s" d="M24 30l14 8M76 30l-14 8M24 70l14-8M76 70l-14-8"/>',
+    frost: '<g class="s"><path d="M50 6v88M12 28l76 44M12 72l76-44"/><path d="M40 12l10 10 10-10M40 88l10-10 10 10M14 42l14-2-3-14M86 58l-14 2 3 14M25 86l3-14-14-2M75 14l-3 14 14 2"/></g><path class="f" d="M50 38l10 12-10 12-10-12z"/>',
+    magma: '<path class="f" d="M50 8c4 14 22 22 24 40 3 20-10 40-24 40S22 76 26 56c2-11 10-16 11-26 6 5 9 11 9 18 6-9 8-20 4-40z"/><path class="i" d="M36 52c6-4 22-4 28 0-6 4-22 4-28 0z"/><path class="k" d="M49 46h2v12h-2z"/>',
+    storm: '<path class="f" d="M50 30L8 18l18 18-14 4 26 6 12 14 12-14 26-6-14-4 18-18z"/><path class="i" d="M54 42L42 64h9l-4 22 15-28h-9z"/>'
+};
+const bossArt = (id, cls = '') => `<svg class="boss-art ${cls}" viewBox="0 0 100 100" aria-hidden="true">${BOSS_ART[id]}</svg>`;
+
+export const BOSSES = [
+    { id: 'rift',  name: '균열의 군주', sub: 'RIFT LORD',      weak: 'light', resist: 'dark', color: '#c070ff', color2: '#ff6ad8', hp: 1,    dmg: 1,    desc: '차원의 틈에서 깨어난 흑요석 거인',
+      drops: [{ kind: 'gear', id: 'gear_riftbreaker', p: [0, 0.008, 0.02, 0.045] }, { kind: 'gear', id: 'amu_riftcore', p: [0, 0.01, 0.025, 0.055] }, { kind: 'aura', id: 'dng_riftwalker', p: [0, 0.006, 0.015, 0.035] }, { kind: 'aura', id: 'dng_riftlord', p: [0, 0, 0.002, 0.008] }] },
+    { id: 'frost', name: '서리 거신',   sub: 'FROST COLOSSUS', weak: 'fire',  resist: 'ice',  color: '#7ae8ff', color2: '#d8fbff', hp: 1.15, dmg: 1.05, desc: '만년설 아래 잠들어 있던 빙하의 거인',
+      drops: [{ kind: 'gear', id: 'gear_glacierfist', p: [0, 0.008, 0.02, 0.045] }, { kind: 'aura', id: 'dng_frostheart', p: [0, 0.005, 0.012, 0.03] }] },
+    { id: 'magma', name: '용암 비룡',   sub: 'MAGMA WYRM',     weak: 'ice',   resist: 'fire', color: '#ff7a2a', color2: '#ffd23a', hp: 1.3,  dmg: 1.1,  desc: '화산 심장부에서 깨어난 불의 용',
+      drops: [{ kind: 'gear', id: 'amu_dragonheart', p: [0, 0.008, 0.02, 0.045] }, { kind: 'aura', id: 'dng_dragonheir', p: [0, 0.005, 0.012, 0.03] }] },
+    { id: 'storm', name: '천공의 뇌조', sub: 'STORM ROC',      weak: 'dark',  resist: 'volt', color: '#ffe14d', color2: '#6ad0ff', hp: 1.45, dmg: 1.15, desc: '먹구름을 몰고 다니는 번개의 새',
+      drops: [{ kind: 'gear', id: 'gear_stormtalon', p: [0, 0.008, 0.02, 0.045] }, { kind: 'aura', id: 'dng_stormrider', p: [0, 0, 0.004, 0.012] }] }
+];
+export const BOSS_BY_ID = Object.fromEntries(BOSSES.map(b => [b.id, b]));
+let CUR = BOSSES[0];   // 지금 고른(싸우는) 보스
+const effOf = (el, b = CUR) => el === b.weak ? 1.6 : el === b.resist ? 0.625 : 1;
+export const bossesWeakTo = el => BOSSES.filter(b => b.weak === el);
 
 // 레이드에 나갈 수 있는 칭호 (속성)
 export const RAID_AURAS = {
@@ -28,16 +60,18 @@ export const RAID_AURAS = {
     anc_iceemperor_tv: 'ice', anc_vampire_gunwoo: 'dark', divine_knight_gaen_sword: 'light',
     abs_archdemon_tv: 'fire', abs_breaker_byungeun: 'volt',
     js_lightning_jisung: 'volt', jxs_creator_gaeun: 'light',
-    dng_riftwalker: 'rift', dng_riftlord: 'rift'
+    dng_riftwalker: 'rift', dng_riftlord: 'rift',
+    dng_frostheart: 'ice', dng_dragonheir: 'fire', dng_stormrider: 'volt',
+    leg_shadowblade_gunwoo: 'dark', myth_starforger_jisung: 'fire', myth_tidecaller_gaeun: 'ice', anc_clockmaster_byungeun: 'light', jxs_eclipse_gunwoo: 'dark'
 };
 // 등급 차이는 작게 (JXS 하나로 다 이기지 않게) — 속성·팀 구성이 더 중요
 const GRADE_STAT = { EPIC: [900, 6000], LEGEND: [980, 6400], MYTHIC: [1060, 6800], ANCIENT: [1140, 7200], ABSOLUTE: [1220, 7600], JXS: [1300, 8000] };
-const STAT_OVERRIDE = { dng_riftwalker: [1200, 7200], dng_riftlord: [1360, 8000] };
-export function raidInfo(a) {
+const STAT_OVERRIDE = { dng_riftwalker: [1200, 7200], dng_riftlord: [1360, 8000], dng_frostheart: [1260, 7600], dng_dragonheir: [1260, 7600], dng_stormrider: [1360, 8000] };
+export function raidInfo(a, bossId) {
     const el = a && RAID_AURAS[a.id];
     if (!el) return null;
     const [atk, hp] = STAT_OVERRIDE[a.id] || GRADE_STAT[a.grade];
-    return { el, E: ELEMENTS[el], atk, hp, eff: effOf(el) };
+    return { el, E: ELEMENTS[el], atk, hp, eff: effOf(el, bossId ? BOSS_BY_ID[bossId] : CUR) };
 }
 
 export const DIFFS = [
@@ -45,13 +79,6 @@ export const DIFFS = [
     { id: 'normal', star: 3, label: '보통',   color: '#ffd23a', hp: 60000,  hit: 300, slam: 1200, jc: 200000,  xp: 3000, items: { limit_potion: 2, star_potion: 1 },    egg: ['egg_rare', 0.25] },
     { id: 'hard',   star: 5, label: '어려움', color: '#ff8a3a', hp: 120000, hit: 500, slam: 2200, jc: 600000,  xp: 5000, items: { overcome_potion: 1, dice_potion: 1 }, egg: ['egg_legend', 0.25] },
     { id: 'hell',   star: 6, label: '지옥',   color: '#ff2a4a', hp: 250000, hit: 800, slam: 3500, jc: 1800000, xp: 8000, items: { heaven_potion: 1 },                   egg: ['egg_mythic', 0.25], extra: ['void_potion', 0.3] }
-];
-// 레이드 클리어 시 전용 드롭 (난이도별 확률: ★1, ★3, ★5, ★6)
-export const DROPS = [
-    { kind: 'gear', id: 'gear_riftbreaker', p: [0, 0.008, 0.02, 0.045] },
-    { kind: 'gear', id: 'amu_riftcore',     p: [0, 0.01, 0.025, 0.055] },
-    { kind: 'aura', id: 'dng_riftwalker',   p: [0, 0.006, 0.015, 0.035] },
-    { kind: 'aura', id: 'dng_riftlord',     p: [0, 0, 0.002, 0.008] }
 ];
 export const TICKET_DAILY = 2, TICKET_PRICE = 250000, RUN_CAP = 3;
 const TIME = 180, MAX_PARTY = 4, TEAM = 6, REJOIN_MS = 8000;
@@ -120,6 +147,9 @@ export function createDungeon(api) {
     const { fmt, esc } = api;
     const $ = id => document.getElementById(id);
     let selDiff = 0, picking = -1, view = 'main', showRw = false;
+    const pickBoss = id => { CUR = BOSS_BY_ID[id] || BOSSES[0]; };
+    // 보스·난이도별 클리어 기록 키 (균열의 군주는 예전 기록 그대로)
+    const ck = (i, b = CUR) => b.id === 'rift' ? DIFFS[i].id : `${b.id}:${DIFFS[i].id}`;
     let party = null;     // 파티 대기실
     let lobby = null;     // 열린 파티 목록 채널
     let B = null;         // 진행 중인 레이드
@@ -137,7 +167,7 @@ export function createDungeon(api) {
     }
     const owned = id => id && (api.gs().inventory[id] || 0) > 0;
     const team = () => st().team.map(id => owned(id) && RAID_AURAS[id] ? id : null);
-    const unlocked = i => i === 0 || (st().clears[DIFFS[i - 1].id] || 0) > 0;
+    const unlocked = i => i === 0 || (st().clears[ck(i - 1)] || 0) > 0;
     const runsLeft = () => Math.max(0, RUN_CAP - st().runs);
     const canPlay = () => st().tk > 0 && runsLeft() > 0 && team().some(Boolean);
     const whyNot = () => !team().some(Boolean) ? '레이드 팀에 칭호를 넣어 주세요' : runsLeft() <= 0 ? `오늘은 ${RUN_CAP}판을 다 했어요` : st().tk <= 0 ? '던전 티켓이 없어요' : '';
@@ -167,28 +197,33 @@ export function createDungeon(api) {
         if (!el) return;
         el.innerHTML = (party || view === 'party' ? partyView() : mainView()) + pickerHtml();
     }
-    function bossCard() {
-        const D = DIFFS[selDiff], W = ELEMENTS[BOSS.weak], R = ELEMENTS[BOSS.resist];
-        return `
-            <div class="rd-boss" style="--dc:${D.color}">
-                <div class="rd-boss-art"><div class="dg-rift"><i></i><i></i><i></i></div></div>
+    function bossCard(selectable) {
+        const D = DIFFS[selDiff], W = ELEMENTS[CUR.weak], R2 = ELEMENTS[CUR.resist], st0 = st();
+        const pick = selectable ? `<div class="rd-bosses">${BOSSES.map(b => {
+            const done = DIFFS.filter((_, i) => st0.clears[ck(i, b)]).length;
+            return `<button class="rd-bcard ${b === CUR ? 'on' : ''}" data-dgboss="${b.id}" style="--bc:${b.color};--bc2:${b.color2}">${bossArt(b.id)}<b>${b.name}</b><small>${'★'.repeat(done)}${'☆'.repeat(4 - done)}</small></button>`;
+        }).join('')}</div>` : '';
+        return `${pick}
+            <div class="rd-boss" style="--bc:${CUR.color};--bc2:${CUR.color2};--dc:${D.color}">
+                <div class="rd-boss-art">${bossArt(CUR.id, 'big')}<i class="rd-art-ring"></i><i class="rd-art-ring r2"></i></div>
                 <div class="rd-boss-txt">
-                    <small>RIFT RAID · <span>${stars(D.star)}</span></small>
-                    <b>${BOSS.name}</b>
-                    <div class="rd-tags"><span class="rd-tag weak">약점 ${W.icon} ${W.name}</span><span class="rd-tag resist">저항 ${R.icon} ${R.name}</span></div>
+                    <small>${CUR.sub} · <span>${stars(D.star)}</span></small>
+                    <b>${CUR.name}</b>
+                    <em>${CUR.desc}</em>
+                    <div class="rd-tags"><span class="rd-tag weak">${embSvg(CUR.weak)} 약점 ${W.name} ×1.6</span><span class="rd-tag resist">${embSvg(CUR.resist)} 저항 ${R2.name}</span></div>
                 </div>
             </div>`;
     }
     function starsRow(disabled) {
         const s = st();
-        return `<div class="rd-stars">${DIFFS.map((d, i) => `<button class="rd-star ${i === selDiff ? 'on' : ''} ${unlocked(i) ? '' : 'lock'}" style="--dc:${d.color}" data-dgdiff="${i}" ${disabled ? 'disabled' : ''}><b>${unlocked(i) ? stars(d.star) : '🔒'}</b><small>${d.label}${s.clears[d.id] ? ' ✓' : ''}</small></button>`).join('')}</div>`;
+        return `<div class="rd-stars">${DIFFS.map((d, i) => `<button class="rd-star ${i === selDiff ? 'on' : ''} ${unlocked(i) ? '' : 'lock'}" style="--dc:${d.color}" data-dgdiff="${i}" ${disabled ? 'disabled' : ''}><b>${unlocked(i) ? stars(d.star) : '🔒'}</b><small>${d.label}${s.clears[ck(i)] ? ' ✓' : ''}</small></button>`).join('')}</div>`;
     }
     function rewardsHtml() {
         const D = DIFFS[selDiff];
         return `<div class="rd-rw">
             <div class="rd-rw-row">${api.rewardChips({ jc: D.jc, items: D.items })}<span class="at-rw">🎫 ${fmt(D.xp)} XP</span></div>
             <div class="rd-rw-row"><span class="at-rw">🥚 ${api.eggName(D.egg[0])} ${Math.round(D.egg[1] * 100)}%</span>${D.extra ? `<span class="at-rw">${api.itemName(D.extra[0])} ${Math.round(D.extra[1] * 100)}%</span>` : ''}</div>
-            <div class="rd-rw-row">${DROPS.filter(x => x.p[selDiff]).map(x => `<span class="at-rw rd-gear">${x.kind === 'aura' ? '✦ ' + esc(api.aura(x.id).name) : '⚒ ' + esc(api.gearName(x.id))} ${Math.round(x.p[selDiff] * 1000) / 10}%</span>`).join('') || '<span class="rd-rw-note">★1은 레이드 전용 드롭이 없어요</span>'}</div>
+            <div class="rd-rw-row">${CUR.drops.filter(x => x.p[selDiff]).map(x => `<span class="at-rw rd-gear">${x.kind === 'aura' ? '✦ ' + esc(api.aura(x.id).name) : '⚒ ' + esc(api.gearName(x.id))} ${Math.round(x.p[selDiff] * 1000) / 10}%</span>`).join('') || '<span class="rd-rw-note">★1은 레이드 전용 드롭이 없어요</span>'}</div>
         </div>`;
     }
     function teamHtml(disabled) {
@@ -196,7 +231,7 @@ export function createDungeon(api) {
             if (!id) return `<button class="rd-mem empty" data-dgslot="${i}" ${disabled ? 'disabled' : ''}><i>+</i></button>`;
             const x = member(id);
             return `<button class="rd-mem" data-dgslot="${i}" style="--ec:${x.E.color}" ${disabled ? 'disabled' : ''}>
-                <span class="rd-mem-el">${x.E.icon}</span>${x.eff > 1 ? '<span class="rd-mem-up">약점</span>' : x.eff < 1 ? '<span class="rd-mem-down">저항</span>' : ''}
+                <span class="rd-mem-el">${embSvg(x.el)}</span>${x.eff > 1 ? '<span class="rd-mem-up">약점</span>' : x.eff < 1 ? '<span class="rd-mem-down">저항</span>' : ''}
                 <b>${esc(x.a.name)}</b><small>${fmt(x.atk)}</small>
             </button>`;
         }).join('')}</div>`;
@@ -204,9 +239,9 @@ export function createDungeon(api) {
     function mainView() {
         const s = st(), D = DIFFS[selDiff], m = mults(), lock = !unlocked(selDiff), why = lock ? `${DIFFS[selDiff - 1]?.label}을 먼저 깨야 해요` : whyNot();
         return `
-            ${bossCard()}
+            ${bossCard(true)}
             ${starsRow(false)}
-            <button class="rd-line" data-dg="rw"><span>체력 <b>${fmt(D.hp)}</b></span><span>제한 <b>3분</b></span><span class="rd-line-rw">보상 ${showRw ? '▴' : '▾'}</span></button>
+            <button class="rd-line" data-dg="rw"><span>체력 <b>${fmt(Math.round(D.hp * CUR.hp))}</b></span><span>제한 <b>3분</b></span><span class="rd-line-rw">보상 ${showRw ? '▴' : '▾'}</span></button>
             ${showRw ? rewardsHtml() : ''}
             <div class="rd-head"><span>레이드 팀</span><small>전투력 ${fmt(power())}</small><button class="rd-auto" data-dg="auto">자동 편성</button></div>
             ${teamHtml(false)}
@@ -225,14 +260,14 @@ export function createDungeon(api) {
     }
     function partyView() {
         const head = `<div class="rd-subhead">${party ? '' : '<button class="rd-back" data-dg="back">‹</button>'}<b>파티 레이드</b><small>최대 ${MAX_PARTY}명 · 각자 티켓 1장</small></div>`;
-        if (party) return head + bossCard() + starsRow(party.role !== 'host') + lobbyHtml();
+        if (party) return head + bossCard(party.role === 'host') + starsRow(party.role !== 'host') + lobbyHtml();
         const rooms = lobby ? [...lobby.rooms.values()].filter(r => Date.now() - r.at < 7000) : [];
         return `${head}
             <button class="btn btn-block btn-primary rd-make" data-dg="host" ${canPlay() && unlocked(selDiff) ? '' : 'disabled'}>방 만들기 <small>${DIFFS[selDiff].label} ${stars(DIFFS[selDiff].star)}</small></button>
             ${canPlay() ? '' : `<div class="rd-why">${whyNot()}</div>`}
             <div class="rd-join"><input id="dg-code" inputmode="numeric" maxlength="4" placeholder="방 번호"><button class="btn" data-dg="join">참가</button></div>
             <div class="rd-head"><span>열린 방</span><small>${lobby ? '' : '연결 중…'}</small></div>
-            <div class="rd-rooms">${rooms.length ? rooms.map(r => `<button class="rd-room" data-dgroom="${r.code}" style="--dc:${DIFFS[r.diff]?.color}"><b>${esc(r.host)}</b><span>${stars(DIFFS[r.diff]?.star || 1)}</span><small>${r.n}/${MAX_PARTY}명 · #${r.code}</small></button>`).join('') : '<div class="rd-empty">열린 방이 없어요</div>'}</div>`;
+            <div class="rd-rooms">${rooms.length ? rooms.map(r => `<button class="rd-room" data-dgroom="${r.code}" style="--dc:${DIFFS[r.diff]?.color}"><b>${esc(r.host)} · ${BOSS_BY_ID[r.boss]?.name || ''}</b><span>${stars(DIFFS[r.diff]?.star || 1)}</span><small>${r.n}/${MAX_PARTY}명 · #${r.code}</small></button>`).join('') : '<div class="rd-empty">열린 방이 없어요</div>'}</div>`;
     }
     function lobbyHtml() {
         const p = party, me = api.me().uid, host = p.role === 'host';
@@ -263,7 +298,7 @@ export function createDungeon(api) {
                         ${list.map(({ a, have, inTeam, x }) => {
                             const m = have ? member(a.id) : null;
                             return `<button class="rd-pk ${have ? '' : 'no'} ${inTeam ? 'in' : ''}" ${have && !inTeam ? `data-dgpick="${a.id}"` : 'disabled'} style="--ec:${x.E.color}">
-                                <span class="rd-pk-el">${x.E.icon}<small>${x.E.name}</small></span>
+                                <span class="rd-pk-el">${embSvg(x.el)}<small>${x.E.name}</small></span>
                                 <span class="rd-pk-main"><b class="${api.gradeCol(a.grade)}">${esc(a.name)}</b><small>${x.E.fast.name} · ${x.E.charged.name}</small></span>
                                 <span class="rd-pk-side">${have ? `<b>${fmt(m.atk)}</b><small>체력 ${fmt(m.max)}</small>` : '<small>미보유</small>'}${inTeam ? '<em>팀에 있음</em>' : x.eff > 1 ? '<em class="up">약점 ×1.6</em>' : x.eff < 1 ? '<em class="down">저항</em>' : ''}</span>
                             </button>`;
@@ -282,11 +317,12 @@ export function createDungeon(api) {
 
     /* ---------- 창 클릭 ---------- */
     function onClick(e) {
-        const t = e.target.closest('[data-dg],[data-dgslot],[data-dgdiff],[data-dgpick],[data-dgroom]');
+        const t = e.target.closest('[data-dg],[data-dgslot],[data-dgdiff],[data-dgpick],[data-dgroom],[data-dgboss]');
         if (!t) { if (e.target.classList.contains('dg-picker')) { picking = -1; render(); } return; }
         const d = t.dataset, s = st();
         if (d.dgslot !== undefined) { picking = +d.dgslot; render(); return; }
         if (d.dgpick !== undefined) { s.team[picking] = d.dgpick || null; picking = -1; api.save(); render(); return; }
+        if (d.dgboss) { pickBoss(d.dgboss); while (selDiff > 0 && !unlocked(selDiff)) selDiff--; render(); return; }
         if (d.dgdiff !== undefined) { const i = +d.dgdiff; if (!unlocked(i)) { api.toast(`${DIFFS[i - 1].label}을 먼저 깨야 해요`, 'bad'); return; } selDiff = i; render(); return; }
         if (d.dgroom) { joinParty(d.dgroom); return; }
         switch (d.dg) {
@@ -343,8 +379,8 @@ export function createDungeon(api) {
             const now = Date.now(), before = p.roster.length;
             p.roster[0] = meEntry();
             p.roster = p.roster.filter((r, i) => i === 0 || now - r.last < 7000);
-            p.net.send('roster', { code: p.code, diff: selDiff, ps: p.roster });
-            lobby?.net.send('room', { code: p.code, host: p.roster[0].nick, n: p.roster.length, diff: selDiff });
+            p.net.send('roster', { code: p.code, diff: selDiff, boss: CUR.id, ps: p.roster });
+            lobby?.net.send('room', { code: p.code, host: p.roster[0].nick, n: p.roster.length, diff: selDiff, boss: CUR.id });
             if (p.roster.length !== before) render();
         };
         p.timer = setInterval(beat, 1500);
@@ -359,6 +395,7 @@ export function createDungeon(api) {
             if (m.code !== code || party !== p) return;
             p.roster = m.ps || []; p.got = Date.now();
             if (DIFFS[m.diff]) selDiff = m.diff;
+            if (BOSS_BY_ID[m.boss]) pickBoss(m.boss);
             render();
         });
         p.net.on('full', m => { if (m.uid === me) { api.toast('파티가 가득 찼어요', 'bad'); leaveParty(true); } });
@@ -367,6 +404,7 @@ export function createDungeon(api) {
             if (party !== p || !(m.ps || []).some(r => r.uid === me)) return;
             clearInterval(p.timer);
             const net = p.net; party = null;
+            if (BOSS_BY_ID[m.boss]) pickBoss(m.boss);
             startBattle({ diff: m.diff, roster: m.ps, host: false, net });
         });
         const beat = () => {
@@ -395,7 +433,7 @@ export function createDungeon(api) {
         clearInterval(p.timer);
         lobby?.net.send('room', { code: p.code, closed: true });
         const roster = p.roster.map(({ last, ...r }) => r);
-        p.net.send('start', { diff: selDiff, ps: roster });
+        p.net.send('start', { diff: selDiff, boss: CUR.id, ps: roster });
         const net = p.net; party = null;
         startBattle({ diff: selDiff, roster, host: true, net });
     }
@@ -411,11 +449,11 @@ export function createDungeon(api) {
         api.closeSheet('sheet-dungeon');
         closeLobby();
         const me = api.me(), D = DIFFS[diff], now = Date.now();
-        const bossMax = Math.round(D.hp * (1 + 0.5 * (roster.length - 1)));
+        const bossMax = Math.round(D.hp * CUR.hp * (1 + 0.5 * (roster.length - 1)));
         const mem = team().filter(Boolean).map(member);
         mem.forEach(x => { x.hp = x.max; });
         B = {
-            diff, D, net, host, roster, scene: null, over: false, t0: now, last: now, lastSt: now, end: now + TIME * 1000,
+            diff, D, bd: CUR, net, host, roster, scene: null, over: false, t0: now, last: now, lastSt: now, end: now + TIME * 1000,
             me: { uid: me.uid, nick: me.nick, dmg: 0, pend: 0 },
             team: mem, cur: 0, busyUntil: now + 1500, holding: false, dodgeUntil: 0, rejoinUntil: 0, swapOpen: false,
             nextHit: now + 3500, nextCharge: now + 9000, tele: null,
@@ -427,14 +465,14 @@ export function createDungeon(api) {
         wireNet();
         api.setBusy(true);
         buildBattleUI();
-        import('./boss3d.js?v=60').then(({ createBossScene }) => {
+        import('./boss3d.js?v=61').then(({ createBossScene }) => {
             if (!B || B.net !== net) return;
-            B.scene = createBossScene();
+            B.scene = createBossScene(B.bd.id);
             api.setTakeover(B.scene);
             showCur();
         }).catch(e => console.warn(e));
         B.timer = setInterval(tick, 50);
-        floatText(`${BOSS.name} ${stars(D.star)}`, 'big', 50, 30);
+        showIntro();
     }
 
     function wireNet() {
@@ -521,7 +559,7 @@ export function createDungeon(api) {
             return;
         }
         if (now >= B.nextCharge) {
-            B.tele = { at: now + 1600, d: D.slam };
+            B.tele = { at: now + 1600, d: D.slam * B.bd.dmg };
             B.scene?.charge(1.6); flash(true);
             B.nextCharge = now + 9000 + Math.random() * 3000;
             return;
@@ -530,7 +568,7 @@ export function createDungeon(api) {
             B.scene?.attack();
             B.nextHit = now + 2000 + Math.random() * 700;
             const at = now + 450;
-            setTimeout(() => { if (B && !B.over && !B.rejoinUntil) hurt(D.hit, Date.now() <= B.dodgeUntil + 100 && B.dodgeUntil >= at - 500, false); }, 450);
+            setTimeout(() => { if (B && !B.over && !B.rejoinUntil) hurt(D.hit * B.bd.dmg, Date.now() <= B.dodgeUntil + 100 && B.dodgeUntil >= at - 500, false); }, 450);
         }
     }
     function hurt(d, dodged, big) {
@@ -630,7 +668,7 @@ export function createDungeon(api) {
                 <div class="db-mine" id="db-mine"></div>
                 <div class="db-timer" id="db-timer">180</div>
                 <div class="db-bossbox" id="db-bosshp">
-                    <div class="db-bname"><b>${BOSS.name}</b><small style="color:${B.D.color}">${stars(B.D.star)}</small></div>
+                    <div class="db-bname"><b>${B.bd.name}</b><small style="color:${B.D.color}">${stars(B.D.star)}</small></div>
                     <div class="db-hpbar"><div id="db-hplag"></div><div id="db-hpfill"></div></div>
                     <small id="db-hptext"></small>
                 </div>
@@ -639,7 +677,9 @@ export function createDungeon(api) {
             <div id="db-float" class="db-float"></div>
             <div class="db-hint" id="db-hint">화면 탭 · 꾹 눌러 공격 &nbsp;|&nbsp; 양옆 화살표로 회피</div>
             <button id="db-quit" class="db-quit" aria-label="나가기"><svg viewBox="0 0 24 24"><path d="M14 4a2 2 0 110 .01M10 9l3-1 3 3 3 1M13 8l-2 6 3 3v4M11 14l-3 2-3-1"/></svg></button>
-            <button id="db-charged" class="db-charged"><div class="db-ch-segs" id="db-segs"></div><b id="db-ch-name"></b></button>
+            <button id="db-charged" class="db-charged"><svg class="db-ch-ring" viewBox="0 0 100 100"><g id="db-arcs"></g></svg><span class="db-ch-core" id="db-ch-core"></span></button>
+            <div class="db-ch-name" id="db-ch-name"></div>
+            <div id="db-intro" class="db-intro"></div>
             <button id="db-dodge-l" class="db-dodge l" aria-label="왼쪽으로 회피"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><small>회피</small></button>
             <button id="db-dodge-r" class="db-dodge r" aria-label="오른쪽으로 회피"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg><small>회피</small></button>
             <button id="db-swap" class="db-swapbtn" aria-label="교체"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><small>교체</small></button>
@@ -670,6 +710,15 @@ export function createDungeon(api) {
         };
         drawUI(Date.now());
     }
+    // 등장 연출: 보스 이름 카드가 미끄러져 들어왔다 사라짐
+    function showIntro() {
+        const el = $('db-intro'), b = B.bd;
+        if (!el) return;
+        el.style.setProperty('--bc', b.color); el.style.setProperty('--bc2', b.color2);
+        el.innerHTML = `<div class="db-intro-in">${bossArt(b.id)}<small>RAID BATTLE · ${stars(B.D.star)}</small><b>${b.name}</b><span>${b.sub}</span><em>약점 ${embSvg(b.weak)} ${ELEMENTS[b.weak].name}</em></div>`;
+        el.classList.add('on');
+        setTimeout(() => el.classList.remove('on'), 2600);
+    }
     function toggleSwap() {
         if (!B || B.over || B.rejoinUntil) return;
         B.swapOpen = !B.swapOpen; B.holding = false;
@@ -677,7 +726,7 @@ export function createDungeon(api) {
         p.classList.toggle('hidden', !B.swapOpen);
         if (B.swapOpen) p.innerHTML = `<div class="db-sw-head">교체할 칭호</div>` + B.team.map((m, i) => `
             <button class="db-sw ${i === B.cur ? 'on' : ''} ${m.dead ? 'dead' : ''}" data-dbsw="${i}" ${m.dead || i === B.cur ? 'disabled' : ''} style="--ec:${m.E.color}">
-                <span class="db-sw-n">${i + 1}</span><span class="db-sw-el">${m.E.icon}</span>
+                <span class="db-sw-n">${i + 1}</span><span class="db-sw-el">${embSvg(m.el)}</span>
                 <span class="db-sw-main"><b>${esc(m.a.name)}</b><i><em style="width:${m.hp / m.max * 100}%"></em></i></span>
                 <small>${i === B.cur ? '전투 중' : m.dead ? '쓰러짐' : `${fmt(Math.ceil(m.hp))}`}</small>
             </button>`).join('');
@@ -697,14 +746,20 @@ export function createDungeon(api) {
         $('db-party').innerHTML = B.roster.length > 1 ? [...B.party.entries()].map(([uid, p]) => `<div class="db-pm ${uid === B.me.uid ? 'me' : ''}"><b>${esc(p.nick)}</b><small>${fmt(uid === B.me.uid ? Math.round(B.me.dmg) : p.dmg)}</small></div>`).join('') : '';
         const x = curM();
         if (x) {
-            $('db-mine').innerHTML = `<div class="db-mine-top" style="--ec:${x.E.color}"><span>${x.E.icon}</span><b>${esc(x.a.name)}</b></div>
+            $('db-mine').innerHTML = `<div class="db-mine-top" style="--ec:${x.E.color}">${embSvg(x.el)}<b>${esc(x.a.name)}</b></div>
                 <div class="db-mine-hp"><div style="width:${x.hp / x.max * 100}%" class="${x.hp / x.max < 0.25 ? 'low' : ''}"></div></div>
                 <small>${fmt(Math.ceil(x.hp))} / ${fmt(x.max)} · 남은 칭호 ${B.team.filter(m => !m.dead).length}/${B.team.length}</small>`;
-            const C = x.E.charged, n = Math.round(100 / C.cost);
-            $('db-segs').innerHTML = Array.from({ length: n }, (_, i) => `<i><b style="width:${Math.max(0, Math.min(1, (x.en - i * C.cost) / C.cost)) * 100}%"></b></i>`).join('');
+            const C = x.E.charged, n = Math.round(100 / C.cost), R0 = 44, CIRC = 2 * Math.PI * R0, gap = n > 1 ? 7 : 0, seg = CIRC / n - gap;
+            $('db-arcs').innerHTML = Array.from({ length: n }, (_, i) => {
+                const f = Math.max(0, Math.min(1, (x.en - i * C.cost) / C.cost)), off = -(i * CIRC / n) - gap / 2;
+                return `<circle class="tr" r="${R0}" cx="50" cy="50" stroke-dasharray="${seg} ${CIRC - seg}" stroke-dashoffset="${off}"/><circle class="fl ${f >= 1 ? 'full' : ''}" r="${R0}" cx="50" cy="50" stroke-dasharray="${seg * f} ${CIRC - seg * f}" stroke-dashoffset="${off}"/>`;
+            }).join('');
+            const core = $('db-ch-core');
+            if (core.dataset.el !== x.el) { core.dataset.el = x.el; core.innerHTML = embSvg(x.el, 'big'); }
             $('db-ch-name').textContent = C.name;
             const ch = $('db-charged');
             ch.style.setProperty('--ec', x.E.color);
+            $('db-ch-name').style.setProperty('--ec', x.E.color);
             ch.classList.toggle('ready', x.en >= C.cost && !x.dead && !B.rejoinUntil);
         }
         $('db-hurt').classList.toggle('on', now - (B.hurtAt || 0) < 220);
@@ -750,7 +805,7 @@ export function createDungeon(api) {
             api.addItems(D.items); B.lines.push(api.rewardChips({ items: D.items }));
             if (D.extra && Math.random() < D.extra[1]) { api.addItems({ [D.extra[0]]: 1 }); B.lines.push(api.rewardChips({ items: { [D.extra[0]]: 1 } })); }
             if (Math.random() < D.egg[1]) { api.addEgg(D.egg[0]); B.lines.push(api.rewardChips({ eggs: { [D.egg[0]]: 1 } })); }
-            for (const x of DROPS) {
+            for (const x of CUR.drops) {
                 if (!(Math.random() < x.p[B.diff])) continue;
                 if (x.kind === 'aura') {
                     api.grantAura(x.id); api.broadcastAura?.(x.id);
@@ -762,7 +817,7 @@ export function createDungeon(api) {
                     B.lines.unshift(`<span class="at-rw dg-rare">⚒ ${esc(api.gearName(x.id))} <small>${t}</small></span>`);
                 }
             }
-            s.clears[D.id] = (s.clears[D.id] || 0) + 1;
+            s.clears[ck(B.diff)] = (s.clears[ck(B.diff)] || 0) + 1;
             api.dailyTrack('dungeon');
         } else {
             const frac = m.frac ?? (1 - B.boss.hp / B.boss.max);
@@ -783,7 +838,7 @@ export function createDungeon(api) {
         el.innerHTML = `
             <div class="db-res-box ${B.won ? 'win' : 'lose'}">
                 <div class="db-res-title">${title}</div>
-                <div class="db-res-sub">${BOSS.name} <span style="color:${D.color}">${stars(D.star)}</span> · ${Math.round((Date.now() - B.t0) / 1000)}초</div>
+                <div class="db-res-sub">${B.bd.name} <span style="color:${D.color}">${stars(D.star)}</span> · ${Math.round((Date.now() - B.t0) / 1000)}초</div>
                 ${B.rare ? `<div class="db-res-rare">${B.rare} 획득!</div>` : ''}
                 <div class="db-res-sec">피해 순위</div>
                 <div class="db-res-rank">${dmg.map(([uid, [nick, v]], i) => `<div class="db-res-row ${uid === B.me.uid ? 'me' : ''}"><span>${i + 1}</span><b>${esc(nick)}</b><div class="db-res-bar"><i style="width:${v / total * 100}%"></i></div><small>${fmt(v)}</small></div>`).join('')}</div>

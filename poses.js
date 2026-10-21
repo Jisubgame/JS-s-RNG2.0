@@ -687,19 +687,79 @@ export const POSES = {
         d.head.rotation.x = mix(0.2, -0.25, g); d.root.position.y += 0.3 + g * 0.5 + S(t * 0.9) * 0.08;
         set(d.legL, 0, 0, -0.05); set(d.legR, 0, 0, 0.05);
     },
-    // 균열을 걷는 자: 몸을 낮추고 한 팔을 비스듬히 휘둘러 공간을 벰
+    // 균열을 걷는 자: 낮게 웅크린 암살자 자세, 베는 순간 두 단검을 X자로 휘두름
     dng_riftwalker(t, d, _r, sig) {
         const k = sig?.slash ?? 0;
-        set(d.armL, mix(-0.6, -1.9, k), 0, mix(-0.3, 0.6, k)); set(d.armR, -0.3, 0, 0.5);
-        d.root.rotation.x = 0.1 + k * 0.1; d.root.rotation.y = mix(0.25, -0.3, k); d.head.rotation.x = -0.1;
-        set(d.legL, -0.35, 0, -0.1); set(d.legR, 0.3, 0, 0.1);
+        set(d.armL, mix(-0.9, -2.2, k), 0, mix(-0.5, 0.9, k)); set(d.armR, mix(-0.9, -2.2, k), 0, mix(0.5, -0.9, k));
+        d.root.rotation.x = 0.18 + k * 0.1; d.root.position.y -= 0.25; d.head.rotation.x = -0.15;
+        set(d.legL, -0.5, 0, -0.12); set(d.legR, 0.35, 0, 0.12);
     },
     // 균열의 지배자: 공중에 떠서 팔을 벌리고, 가끔 두 팔을 앞으로 내밀어 명령
     dng_riftlord(t, d, _r, sig) {
         const k = sig?.command ?? 0;
-        set(d.armR, mix(-0.3, -1.4, k), 0, mix(1.0, 0.4, k)); set(d.armL, mix(-0.3, -1.4, k), 0, mix(-1.0, -0.4, k));
-        d.root.position.y += 0.6 + S(t * 1.1) * 0.12; d.head.rotation.x = -0.15 + k * 0.1;
+        set(d.armR, mix(-0.3, -1.5, k), 0, mix(1.0, 0.3, k)); set(d.armL, mix(-0.3, -1.5, k), 0, mix(-1.0, -0.3, k));
+        d.root.position.y += 0.7 + S(t * 1.1) * 0.12; d.head.rotation.x = -0.18 + k * 0.1;
         set(d.legL, 0.15, 0, -0.06); set(d.legR, -0.05, 0, 0.06);
+    },
+    // 빙하의 심장: 한 손을 가슴의 심장에 얹고 다른 손으로 냉기를 내뿜음
+    dng_frostheart(t, d, _r, sig) {
+        const b = sig?.beat ?? 0;
+        set(d.armR, -1.4, 0, 0.9); set(d.armL, -1.2 - b * 0.1, 0, -0.5);
+        d.root.position.y += 0.3 + S(t) * 0.08; d.head.rotation.x = -0.1 + b * 0.03;
+        set(d.legL, 0, 0, -0.08); set(d.legR, 0, 0, 0.08);
+    },
+    // 화룡의 계승자: 다리를 벌리고 주먹을 쥔 채 포효
+    dng_dragonheir(t, d, _r, sig) {
+        const f = sig?.flap ?? 0;
+        set(d.armL, -0.4, 0, -0.9 - f * 0.1); set(d.armR, -0.4, 0, 0.9 + f * 0.1);
+        d.head.rotation.x = -0.25 + S(t * 3) * 0.03; d.root.position.y += 0.2 + f * 0.05;
+        set(d.legL, 0, 0, -0.22); set(d.legR, 0, 0, 0.22);
+    },
+    // 뇌조의 기수: 창을 높이 들고, 번개가 칠 때 창끝을 내리찍음
+    dng_stormrider(t, d, _r, sig) {
+        const k = sig?.strike ?? 0;
+        set(d.armL, mix(-2.8, -1.6, k), 0, -0.2); set(d.armR, -0.3, 0, 0.6);
+        d.root.position.y += 0.6 + S(t * 1.6) * 0.15; d.head.rotation.x = -0.2;
+        set(d.legL, -0.3, 0, -0.1); set(d.legR, 0.2, 0, 0.1);
+    },
+    // 천문학자 김티비: 한 손으로 하늘을 가리키며 별을 셈
+    leg_astronomer_tv(t, d, _r, sig) {
+        set(d.armR, -2.6, 0, 0.3); set(d.armL, -0.4, 0, -0.2);
+        d.head.rotation.set(-0.45, 0.2 + (sig?.look ?? 0) * 0.15, 0);
+        set(d.legL, 0, 0, -0.06); set(d.legR, 0, 0, 0.06);
+    },
+    // 그림자 검객 김건우: 발도 자세. 칼날들이 정렬하면 칼을 앞으로 겨눔
+    leg_shadowblade_gunwoo(t, d, _r, sig) {
+        const k = sig?.draw ?? 0;
+        set(d.armR, mix(-0.6, -1.5, k), 0, mix(0.6, 0.1, k)); set(d.armL, -0.5, 0, -0.3);
+        d.root.rotation.y = mix(-0.4, 0, k); d.root.rotation.x = 0.12; d.root.position.y -= 0.2;
+        set(d.legL, -0.45, 0, -0.1); set(d.legR, 0.3, 0, 0.1);
+    },
+    // 별을 벼리는 박지성: 망치를 들어 올렸다가 모루로 내려침
+    myth_starforger_jisung(t, d, _r, sig) {
+        const k = sig?.strike ?? 0;
+        set(d.armR, mix(-0.6, -2.9, k), 0, 0.3); set(d.armL, -0.6, 0, -0.3);
+        d.root.rotation.y = -0.5; d.root.rotation.x = 0.1 * (1 - k);
+        set(d.legL, -0.2, 0, -0.12); set(d.legR, 0.15, 0, 0.12);
+    },
+    // 파도를 부르는 김가은: 두 팔을 위로 들어 물결을 부름
+    myth_tidecaller_gaeun(t, d, _r, sig) {
+        const c = sig?.call ?? 0;
+        set(d.armR, -0.2, 0, mix(0.9, 2.6, c)); set(d.armL, -0.2, 0, mix(-0.9, -2.6, c));
+        d.root.position.y += 0.4 + S(t * 1.2) * 0.1; d.head.rotation.x = -0.2 * c;
+        set(d.legL, 0, 0, -0.05); set(d.legR, 0, 0, 0.05);
+    },
+    // 시계탑의 주인 공병은: 한 손에 회중시계를 들여다보고 다른 손은 뒷짐
+    anc_clockmaster_byungeun(t, d, _r, sig) {
+        set(d.armL, -1.5, 0, 0.3); set(d.armR, 0.3, 0, -0.2);
+        d.head.rotation.set(0.35, 0, (sig?.tock ?? 0) * 0.05);
+        set(d.legL, 0, 0, -0.04); set(d.legR, 0, 0, 0.04);
+    },
+    // 일식의 김건우: 공중에 떠 일식 구슬을 든 손을 내밀고 다른 팔은 펼침
+    jxs_eclipse_gunwoo(t, d, _r, sig) {
+        set(d.armR, -1.3, 0, 0.2); set(d.armL, -0.2, 0, -1.2 - (sig?.flare ?? 0) * 0.1);
+        d.root.position.y += 0.9 + S(t * 0.9) * 0.12; d.head.rotation.x = -0.12;
+        set(d.legL, 0.15, 0, -0.05); set(d.legR, -0.1, 0, 0.05);
     },
     // 시즌1 개척자: 한 손을 이마에 대고 먼 곳을 바라보며 걷는 듯 살랑
     pass_pioneer(t, d, _r, sig) {

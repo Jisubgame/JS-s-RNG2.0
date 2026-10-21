@@ -394,5 +394,35 @@ export const JXS_BACKDROPS = {
             fp.forEach((p, i) => { const k = (t * p.sp + p.ph) % 1; put(kit, fall, i, p.x + Math.sin(t + i) * 1.5, 24 - k * 25, p.z, 0.28, t + i, t * 0.7, Math.sin(t * 2 + i)); });
             fall.instanceMatrix.needsUpdate = true;
         });
+    },
+    /* 일식 — 지평선 위에 뜬 거대한 검은 태양, 하늘을 뒤덮는 코로나와 홍염, 어둠 속에 떠오르는 별, 타며 떨어지는 재 */
+    eclipse(ctx) {
+        const { kit, tick, pick } = ctx;
+        const { THREE, glowMat, rand } = kit;
+        const { far, box } = setup(ctx);
+        const sun = new THREE.Group(); sun.position.set(0, 13, -26); far.add(sun);
+        const core = disc(kit, 6, new THREE.MeshBasicMaterial({ color: 0x000000 })); core.position.z = 0.2; sun.add(core);
+        const ring = disc(kit, 6.6, glowMat(0xffe0a0, 0.9)); sun.add(ring);
+        const glowA = disc(kit, 10, glowMat(pick(0), 0.25)); glowA.position.z = -0.2; sun.add(glowA);
+        const glowB = disc(kit, 16, glowMat(pick(1), 0.08)); glowB.position.z = -0.4; sun.add(glowB);
+        const R = 70, rays = inst(kit, R, glowMat(0xffc27a, 0.5), sun);
+        const rp = Array.from({ length: R }, (_, i) => ({ a: i / R * Math.PI * 2 + rand(-0.03, 0.03), l: rand(2, 6), ph: rand(0, 6) }));
+        const F = 4, flares = Array.from({ length: F }, (_, k) => inst(kit, 16, glowMat(pick(1), 0.85), sun));
+        const S2 = 90, stars = inst(kit, S2, glowMat(0xffffff, 0.9), far);
+        const sp = Array.from({ length: S2 }, () => ({ x: rand(-40, 40), y: rand(8, 34), z: rand(-34, -22), s: rand(0.08, 0.2), ph: rand(0, 6) }));
+        const A = 50, ash = inst(kit, A, glowMat(0xff8a3a, 0.8), far);
+        const ap = Array.from({ length: A }, () => ({ x: rand(-20, 20), z: rand(-18, -6), ph: Math.random(), sp: rand(0.05, 0.12) }));
+        const horizon = box(glowMat(pick(0), 0.35), 90, 0.6, 0.2, 0, 0.6, -30);
+        tick(t => {
+            ring.scale.setScalar(1 + Math.sin(t * 1.8) * 0.02); glowA.scale.setScalar(1 + Math.sin(t * 1.1) * 0.06);
+            rp.forEach((r, i) => { const l = r.l * (0.7 + 0.3 * Math.sin(t * 1.5 + r.ph)); put(kit, rays, i, Math.cos(r.a) * (6.6 + l / 2), Math.sin(r.a) * (6.6 + l / 2), 0, 0.12, 0, 0, r.a - Math.PI / 2, l, 0.05); });
+            rays.instanceMatrix.needsUpdate = true;
+            flares.forEach((f, k) => { const base = t * 0.15 + k * 1.6, ph = (t * 0.25 + k / F) % 1; for (let i = 0; i < 16; i++) { const u = i / 15, a = base + u * 0.7, h = Math.sin(u * Math.PI) * 4 * Math.sin(ph * Math.PI); put(kit, f, i, Math.cos(a) * (6.4 + h), Math.sin(a) * (6.4 + h), 0.1, 0.45 * Math.sin(ph * Math.PI) + 0.05); } f.instanceMatrix.needsUpdate = true; });
+            sp.forEach((o, i) => put(kit, stars, i, o.x, o.y, o.z, o.s * (0.6 + 0.4 * Math.sin(t * 2 + o.ph))));
+            stars.instanceMatrix.needsUpdate = true;
+            ap.forEach((o, i) => { const k = (t * o.sp + o.ph) % 1; put(kit, ash, i, o.x + Math.sin(t + i) * 1.2, 22 - k * 23, o.z, 0.14, t + i, t * 0.6, 0); });
+            ash.instanceMatrix.needsUpdate = true;
+            horizon.material.opacity = 0.3 + 0.1 * Math.sin(t * 0.8);
+        });
     }
 };

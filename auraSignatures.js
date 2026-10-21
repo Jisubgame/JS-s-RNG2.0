@@ -12,6 +12,15 @@
      kit       { THREE, BOX, glowMat, solidMat, square, rand, ghost, sword, bolt }
    ========================================================= */
 
+// 신규 칭호용 공통 도구: box(재질, 가로, 세로, 깊이, x, y, z, 부모) · attach(캐릭터 부위, 물체)
+function sk(group, kit, stage) {
+    const owned = [];
+    const attach = (p, o) => { p.add(o); owned.push([p, o]); };
+    stage.onClear(() => owned.forEach(([p, o]) => p.remove(o)));
+    const box = (m, w, h, d, x = 0, y = 0, z = 0, p = group) => { const b = new kit.THREE.Mesh(kit.BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
+    return { box, attach };
+}
+
 export const SIGNATURES = {
 
     /* =================== 🆕 UPDATE 3 칭호 =================== */
@@ -203,116 +212,528 @@ export const SIGNATURES = {
         });
     },
 
-    /* =================== 🌀 균열 던전 칭호 =================== */
+    /* =================== 🌀 레이드 보스 드롭 칭호 =================== */
 
-    /* 균열을 걷는 자 — 두건 달린 흑요석 망토, 주위에서 열렸다 닫히는 차원의 틈, 발자국마다 남는 균열 */
+    /* 균열을 걷는 자 — 두건 쓴 차원 암살자. 양손의 균열 단검, 등 뒤에서 열렸다 닫히는 차원의 문,
+       4초마다 순간이동 잔상과 함께 앞을 X자로 가르는 균열 */
     riftWalker({ group, tick, pick, dummy, kit, stage, sig }) {
-        const { THREE, BOX, glowMat, square, rand } = kit;
-        stage.setSky('#08040f');
-        const owned = [];
-        const attach = (parent, obj) => { parent.add(obj); owned.push([parent, obj]); };
-        stage.onClear(() => owned.forEach(([p, o]) => p.remove(o)));
-        const box = (m, w, h, d, x, y, z, p = group) => { const b = new THREE.Mesh(BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
-        const obs = new THREE.MeshStandardMaterial({ color: 0x1b1428, roughness: 0.35, metalness: 0.45, emissive: 0x2a0a4a, emissiveIntensity: 0.4 });
-        const crack = glowMat(pick(0), 1);
-        // 두건
+        const { THREE, glowMat, rand, ghost, heldSword } = kit;
+        const { box, attach } = sk(group, kit, stage);
+        stage.setSky('#07030f');
+        const obs = new THREE.MeshStandardMaterial({ color: 0x15101f, roughness: 0.3, metalness: 0.5, emissive: 0x2a0a4a, emissiveIntensity: 0.45 });
+        const trim = glowMat(pick(0), 1);
+        // 두건 + 얼굴 가리개
         const hood = new THREE.Group(); hood.position.y = 0.1;
-        box(obs, 1.45, 0.25, 1.45, 0, 0.72, 0, hood); box(obs, 0.18, 1.3, 1.45, -0.72, 0.05, 0, hood); box(obs, 0.18, 1.3, 1.45, 0.72, 0.05, 0, hood); box(obs, 1.45, 1.3, 0.18, 0, 0.05, -0.72, hood);
-        box(crack, 1.0, 0.05, 0.05, 0, 0.6, 0.74, hood);
+        box(obs, 1.5, 0.28, 1.5, 0, 0.74, 0, hood); for (const s of [-1, 1]) box(obs, 0.16, 1.35, 1.5, s * 0.74, 0.05, 0, hood); box(obs, 1.5, 1.35, 0.16, 0, 0.05, -0.74, hood);
+        box(obs, 1.1, 0.5, 0.08, 0, -0.32, 0.66, hood); box(trim, 1.12, 0.05, 0.09, 0, -0.06, 0.67, hood); box(trim, 1.52, 0.05, 0.05, 0, 0.6, 0.76, hood);
         attach(dummy.head, hood);
-        // 망토 (조각조각 흩어지는 끝자락)
-        const cape = new THREE.Group(); cape.position.set(0, 0.95, -0.6);
-        const capeSegs = Array.from({ length: 6 }, (_, i) => box(obs, 2.1 - i * 0.12, 0.55, 0.08, 0, -i * 0.52, 0, cape));
+        // 망토: 끝으로 갈수록 조각조각 흩어짐
+        const cape = new THREE.Group(); cape.position.set(0, 0.95, -0.62);
+        const capeSegs = Array.from({ length: 7 }, (_, i) => box(obs, 2.2 - i * 0.12, 0.5, 0.08, 0, -i * 0.48, 0, cape));
+        const capeTrim = capeSegs.map((s, i) => box(trim, 2.2 - i * 0.12, 0.04, 0.09, 0, -i * 0.48 - 0.24, 0, cape));
         attach(dummy.torso, cape);
-        // 가슴의 작은 핵
-        const coreM = new THREE.MeshStandardMaterial({ color: 0xff4ad8, emissive: 0xff4ad8, emissiveIntensity: 2 });
-        const core = new THREE.Mesh(BOX, coreM); core.scale.setScalar(0.32); core.position.set(0, 0.2, 0.55); core.rotation.z = Math.PI / 4;
-        attach(dummy.torso, core);
-        // 주위에서 열리고 닫히는 세로 틈 5개
-        const rifts = Array.from({ length: 5 }, (_, k) => {
-            const g = new THREE.Group(); group.add(g);
-            const bars = Array.from({ length: 14 }, (_, i) => { const t = i / 13; return { m: box(glowMat(i % 3 ? pick(0) : 0xffffff, 0.85), 1, 0.3, 0.06, 0, (t - 0.5) * 3.6, 0, g), w: Math.sin(t * Math.PI) }; });
-            return { g, bars, ph: k / 5, a: (k / 5) * Math.PI * 2 };
-        });
-        // 바닥 균열 발자국
-        const steps = Array.from({ length: 10 }, (_, i) => { const m = box(glowMat(pick(1), 0.9), 0.5, 0.04, 0.12, 0, 0.04, 0); return { m, ph: i / 10 }; });
-        // 떠다니는 흑요석 파편
-        const shards = Array.from({ length: 10 }, (_, i) => ({ m: box(i % 2 ? obs : glowMat(pick(1), 0.9), 0.3, 0.3, 0.3, 0, 0, 0), a: i / 10 * Math.PI * 2, r: rand(2.2, 3), y: rand(1, 5.5) }));
-        const ring = square(4.6, 0.1, glowMat(pick(0), 0.6)); ring.position.y = 0.05; group.add(ring);
+        const belt = new THREE.Group(); box(obs, 2.14, 0.3, 1.14, 0, -0.7, 0, belt); box(trim, 0.3, 0.3, 0.06, 0, -0.7, 0.58, belt).rotation.z = Math.PI / 4; attach(dummy.torso, belt);
+        // 양손 균열 단검
+        const daggers = [dummy.armL, dummy.armR].map((arm, i) => { const d = heldSword(1.5, pick(0), pick(1), 0.3, false); d.position.set(0, -1.95, 0); d.rotation.x = Math.PI * (i ? 0.75 : 0.55); attach(arm, d); return d; });
+        // 등 뒤 차원의 문
+        const door = new THREE.Group(); door.position.set(0, 3.2, -1.7); group.add(door);
+        const bars = Array.from({ length: 22 }, (_, i) => { const k = i / 21; return { a: box(glowMat(0xffffff, 0.8), 1, 0.3, 0.05, Math.sin(i * 1.3) * 0.12, (k - 0.5) * 6.4, 0.04, door), b: box(glowMat(pick(0), 0.6), 1, 0.3, 0.05, Math.sin(i * 1.3) * 0.12, (k - 0.5) * 6.4, 0, door), c: box(glowMat(pick(1), 0.35), 1, 0.3, 0.05, Math.sin(i * 1.3) * 0.12, (k - 0.5) * 6.4, -0.04, door), w: Math.pow(Math.sin(k * Math.PI), 0.7) }; });
+        // X자 베기
+        const slashes = [0.75, -0.75].map(rz => { const m = box(glowMat(pick(0), 0), 5.5, 0.16, 0.05, 0, 3.2, 1.4); m.rotation.z = rz; return m; });
+        // 순간이동 잔상
+        const after = ghost(pick(0), 0); after.scale.setScalar(0.98); group.add(after);
+        // 맴도는 파편
+        const shards = Array.from({ length: 12 }, (_, i) => ({ m: box(i % 3 ? obs : glowMat(pick(i % 2), 0.95), 0.22, 0.4, 0.22, 0, 0, 0), a: i / 12 * Math.PI * 2, r: 1.9 + (i % 3) * 0.35, y: 1 + (i % 4) * 1.1 }));
         sig.slash = 0;
         tick(t => {
             const lift = dummy.root.position.y;
-            capeSegs.forEach((b, i) => { b.rotation.x = 0.12 + Math.sin(t * 2.4 - i * 0.7) * 0.07 * i; b.position.z = -i * 0.1; b.scale.x = (2.1 - i * 0.12) * (i > 3 ? 0.8 + 0.2 * Math.sin(t * 6 + i) : 1); });
-            coreM.emissiveIntensity = 1.6 + Math.sin(t * 4) * 0.6;
-            rifts.forEach(r => {
-                const k = (t * 0.25 + r.ph) % 1, open = k < 0.5 ? Math.sin(k / 0.5 * Math.PI) : 0;
-                r.g.position.set(Math.cos(r.a + t * 0.1) * 3.4, 3 + lift, Math.sin(r.a + t * 0.1) * 2 - 0.6);
-                r.g.rotation.y = -r.a;
-                r.bars.forEach((b, i) => { b.m.scale.x = Math.max(0.01, b.w * 0.9 * open * (0.8 + 0.2 * Math.sin(t * 12 + i))); });
-            });
-            steps.forEach(s => { const k = (t * 0.35 + s.ph) % 1; s.m.position.set(-3 + k * 6, 0.04, Math.sin(k * 9) * 0.5 + 0.8); s.m.material.opacity = Math.sin(k * Math.PI) * 0.9; s.m.rotation.y = Math.sin(k * 9) * 0.6; });
-            shards.forEach((s, i) => { const a = s.a + t * 0.5; s.m.position.set(Math.cos(a) * s.r, s.y + lift + Math.sin(t * 1.3 + i) * 0.3, Math.sin(a) * s.r); s.m.rotation.set(t * 2 + i, t * 1.5, 0); });
-            ring.rotation.y = t * 0.3;
-            const c = (t % 3.5) / 3.5; sig.slash = c > 0.75 ? Math.sin((c - 0.75) / 0.25 * Math.PI) : 0;
+            capeSegs.forEach((b, i) => { const w = Math.sin(t * 2.6 - i * 0.7) * 0.07 * i; b.rotation.x = 0.12 + w; b.position.z = -i * 0.12; capeTrim[i].rotation.x = b.rotation.x; capeTrim[i].position.z = b.position.z; if (i > 3) { b.scale.x = (2.2 - i * 0.12) * (0.75 + 0.25 * Math.sin(t * 7 + i)); capeTrim[i].scale.x = b.scale.x; } });
+            const open = 0.65 + 0.35 * Math.sin(t * 1.4);
+            bars.forEach((b, i) => { const f = open * (0.85 + 0.15 * Math.sin(t * 10 + i)); b.a.scale.x = Math.max(0.03, b.w * 0.22 * f); b.b.scale.x = b.w * 0.7 * f; b.c.scale.x = b.w * 1.2 * f; });
+            door.position.y = 3.2 + lift;
+            const c = (t % 4) / 4;
+            sig.slash = c > 0.72 && c < 0.92 ? Math.sin((c - 0.72) / 0.2 * Math.PI) : 0;
+            slashes.forEach((m, i) => { const k = Math.max(0, Math.min(1, (c - 0.74 - i * 0.04) / 0.1)); m.material.opacity = k > 0 && k < 1 ? Math.sin(k * Math.PI) : 0; m.scale.x = 5.5 * k; m.position.y = 3.2 + lift; });
+            const g = c > 0.66 && c < 0.9 ? 1 - Math.abs(c - 0.74) / 0.16 : 0;
+            after.position.set(c < 0.74 ? -2.2 : 2.2, lift, -0.4);
+            after.children.forEach(m => { m.material.opacity = Math.max(0, g) * 0.35; });
+            shards.forEach((s, i) => { const a = s.a + t * (0.6 + (i % 3) * 0.2); s.m.position.set(Math.cos(a) * s.r, s.y + lift + Math.sin(t * 2 + i) * 0.2, Math.sin(a) * s.r); s.m.rotation.set(t * 2 + i, t * 3, 0.5); });
+            trim.color.set(pick(0)).multiplyScalar(0.8 + 0.4 * Math.sin(t * 4));
         });
     },
 
-    /* 균열의 지배자 — 흑요석 갑옷과 수정 왕관, 몸 주위에 떠 있는 거대한 두 주먹, 등 뒤에 열린 거대한 차원 균열 */
+    /* 균열의 지배자 — 흑요석 황제. 등 뒤에 균열로 된 거대한 날개, 머리 위 수정 왕관 고리,
+       떠 있는 두 건틀렛이 명령에 맞춰 내려찍고, 발밑에서 충격파가 퍼짐 */
     riftLord({ group, tick, pick, dummy, kit, stage, sig }) {
-        const { THREE, BOX, glowMat, square, rand } = kit;
+        const { THREE, glowMat, square, rand } = kit;
+        const { box, attach } = sk(group, kit, stage);
         stage.setSky('#0a0414');
-        const owned = [];
-        const attach = (parent, obj) => { parent.add(obj); owned.push([parent, obj]); };
-        stage.onClear(() => owned.forEach(([p, o]) => p.remove(o)));
-        const box = (m, w, h, d, x, y, z, p = group) => { const b = new THREE.Mesh(BOX, m); b.scale.set(w, h, d); b.position.set(x, y, z); p.add(b); return b; };
-        const obs = new THREE.MeshStandardMaterial({ color: 0x1b1428, roughness: 0.3, metalness: 0.55, emissive: 0x2a0a4a, emissiveIntensity: 0.4 });
-        const obs2 = new THREE.MeshStandardMaterial({ color: 0x261b38, roughness: 0.35, metalness: 0.5, emissive: 0x1a0630, emissiveIntensity: 0.35 });
-        const crystal = new THREE.MeshStandardMaterial({ color: 0x9a6aff, emissive: 0x7a3aff, emissiveIntensity: 1.2, roughness: 0.15 });
+        const obs = new THREE.MeshStandardMaterial({ color: 0x1b1428, roughness: 0.28, metalness: 0.6, emissive: 0x2a0a4a, emissiveIntensity: 0.45 });
+        const obs2 = new THREE.MeshStandardMaterial({ color: 0x2a1d3e, roughness: 0.32, metalness: 0.55, emissive: 0x1a0630, emissiveIntensity: 0.4 });
+        const crystal = new THREE.MeshStandardMaterial({ color: 0xb08aff, emissive: 0x7a3aff, emissiveIntensity: 1.3, roughness: 0.12 });
         const crack = glowMat(pick(0), 1);
-        // 갑옷
+        // 갑옷 + 어깨 수정 + 가슴 핵
         const armor = new THREE.Group();
-        box(obs, 2.18, 2.16, 1.18, 0, 0, 0, armor);
-        for (const s of [-1, 1]) { box(obs2, 1.0, 0.6, 1.4, s * 1.3, 0.9, 0, armor); box(crystal, 0.18, 0.8, 0.18, s * 1.55, 1.45, 0, armor).rotation.z = -s * 0.4; }
-        [[-0.6, 0.35, 0.5], [0.55, -0.3, -0.6], [-0.3, -0.55, 0.9]].forEach(([x, y, rz]) => box(crack, 0.06, 0.7, 0.04, x, y, 0.6, armor).rotation.z = rz);
+        box(obs, 2.2, 2.18, 1.2, 0, 0, 0, armor); box(obs2, 2.24, 0.3, 1.24, 0, -0.75, 0, armor);
+        for (const s of [-1, 1]) { box(obs2, 1.05, 0.65, 1.45, s * 1.32, 0.95, 0, armor); for (let i = 0; i < 3; i++) box(crystal, 0.18, 0.9 - i * 0.18, 0.18, s * (1.25 + i * 0.25), 1.55 - i * 0.05, (i - 1) * 0.4, armor).rotation.z = -s * (0.25 + i * 0.25); }
+        [[-0.6, 0.35, 0.5], [0.55, -0.3, -0.6], [-0.3, -0.55, 0.9], [0.65, 0.4, -0.3]].forEach(([x, y, rz]) => box(crack, 0.06, 0.7, 0.04, x, y, 0.62, armor).rotation.z = rz);
         const coreM = new THREE.MeshStandardMaterial({ color: 0xff4ad8, emissive: 0xff4ad8, emissiveIntensity: 2.4 });
-        const core = box(coreM, 0.5, 0.5, 0.1, 0, 0.15, 0.62, armor); core.rotation.z = Math.PI / 4;
+        const core = box(coreM, 0.5, 0.5, 0.1, 0, 0.15, 0.64, armor); core.rotation.z = Math.PI / 4;
+        box(obs2, 0.75, 0.75, 0.06, 0, 0.15, 0.6, armor).rotation.z = Math.PI / 4;
         attach(dummy.torso, armor);
-        // 수정 왕관 (머리 위에 떠서 돎)
+        // 망토 (보라 안감)
+        const cape = new THREE.Group(); cape.position.set(0, 0.95, -0.66);
+        const capeSegs = Array.from({ length: 6 }, (_, i) => { const g = new THREE.Group(); g.position.y = -i * 0.55; cape.add(g); box(obs, 2.4, 0.56, 0.08, 0, 0, 0, g); box(glowMat(pick(1), 0.35), 2.3, 0.5, 0.02, 0, 0, 0.05, g); return g; });
+        attach(dummy.torso, cape);
+        // 수정 왕관 고리 (두 겹으로 반대로 돎)
         const crown = new THREE.Group(); group.add(crown);
-        const crs = Array.from({ length: 7 }, (_, i) => { const a = i / 7 * Math.PI * 2, h = i % 2 ? 0.5 : 0.9; const c = box(crystal, 0.16, h, 0.16, Math.cos(a) * 0.75, h / 2, Math.sin(a) * 0.75, crown); return c; });
-        const cr = square(1.6, 0.06, glowMat(pick(1), 0.8)); crown.add(cr);
-        // 떠 있는 두 주먹
+        const ringA = new THREE.Group(), ringB = new THREE.Group(); crown.add(ringA, ringB);
+        for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, h = i % 2 ? 0.45 : 0.85; box(crystal, 0.14, h, 0.14, Math.cos(a) * 0.82, h / 2, Math.sin(a) * 0.82, ringA); }
+        for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; box(glowMat(pick(i % 2), 0.9), 0.1, 0.1, 0.1, Math.cos(a) * 1.25, 0.25, Math.sin(a) * 1.25, ringB); }
+        ringA.add(square(1.7, 0.05, glowMat(pick(1), 0.8)));
+        // 균열 날개 (등 뒤에서 위로 펼쳐지는 빛의 틈 여러 갈래)
+        const wings = [-1, 1].map(s => {
+            const w = new THREE.Group(); w.position.set(s * 0.6, 4.2, -1.1); group.add(w);
+            const blades = [0, 1, 2, 3].map(j => {
+                const b = new THREE.Group(); b.rotation.z = -s * (0.35 + j * 0.32); w.add(b);
+                const len = 3.6 - j * 0.45;
+                const segs = Array.from({ length: 10 }, (_, k) => { const kk = k / 9, wd = Math.sin(kk * Math.PI) * 0.55; return { a: box(glowMat(0xffffff, 0.75), wd * 0.25 + 0.03, 0.34, 0.04, 0, kk * len, 0.03, b), b: box(glowMat(pick(0), 0.55), wd * 0.7, 0.34, 0.04, 0, kk * len, 0, b), c: box(glowMat(pick(1), 0.3), wd * 1.2, 0.34, 0.04, 0, kk * len, -0.03, b), wd }; });
+                b.position.x = s * 0.2;
+                return { b, segs, j };
+            });
+            return { w, s, blades };
+        });
+        // 떠 있는 두 건틀렛
         const fists = [-1, 1].map(s => {
             const g = new THREE.Group(); group.add(g);
-            box(obs, 1.1, 1.05, 1.1, 0, 0, 0, g); box(obs2, 1.2, 0.3, 1.2, 0, -0.4, 0, g);
-            for (let i = 0; i < 4; i++) box(obs2, 0.22, 0.22, 0.2, (i - 1.5) * 0.26, 0.22, 0.6, g);
-            box(glowMat(pick(0), 0.9), 1.22, 0.07, 1.22, 0, -0.18, 0, g);
+            box(obs, 1.15, 1.05, 1.15, 0, 0, 0, g); box(obs2, 1.25, 0.3, 1.25, 0, -0.4, 0, g);
+            for (let i = 0; i < 4; i++) box(obs2, 0.24, 0.24, 0.2, (i - 1.5) * 0.27, 0.22, 0.62, g);
+            box(glowMat(pick(0), 0.9), 1.27, 0.07, 1.27, 0, -0.18, 0, g);
+            box(crystal, 0.2, 0.6, 0.2, s * 0.25, 0.7, -0.15, g).rotation.z = -s * 0.4;
             return { g, s };
         });
-        // 등 뒤의 거대한 균열
-        const rift = new THREE.Group(); rift.position.set(0, 5, -3.6); rift.userData.noFit = true; group.add(rift);
-        const bars = Array.from({ length: 30 }, (_, i) => {
-            const k = i / 29, w = Math.pow(Math.sin(k * Math.PI), 0.8) * 2.4;
-            return { a: box(glowMat(0xffffff, 0.9), 1, 0.36, 0.06, Math.sin(i * 0.9) * 0.2, (k - 0.5) * 10, 0.05, rift), b: box(glowMat(pick(1), 0.55), 1, 0.34, 0.06, Math.sin(i * 0.9) * 0.2, (k - 0.5) * 10, 0, rift), c: box(glowMat(pick(0), 0.35), 1, 0.32, 0.06, Math.sin(i * 0.9) * 0.2, (k - 0.5) * 10, -0.05, rift), w, ph: i * 0.4 };
-        });
-        // 바닥 결계
-        const runes = [square(5.4, 0.12, glowMat(pick(0), 0.7)), square(3.8, 0.08, glowMat(pick(1), 0.6))];
-        runes.forEach((r, i) => { r.position.y = 0.05 + i * 0.01; if (i) r.rotation.y = Math.PI / 4; group.add(r); });
-        const motes = Array.from({ length: 18 }, () => ({ m: box(glowMat(pick(Math.random() < 0.5 ? 0 : 1), 1), 0.14, 0.14, 0.14, 0, 0, 0), p: Math.random(), x: rand(-3, 3), z: rand(-2, 1.5) }));
+        // 명령할 때 퍼지는 충격파
+        const shock = [0, 1].map(() => { const r = square(1, 0.12, glowMat(pick(0), 0)); r.position.y = 0.08; group.add(r); return r; });
         sig.command = 0;
         tick(t => {
             const lift = dummy.root.position.y;
             coreM.emissiveIntensity = 2 + Math.sin(t * 3) * 0.8;
-            crown.position.set(0, 6.1 + lift + Math.sin(t * 2) * 0.08, 0); crown.rotation.y = t * 0.6;
+            crown.position.set(0, 6.15 + lift + Math.sin(t * 2) * 0.08, 0); ringA.rotation.y = t * 0.6; ringB.rotation.y = -t * 1.1;
+            capeSegs.forEach((g, i) => { g.rotation.x = 0.1 + Math.sin(t * 2 - i * 0.6) * 0.05 * i; g.position.z = -i * 0.1; });
             const c = (t % 5) / 5, cmd = c > 0.7 ? Math.sin((c - 0.7) / 0.3 * Math.PI) : 0;
             sig.command = cmd;
-            fists.forEach(({ g, s }, i) => {
-                g.position.set(s * (2.9 - cmd * 0.6), 3.2 + lift + Math.sin(t * 1.6 + i * 2) * 0.25 + cmd * 1.2, 0.5 + cmd * 1.4);
-                g.rotation.set(-cmd * 0.5, Math.sin(t + i) * 0.2, s * 0.1);
+            wings.forEach(w => {
+                w.w.position.y = 4.2 + lift;
+                w.blades.forEach(bl => { bl.b.rotation.z = -w.s * (0.35 + bl.j * 0.32 + cmd * 0.15 + Math.sin(t * 1.2 + bl.j) * 0.04); bl.segs.forEach((sg, k) => { const f = 0.8 + 0.2 * Math.sin(t * 8 + k + bl.j) + cmd * 0.4; sg.a.scale.x = Math.max(0.03, sg.wd * 0.25 * f); sg.b.scale.x = sg.wd * 0.7 * f; sg.c.scale.x = sg.wd * 1.2 * f; }); });
             });
-            bars.forEach((b, i) => { const f = 0.8 + 0.2 * Math.sin(t * 6 + b.ph) + cmd * 0.3; b.a.scale.x = Math.max(0.04, b.w * 0.25 * f); b.b.scale.x = b.w * 0.6 * f; b.c.scale.x = b.w * f; });
-            runes[0].rotation.y = t * 0.2; runes[1].rotation.y = Math.PI / 4 - t * 0.3;
-            motes.forEach(o => { const k = (t * 0.3 + o.p) % 1; o.m.position.set(o.x * (1 - k * 0.6), k * 7, o.z); o.m.scale.setScalar(0.14 * Math.sin(k * Math.PI)); });
+            fists.forEach(({ g, s }, i) => {
+                const hit = c > 0.7 && c < 0.85 ? Math.sin((c - 0.7) / 0.15 * Math.PI) : 0;
+                g.position.set(s * (2.7 - cmd * 0.5), 3.4 + lift + Math.sin(t * 1.6 + i * 2) * 0.25 + cmd * 1.4 - hit * 2.6, 0.6 + cmd * 1.2);
+                g.rotation.set(-cmd * 0.6, Math.sin(t + i) * 0.2, s * 0.1);
+            });
+            shock.forEach((r, i) => { const k = ((c - 0.8 - i * 0.06) / 0.2); const v = k > 0 && k < 1; r.scale.setScalar(v ? 1 + k * 9 : 0.01); r.children.forEach(m => { m.material.opacity = v ? (1 - k) * 0.9 : 0; }); });
+        });
+    },
+
+    /* 빙하의 심장 — 얼음 갑옷과 두 번씩 뛰는 얼음 심장, 머리 위 빙정 왕관, 몸을 도는 서리 고리,
+       주위를 천천히 맴도는 거대한 얼음 조각과 흩날리는 눈 */
+    frostHeart({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, glowMat, square, rand } = kit;
+        const { box, attach } = sk(group, kit, stage);
+        stage.setSky('#08121f');
+        const ice = new THREE.MeshStandardMaterial({ color: 0xbfeaff, roughness: 0.08, metalness: 0.2, emissive: 0x2a7ab0, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 });
+        const deep = new THREE.MeshStandardMaterial({ color: 0x3a8ac8, roughness: 0.15, metalness: 0.3, emissive: 0x0a3a6a, emissiveIntensity: 0.5 });
+        const crystal = new THREE.MeshStandardMaterial({ color: 0xe0fbff, emissive: 0x5ad8ff, emissiveIntensity: 1.2, roughness: 0.05 });
+        // 얼음 갑옷 조각
+        const arm = new THREE.Group();
+        box(ice, 2.16, 1.0, 1.16, 0, 0.5, 0, arm); box(deep, 2.2, 0.2, 1.2, 0, -0.1, 0, arm);
+        for (const s of [-1, 1]) { box(ice, 1.0, 0.5, 1.3, s * 1.3, 0.95, 0, arm); for (let i = 0; i < 4; i++) box(crystal, 0.16, 0.7 - i * 0.12, 0.16, s * (1.1 + i * 0.22), 1.4, (i - 1.5) * 0.3, arm).rotation.z = -s * (0.2 + i * 0.25); }
+        // 얼음 심장 (두 번씩 뜀)
+        const heartM = new THREE.MeshStandardMaterial({ color: 0x8af6ff, emissive: 0x8af6ff, emissiveIntensity: 2.2, roughness: 0.05 });
+        const heart = new THREE.Group(); heart.position.set(0, 0.35, 0.66); arm.add(heart);
+        box(heartM, 0.3, 0.3, 0.2, -0.13, 0.08, 0, heart).rotation.z = Math.PI / 4; box(heartM, 0.3, 0.3, 0.2, 0.13, 0.08, 0, heart).rotation.z = Math.PI / 4; box(heartM, 0.36, 0.36, 0.2, 0, -0.1, 0, heart).rotation.z = Math.PI / 4;
+        const heartHalo = box(glowMat(pick(0), 0.4), 0.9, 0.9, 0.02, 0, 0, 0.12, heart); heartHalo.rotation.z = Math.PI / 4;
+        attach(dummy.torso, arm);
+        // 빙정 왕관
+        const crown = new THREE.Group(); crown.position.y = 0.72;
+        for (let i = 0; i < 7; i++) { const x = (i - 3) * 0.22, h = 0.5 + (3 - Math.abs(i - 3)) * 0.22; box(crystal, 0.14, h, 0.14, x, h / 2, 0.55).rotation.z = (i - 3) * -0.1; }
+        box(deep, 1.35, 0.15, 1.35, 0, 0, 0, crown);
+        attach(dummy.head, crown);
+        // 서리 고리 (허리 둘레를 기울어진 채 돎)
+        const rings = [0, 1, 2].map(i => { const r = square(2.8 + i * 0.6, 0.06, glowMat(pick(i % 2), 0.7)); group.add(r); for (let k = 0; k < 6; k++) { const m = new THREE.Mesh(kit.BOX, crystal); m.scale.set(0.12, 0.3, 0.12); const a = k / 6 * Math.PI * 2; m.position.set(Math.cos(a) * (1.4 + i * 0.3), 0, Math.sin(a) * (1.4 + i * 0.3)); r.add(m); } return r; });
+        // 맴도는 큰 얼음 조각
+        const bergs = Array.from({ length: 6 }, (_, i) => { const g = new THREE.Group(); group.add(g); const h = rand(0.9, 1.6); box(ice, 0.5, h, 0.5, 0, 0, 0, g); box(crystal, 0.3, h * 0.6, 0.3, 0.15, h * 0.4, 0.1, g); return { g, a: i / 6 * Math.PI * 2, y: rand(1.5, 5), r: rand(2.6, 3.2) }; });
+        // 흩날리는 눈
+        const N = 40, snow = new THREE.InstancedMesh(kit.BOX, glowMat(0xffffff, 0.9), N); group.add(snow);
+        const sp = Array.from({ length: N }, () => ({ x: rand(-3.5, 3.5), z: rand(-2.5, 2.5), ph: Math.random(), s: rand(0.05, 0.11) }));
+        const { m4, q, p, sc, e } = kit.TMP;
+        sig.beat = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            const k = (t % 1.4) / 1.4, beat = Math.max(0, Math.sin(Math.min(1, k / 0.12) * Math.PI)) + 0.6 * Math.max(0, Math.sin(Math.min(1, Math.max(0, k - 0.18) / 0.12) * Math.PI));
+            sig.beat = beat;
+            heart.scale.setScalar(1 + beat * 0.25); heartM.emissiveIntensity = 1.8 + beat * 2; heartHalo.scale.setScalar(1 + beat * 0.8); heartHalo.material.opacity = 0.2 + beat * 0.4;
+            rings.forEach((r, i) => { r.position.y = 1.6 + i * 0.9 + lift; r.rotation.set(0.35 * Math.sin(t * 0.5 + i), t * (0.4 + i * 0.25) * (i % 2 ? -1 : 1), 0.2); });
+            bergs.forEach((b, i) => { const a = b.a + t * 0.25; b.g.position.set(Math.cos(a) * b.r, b.y + lift + Math.sin(t + i) * 0.3, Math.sin(a) * b.r); b.g.rotation.set(Math.sin(t * 0.5 + i) * 0.3, t * 0.4 + i, 0.2); });
+            sp.forEach((o, i) => { const kk = (t * 0.15 + o.ph) % 1; p.set(o.x + Math.sin(t + i) * 0.4, 6.5 - kk * 6.5 + lift, o.z); q.setFromEuler(e.set(t + i, t, 0)); sc.setScalar(o.s); snow.setMatrixAt(i, m4.compose(p, q, sc)); });
+            snow.instanceMatrix.needsUpdate = true;
+        });
+    },
+
+    /* 화룡의 계승자 — 용의 뿔과 비늘 갑옷, 등에서 퍼덕이는 용 날개, 몸을 나선으로 감싸며 도는 불의 용 */
+    dragonHeir({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, glowMat, rand } = kit;
+        const { box, attach } = sk(group, kit, stage);
+        stage.setSky('#140602');
+        const scale = new THREE.MeshStandardMaterial({ color: 0x3a1a10, roughness: 0.4, metalness: 0.5, emissive: 0x3a0a00, emissiveIntensity: 0.5 });
+        const horn = new THREE.MeshStandardMaterial({ color: 0x1a1210, roughness: 0.35, metalness: 0.6 });
+        const lava = glowMat(pick(0), 1);
+        const memb = new THREE.MeshStandardMaterial({ color: 0x7a1a08, emissive: 0xff3a0a, emissiveIntensity: 0.45, roughness: 0.6, side: THREE.DoubleSide });
+        // 뿔
+        const horns = new THREE.Group(); horns.position.y = 0.5;
+        for (const s of [-1, 1]) { let x = s * 0.45, y = 0, z = -0.1; for (let k = 0; k < 4; k++) { const seg = box(k === 3 ? lava : horn, 0.26 - k * 0.04, 0.5, 0.26 - k * 0.04, x, y + 0.25, z, horns); seg.rotation.set(-0.5 - k * 0.2, 0, -s * 0.3); x += s * 0.12; y += 0.38; z -= 0.22 + k * 0.05; } }
+        attach(dummy.head, horns);
+        // 비늘 갑옷 + 용암 결
+        const ar = new THREE.Group();
+        box(scale, 2.18, 2.16, 1.18, 0, 0, 0, ar);
+        for (let r = 0; r < 4; r++) for (let c2 = 0; c2 < 4; c2++) box(horn, 0.42, 0.12, 0.06, (c2 - 1.5) * 0.5 + (r % 2) * 0.25, 0.75 - r * 0.45, 0.61, ar);
+        [[-0.5, 0.2, 0.6], [0.45, -0.3, -0.5], [0, -0.7, 0.2]].forEach(([x, y, rz]) => box(lava, 0.06, 0.8, 0.04, x, y, 0.63, ar).rotation.z = rz);
+        const coreM = new THREE.MeshStandardMaterial({ color: 0xffb03a, emissive: 0xffb03a, emissiveIntensity: 2.2 });
+        box(coreM, 0.42, 0.42, 0.08, 0, 0.25, 0.64, ar).rotation.z = Math.PI / 4;
+        for (const s of [-1, 1]) { box(scale, 1.0, 0.55, 1.35, s * 1.3, 0.92, 0, ar); for (let i = 0; i < 3; i++) box(horn, 0.14, 0.45, 0.14, s * 1.3, 1.3, (i - 1) * 0.4, ar).rotation.z = -s * 0.3; }
+        attach(dummy.torso, ar);
+        // 용 날개 (등에 붙어 퍼덕임)
+        const wings = [-1, 1].map(s => {
+            const w = new THREE.Group(); w.position.set(s * 0.5, 0.6, -0.6); attach(dummy.torso, w);
+            const arm = new THREE.Group(); w.add(arm);
+            box(horn, 2.6, 0.2, 0.2, s * 1.3, 0.9, 0, arm).rotation.z = s * 0.5;
+            const tip = new THREE.Group(); tip.position.set(s * 2.3, 2.1, 0); arm.add(tip);
+            for (let i = 0; i < 4; i++) { box(horn, 0.12, 2.4 - i * 0.35, 0.12, s * i * 0.55, -1.0 + i * 0.1, 0, tip).rotation.z = s * (0.15 + i * 0.25); box(memb, 0.6, 2.2 - i * 0.4, 0.04, s * (i * 0.55 + 0.28), -1.0 + i * 0.15, -0.02, tip).rotation.z = s * (0.2 + i * 0.25); }
+            box(memb, 2.4, 1.6, 0.04, s * 1.2, 0.3, -0.02, arm).rotation.z = s * 0.35;
+            return { arm, tip, s };
+        });
+        // 나선으로 감도는 불의 용 (머리 + 몸 마디)
+        const N = 26;
+        const fd = Array.from({ length: N }, (_, i) => box(i === 0 ? new THREE.MeshStandardMaterial({ color: 0xffd23a, emissive: 0xff7a1a, emissiveIntensity: 2 }) : glowMat(i % 3 ? pick(0) : pick(1), 1 - i / N * 0.7), i === 0 ? 0.55 : 0.42 - i * 0.012, i === 0 ? 0.4 : 0.42 - i * 0.012, i === 0 ? 0.7 : 0.42 - i * 0.012, 0, 0, 0));
+        const fhorns = [-1, 1].map(s => box(horn, 0.08, 0.08, 0.4, 0, 0, 0));
+        const prev = new THREE.Vector3();
+        // 불씨
+        const E = 30, emb = new THREE.InstancedMesh(kit.BOX, glowMat(0xff8a2a, 0.9), E); group.add(emb);
+        const ep = Array.from({ length: E }, () => ({ x: rand(-2.5, 2.5), z: rand(-2, 2), ph: Math.random() }));
+        const { m4, q, p, sc, e } = kit.TMP;
+        sig.flap = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            const flap = Math.sin(t * 2.4); sig.flap = flap;
+            wings.forEach(w => { w.arm.rotation.set(0, w.s * -0.5, w.s * (0.1 + flap * 0.3)); w.tip.rotation.z = w.s * flap * 0.25; });
+            coreM.emissiveIntensity = 2 + Math.sin(t * 4) * 0.7;
+            const path = k => { const a = t * 1.6 - k * 0.38; return [Math.cos(a) * (2.0 + Math.sin(k * 0.5) * 0.2), 0.8 + ((t * 0.9 - k * 0.12) % 6 + 6) % 6 + lift, Math.sin(a) * 2.0]; };
+            fd.forEach((m, k) => { const [x, y, z] = path(k); m.position.set(x, y, z); const [x2, y2, z2] = path(k + 0.3); m.lookAt(x2, y2, z2); m.rotateY(Math.PI); });
+            fhorns.forEach((h, i) => { h.position.copy(fd[0].position); h.quaternion.copy(fd[0].quaternion); h.translateX(i ? 0.18 : -0.18); h.translateY(0.25); h.translateZ(-0.25); h.rotateX(-0.6); });
+            ep.forEach((o, i) => { const k = (t * 0.25 + o.ph) % 1; p.set(o.x + Math.sin(t * 2 + i) * 0.3, k * 6.5 + lift, o.z); q.setFromEuler(e.set(t * 3 + i, t, 0)); sc.setScalar(0.1 * (1 - k) + 0.02); emb.setMatrixAt(i, m4.compose(p, q, sc)); });
+            emb.instanceMatrix.needsUpdate = true;
+        });
+    },
+
+    /* 뇌조의 기수 — 깃털 망토와 깃 투구, 등에 펼친 번개 깃털 날개, 손에 번개 창,
+       머리 위를 맴도는 작은 뇌조와 주위에 내리꽂는 번개 */
+    stormRider({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, glowMat, rand, heldSword, bolt } = kit;
+        const { box, attach } = sk(group, kit, stage);
+        stage.setSky('#060a16');
+        const plume = new THREE.MeshStandardMaterial({ color: 0x1a2a6a, roughness: 0.4, metalness: 0.3, emissive: 0x0a1a5a, emissiveIntensity: 0.6 });
+        const gold = new THREE.MeshStandardMaterial({ color: 0xffd23a, roughness: 0.2, metalness: 0.85, emissive: 0x6a4a00, emissiveIntensity: 0.5 });
+        const volt = glowMat(pick(0), 1);
+        // 깃 투구 + 고글
+        const helm = new THREE.Group(); helm.position.y = 0.2;
+        box(plume, 1.38, 0.5, 1.38, 0, 0.5, 0, helm); box(gold, 1.42, 0.12, 1.42, 0, 0.28, 0, helm);
+        box(glowMat(0x9fe8ff, 0.9), 1.0, 0.22, 0.06, 0, 0.05, 0.66, helm);
+        for (let i = 0; i < 5; i++) { const f = box(i % 2 ? volt : gold, 0.12, 0.9 - i * 0.08, 0.12, 0, 1.0, 0.3 - i * 0.22, helm); f.rotation.x = -0.4 - i * 0.15; }
+        attach(dummy.head, helm);
+        // 깃털 망토
+        const cloak = new THREE.Group(); cloak.position.set(0, 0.9, -0.62);
+        const feathers = [];
+        for (let r = 0; r < 4; r++) for (let c2 = 0; c2 < 5; c2++) feathers.push(box(r % 2 ? plume : new THREE.MeshStandardMaterial({ color: 0x2a4ab0, emissive: 0x0a2a8a, emissiveIntensity: 0.5 }), 0.42, 0.7, 0.06, (c2 - 2) * 0.44, -r * 0.55, -r * 0.05, cloak));
+        attach(dummy.torso, cloak);
+        // 번개 창
+        const spear = heldSword(3.2, pick(0), '#ffd23a', 0.2, false); spear.position.set(0, -1.95, 0); spear.rotation.x = Math.PI * 0.62; attach(dummy.armL, spear);
+        // 번개 깃털 날개
+        const wings = [-1, 1].map(s => {
+            const w = new THREE.Group(); w.position.set(s * 0.6, 3.9, -0.9); group.add(w);
+            const fs = Array.from({ length: 7 }, (_, i) => { const f = new THREE.Group(); f.rotation.z = -s * (0.15 + i * 0.22); w.add(f); box(i % 2 ? plume : gold, 0.22, 2.6 - i * 0.15, 0.06, 0, (2.6 - i * 0.15) / 2, 0, f); const edge = box(volt, 0.06, 2.6 - i * 0.15, 0.08, s * 0.12, (2.6 - i * 0.15) / 2, 0, f); return { f, edge, i }; });
+            return { w, s, fs };
+        });
+        // 작은 뇌조
+        const bird = new THREE.Group(); group.add(bird);
+        box(plume, 0.5, 0.4, 0.8, 0, 0, 0, bird); box(gold, 0.18, 0.15, 0.35, 0, 0.05, 0.5, bird);
+        const bw = [-1, 1].map(s => { const g = new THREE.Group(); g.position.x = s * 0.25; bird.add(g); box(plume, 1.0, 0.06, 0.45, s * 0.5, 0, 0, g); box(volt, 1.0, 0.07, 0.06, s * 0.5, 0, 0.22, g); return g; });
+        // 주위 번개
+        const bolts = [0, 1, 2].map(() => { const b = bolt(7, glowMat(pick(1), 1)); b.visible = false; group.add(b); return { b, life: 0 }; });
+        const rings = [0, 1].map(i => { const r = kit.square(2.4 + i * 1.2, 0.06, glowMat(pick(0), 0.6)); r.position.y = 0.06; group.add(r); return r; });
+        sig.strike = 0;
+        let next = 0;
+        tick((t, dt) => {
+            const lift = dummy.root.position.y;
+            wings.forEach(w => { w.w.position.y = 3.9 + lift; w.fs.forEach(o => { o.f.rotation.z = -w.s * (0.15 + o.i * 0.22 + Math.sin(t * 2.4 - o.i * 0.3) * 0.06); o.edge.material.opacity = 0.6 + 0.4 * Math.sin(t * 9 + o.i); }); });
+            feathers.forEach((f, i) => { f.rotation.x = 0.1 + Math.sin(t * 3 - i * 0.4) * 0.06; });
+            const a = t * 1.3; bird.position.set(Math.cos(a) * 2.4, 6.4 + lift + Math.sin(t * 2.6) * 0.3, Math.sin(a) * 2.4); bird.rotation.set(0, -a, Math.sin(t * 4) * 0.2); bw.forEach((g, i) => { g.rotation.z = (i ? -1 : 1) * Math.sin(t * 12) * 0.6; });
+            rings.forEach((r, i) => { r.rotation.y = t * (i ? -0.8 : 0.5); r.scale.setScalar(1 + 0.05 * Math.sin(t * 6 + i)); });
+            if (t > next) {
+                next = t + rand(0.5, 1.2);
+                const o = bolts.find(x => x.life <= 0) || bolts[0]; o.life = 0.18; o.b.visible = true;
+                const ang = rand(0, Math.PI * 2), r = rand(2.2, 3.4);
+                o.b.reshape([Math.cos(ang) * r * 0.6, 9, Math.sin(ang) * r * 0.6], [Math.cos(ang) * r, 0.1, Math.sin(ang) * r], 0.5);
+                sig.strike = 1;
+            }
+            bolts.forEach(o => { if (o.life > 0) { o.life -= dt; o.b.visible = o.life > 0; } });
+            sig.strike = Math.max(0, sig.strike - dt * 4);
+        });
+    },
+
+    /* =================== 🆕 UPDATE 4 칭호 =================== */
+
+    /* 천문학자 김티비 — 별 무늬 모자, 옆에 세운 놋쇠 망원경, 몸 주위를 도는 행성들, 머리 위로 이어지는 별자리 */
+    astronomer({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, glowMat, rand, square } = kit;
+        const { box, attach } = sk(group, kit, stage);
+        stage.setSky('#050818');
+        const navy = new THREE.MeshStandardMaterial({ color: 0x1a2550, roughness: 0.6, emissive: 0x0a1030, emissiveIntensity: 0.4 });
+        const brass = new THREE.MeshStandardMaterial({ color: 0xd9a84a, metalness: 0.85, roughness: 0.25, emissive: 0x3a2a00, emissiveIntensity: 0.3 });
+        // 고깔모자
+        const hat = new THREE.Group(); hat.position.y = 0.62;
+        box(navy, 1.8, 0.12, 1.8, 0, 0, 0, hat); [1.1, 0.8, 0.5, 0.25].forEach((w, i) => box(navy, w, 0.45, w, 0, 0.25 + i * 0.4, -i * 0.08, hat));
+        for (let i = 0; i < 6; i++) box(glowMat(0xffe9a0, 1), 0.08, 0.08, 0.02, rand(-0.45, 0.45), 0.3 + rand(0, 1.2), 0.56, hat);
+        attach(dummy.head, hat);
+        // 망원경 (삼각대 위에서 하늘을 향함)
+        const scope = new THREE.Group(); scope.position.set(-2.2, 0, 0.6); group.add(scope);
+        for (const a of [0, 2.1, 4.2]) { const l = box(brass, 0.08, 2.4, 0.08, Math.cos(a) * 0.35, 1.15, Math.sin(a) * 0.35, scope); l.rotation.set(Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3); }
+        const tube = new THREE.Group(); tube.position.y = 2.4; scope.add(tube);
+        box(brass, 0.32, 0.32, 1.8, 0, 0, 0.2, tube); box(navy, 0.42, 0.42, 0.3, 0, 0, 1.1, tube); box(glowMat(0x9fd8ff, 0.8), 0.3, 0.3, 0.04, 0, 0, 1.26, tube);
+        // 행성들
+        const planets = [[1.9, 0.28, 0xff8a5a, 1.1], [2.6, 0.38, 0x7ac8ff, 0.7], [3.3, 0.48, 0xffd38a, 0.45]].map(([r, s, col, sp], i) => {
+            const g = new THREE.Group(); group.add(g);
+            box(new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.6, roughness: 0.5 }), s, s, s, 0, 0, 0, g);
+            if (i === 2) { const rg = square(s * 2.4, 0.05, glowMat(0xffe9a0, 0.8)); rg.rotation.x = 0.4; g.add(rg); }
+            const orbit = square(r * 2, 0.02, glowMat(pick(1), 0.25)); orbit.rotation.set(0.25, 0, 0.1); group.add(orbit);
+            return { g, r, sp, orbit, ph: i * 2 };
+        });
+        // 별자리 (점과 선이 차례로 켜짐)
+        const stars = [[-1.6, 7.2], [-0.6, 7.9], [0.4, 7.4], [1.4, 8.1], [2.1, 7.2], [0.9, 6.6]].map(([x, y]) => box(glowMat(0xffffff, 1), 0.14, 0.14, 0.14, x, y, -0.8));
+        const lines = [];
+        for (let i = 0; i < stars.length - 1; i++) { const a = stars[i].position, b = stars[i + 1].position; const l = box(glowMat(pick(0), 0.6), Math.hypot(b.x - a.x, b.y - a.y), 0.03, 0.03, (a.x + b.x) / 2, (a.y + b.y) / 2, -0.8); l.rotation.z = Math.atan2(b.y - a.y, b.x - a.x); lines.push(l); }
+        sig.look = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            tube.rotation.set(-0.9 + Math.sin(t * 0.4) * 0.1, Math.sin(t * 0.3) * 0.3, 0);
+            planets.forEach(p2 => { const a = t * p2.sp + p2.ph; p2.g.position.set(Math.cos(a) * p2.r, 3.2 + lift + Math.sin(a) * p2.r * 0.25, Math.sin(a) * p2.r); p2.g.rotation.y = t; p2.orbit.position.y = 3.2 + lift; });
+            const k = (t * 0.35) % 1.4;
+            stars.forEach((s, i) => { s.position.y = s.userData.y0 ?? (s.userData.y0 = s.position.y); s.position.y = s.userData.y0 + lift; s.material.opacity = Math.min(1, Math.max(0.15, (k * 6 - i))); s.scale.setScalar(0.14 * (1 + 0.4 * Math.sin(t * 5 + i))); });
+            lines.forEach((l, i) => { l.position.y = (stars[i].position.y + stars[i + 1].position.y) / 2; l.material.opacity = Math.max(0, Math.min(0.7, k * 6 - i - 1)); });
+            sig.look = Math.sin(t * 0.4);
+        });
+    },
+
+    /* 그림자 검객 김건우 — 검은 목도리를 휘날리며 칼을 쥔 검객, 뒤에 늘어선 그림자 분신 셋,
+       주위를 돌다 앞을 향해 정렬하는 그림자 칼날들, 발밑에서 피어오르는 그림자 연기 */
+    shadowBlade({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, glowMat, rand, ghost, heldSword, sword } = kit;
+        const { box, attach } = sk(group, kit, stage);
+        stage.setSky('#06040c');
+        const black = new THREE.MeshStandardMaterial({ color: 0x0c0a14, roughness: 0.7 });
+        // 목도리 (뒤로 길게 휘날림)
+        const scarf = new THREE.Group(); scarf.position.set(0, -0.55, 0);
+        box(black, 1.4, 0.35, 1.4, 0, 0, 0, scarf);
+        const tails = Array.from({ length: 8 }, (_, i) => box(i % 2 ? black : glowMat(pick(0), 0.5), 0.35, 0.22, 0.5, 0.35, 0, -0.75 - i * 0.48, scarf));
+        attach(dummy.head, scarf);
+        const blade = heldSword(2.6, null, pick(0), 0.24, true); blade.position.set(0, -1.95, 0); blade.rotation.x = Math.PI * 0.58; attach(dummy.armR, blade);
+        // 그림자 분신
+        const clones = [-1, 1, 0].map((s, i) => { const g = ghost(pick(0), 0.18); g.position.set(s * 1.5, 0, -1.2 - i * 0.6); group.add(g); return g; });
+        // 그림자 칼날 고리
+        const blades = Array.from({ length: 8 }, (_, i) => { const s = sword(1.4, pick(0), '#000000', 0.2); group.add(s); return { s, a: i / 8 * Math.PI * 2 }; });
+        // 연기
+        const N = 26, smoke = new THREE.InstancedMesh(kit.BOX, glowMat(pick(1), 0.35), N); group.add(smoke);
+        const sp = Array.from({ length: N }, () => ({ a: rand(0, 6.28), r: rand(0.6, 2.2), ph: Math.random() }));
+        const { m4, q, p, sc, e } = kit.TMP;
+        sig.draw = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            tails.forEach((m, i) => { m.position.x = 0.35 + Math.sin(t * 5 - i * 0.6) * 0.12 * i; m.position.y = Math.sin(t * 4 - i * 0.5) * 0.06 * i; });
+            const c = (t % 4.5) / 4.5, aim = c > 0.6 ? Math.min(1, (c - 0.6) / 0.15) * (c > 0.9 ? Math.max(0, 1 - (c - 0.9) / 0.1) : 1) : 0;
+            sig.draw = aim;
+            blades.forEach((b, i) => {
+                const a = b.a + t * 0.9;
+                const ox = Math.cos(a) * 2.2, oz = Math.sin(a) * 2.2, oy = 2.8 + Math.sin(t * 2 + i) * 0.3;
+                const tx = (i - 3.5) * 0.45, ty = 4.6 + Math.abs(i - 3.5) * -0.15, tz = 1.4;
+                b.s.position.set(ox + (tx - ox) * aim, oy + (ty - oy) * aim + lift, oz + (tz - oz) * aim);
+                b.s.rotation.set(aim * Math.PI / 2, aim ? 0 : -a, aim ? 0 : Math.PI / 2);
+            });
+            clones.forEach((g, i) => { g.position.y = lift + Math.sin(t * 1.5 + i) * 0.1; g.children.forEach(m => { m.material.opacity = 0.12 + 0.1 * Math.sin(t * 2 + i * 2); }); });
+            sp.forEach((o, i) => { const k = (t * 0.3 + o.ph) % 1; p.set(Math.cos(o.a + t * 0.2) * o.r, k * 2.2, Math.sin(o.a + t * 0.2) * o.r); q.setFromEuler(e.set(t + i, t * 0.5, 0)); sc.setScalar(0.35 * (1 - k) + 0.05); smoke.setMatrixAt(i, m4.compose(p, q, sc)); });
+            smoke.instanceMatrix.needsUpdate = true;
+        });
+    },
+
+    /* 별을 벼리는 박지성 — 대장장이 앞치마와 큰 망치, 옆 모루 위에서 달궈지는 별,
+       망치가 내려칠 때마다 불꽃이 튀고, 다 벼린 별은 하늘로 떠오름 */
+    starForge({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, glowMat, rand } = kit;
+        const { box, attach } = sk(group, kit, stage);
+        stage.setSky('#120804');
+        const leather = new THREE.MeshStandardMaterial({ color: 0x5a3a20, roughness: 0.8 });
+        const iron = new THREE.MeshStandardMaterial({ color: 0x3a3a44, metalness: 0.85, roughness: 0.3 });
+        const apron = new THREE.Group(); box(leather, 1.9, 1.9, 0.1, 0, -0.15, 0.58, apron); box(iron, 0.3, 0.3, 0.06, 0, 0.4, 0.64, apron); attach(dummy.torso, apron);
+        // 망치
+        const hammer = new THREE.Group(); hammer.position.set(0, -1.95, 0); hammer.rotation.x = Math.PI * 0.55;
+        box(leather, 0.16, 2.0, 0.16, 0, 0.9, 0, hammer); box(iron, 0.6, 0.5, 0.95, 0, 2.0, 0, hammer); box(glowMat(pick(0), 0.8), 0.62, 0.08, 0.97, 0, 1.85, 0, hammer);
+        attach(dummy.armR, hammer);
+        // 모루 + 달궈지는 별
+        const anvil = new THREE.Group(); anvil.position.set(1.7, 0, 1.3); anvil.rotation.y = -0.6; group.add(anvil);
+        box(iron, 0.6, 0.7, 0.6, 0, 0.35, 0, anvil); box(iron, 0.9, 0.25, 0.5, 0, 0.8, 0, anvil); box(iron, 0.4, 0.3, 0.45, 0.6, 0.85, 0, anvil);
+        const starM = new THREE.MeshStandardMaterial({ color: 0xfff0b0, emissive: pick(0), emissiveIntensity: 2.4 });
+        const star = new THREE.Group(); star.position.y = 1.15; anvil.add(star);
+        box(starM, 0.36, 0.36, 0.12, 0, 0, 0, star); box(starM, 0.36, 0.36, 0.12, 0, 0, 0, star).rotation.z = Math.PI / 4;
+        // 떠오르는 완성된 별들
+        const risen = Array.from({ length: 5 }, (_, i) => { const g = new THREE.Group(); box(glowMat(0xfff0b0, 1), 0.3, 0.3, 0.05, 0, 0, 0, g); box(glowMat(pick(0), 0.9), 0.3, 0.3, 0.05, 0, 0, 0, g).rotation.z = Math.PI / 4; group.add(g); return { g, ph: i / 5 }; });
+        // 불꽃
+        const N = 40, spark = new THREE.InstancedMesh(kit.BOX, glowMat(0xffc24a, 1), N); group.add(spark);
+        const sp = Array.from({ length: N }, () => ({ v: new THREE.Vector3(rand(-1, 1), rand(1, 2.5), rand(-1, 1)) }));
+        const { m4, q, p, sc, e } = kit.TMP;
+        const forge = kit.square(3.2, 0.08, glowMat(pick(0), 0.6)); forge.position.y = 0.06; group.add(forge);
+        sig.strike = 0;
+        let sparkT = 9;
+        tick((t, dt) => {
+            const lift = dummy.root.position.y;
+            const c = (t % 1.6) / 1.6;
+            sig.strike = c < 0.6 ? c / 0.6 : Math.max(0, 1 - (c - 0.6) / 0.1);
+            if (c > 0.6 && c - dt / 1.6 <= 0.6) sparkT = 0;
+            sparkT += dt;
+            starM.emissiveIntensity = 2 + Math.max(0, 1 - sparkT * 3) * 3; star.rotation.z = t * 0.5;
+            sp.forEach((o, i) => { const k = Math.min(1, sparkT / 0.8); p.set(anvil.position.x + o.v.x * k * 1.6, 1.2 + o.v.y * k - 4 * k * k + lift * 0, anvil.position.z + o.v.z * k * 1.6); sc.setScalar(k < 1 ? 0.08 * (1 - k) : 0); q.identity(); spark.setMatrixAt(i, m4.compose(p, q, sc)); });
+            spark.instanceMatrix.needsUpdate = true;
+            risen.forEach((r, i) => { const k = (t * 0.12 + r.ph) % 1; r.g.position.set(1.7 + Math.sin(t + i) * 0.6 * k, 1.4 + k * 7 + lift, 1.3 - k * 2); r.g.rotation.z = t * 2 + i; r.g.scale.setScalar(0.6 + k * 1.4); r.g.children.forEach(m => { m.material.opacity = Math.sin(k * Math.PI); }); });
+            forge.rotation.y = t * 0.2;
+        });
+    },
+
+    /* 파도를 부르는 김가은 — 조개 왕관, 몸을 휘감아 오르는 물결 고리, 등 뒤에서 솟아오르는 물기둥,
+       주위를 헤엄치는 물고기 떼와 떠오르는 물방울 */
+    tideCaller({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, glowMat, rand, square } = kit;
+        const { box, attach } = sk(group, kit, stage);
+        stage.setSky('#03101c');
+        const water = new THREE.MeshStandardMaterial({ color: 0x3ac8ff, transparent: true, opacity: 0.55, roughness: 0.05, metalness: 0.1, emissive: 0x0a5a8a, emissiveIntensity: 0.6 });
+        const shell = new THREE.MeshStandardMaterial({ color: 0xffd8e8, roughness: 0.4, emissive: 0x6a3a4a, emissiveIntensity: 0.3 });
+        const crown = new THREE.Group(); crown.position.y = 0.72;
+        for (let i = 0; i < 5; i++) { const s = box(shell, 0.3, 0.5 - Math.abs(i - 2) * 0.08, 0.08, (i - 2) * 0.26, 0.2, 0.6, crown); s.rotation.z = (i - 2) * -0.15; }
+        box(glowMat(0xffffff, 0.9), 0.14, 0.14, 0.14, 0, 0.15, 0.7, crown);
+        attach(dummy.head, crown);
+        // 휘감아 오르는 물결
+        const helix = Array.from({ length: 36 }, (_, i) => box(i % 4 ? water : glowMat(pick(0), 0.8), 0.32, 0.18, 0.32, 0, 0, 0));
+        // 물기둥 다섯
+        const pillars = [-2, -1, 0, 1, 2].map((k, i) => { const g = new THREE.Group(); g.position.set(k * 1.1, 0, -1.8 - Math.abs(k) * 0.3); group.add(g); const segs = Array.from({ length: 10 }, (_, j) => box(j % 3 ? water : glowMat(pick(1), 0.6), 0.6 - j * 0.03, 0.55, 0.6 - j * 0.03, 0, j * 0.5 + 0.25, 0, g)); return { g, segs, ph: i * 0.7 }; });
+        // 물고기
+        const fish = Array.from({ length: 7 }, (_, i) => { const g = new THREE.Group(); group.add(g); const col = [0xffa04a, 0x7af0ff, 0xff7ab6][i % 3]; const m = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.5 }); box(m, 0.18, 0.2, 0.4, 0, 0, 0, g); const tail = box(m, 0.04, 0.22, 0.18, 0, 0, -0.28, g); return { g, tail, a: i / 7 * Math.PI * 2, r: 2 + (i % 3) * 0.5, y: 1.2 + (i % 4) * 1.1, sp: 0.7 + (i % 3) * 0.2 }; });
+        const N = 30, bub = new THREE.InstancedMesh(kit.BOX, glowMat(0xd8f8ff, 0.8), N); group.add(bub);
+        const bp = Array.from({ length: N }, () => ({ x: rand(-2.6, 2.6), z: rand(-2, 2), ph: Math.random() }));
+        const { m4, q, p, sc, e } = kit.TMP;
+        sig.call = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            helix.forEach((m, i) => { const k = i / helix.length, a = t * 2 + k * Math.PI * 4; m.position.set(Math.cos(a) * (1.5 + k * 0.3), 0.3 + k * 5.6 + lift, Math.sin(a) * (1.5 + k * 0.3)); m.rotation.y = -a; });
+            const call = (Math.sin(t * 0.9) + 1) / 2; sig.call = call;
+            pillars.forEach(pl => { pl.segs.forEach((s, j) => { const h = Math.max(0, call * 10 - j - Math.abs(pl.g.position.x)); s.visible = h > 0; s.position.x = Math.sin(t * 3 + j * 0.6 + pl.ph) * 0.12 * j * 0.3; s.scale.y = Math.min(1, h) * 0.55; }); });
+            fish.forEach((f, i) => { const a = f.a + t * f.sp; f.g.position.set(Math.cos(a) * f.r, f.y + lift + Math.sin(t * 2 + i) * 0.2, Math.sin(a) * f.r); f.g.rotation.y = -a; f.tail.rotation.y = Math.sin(t * 12 + i) * 0.5; });
+            bp.forEach((o, i) => { const k = (t * 0.25 + o.ph) % 1; p.set(o.x + Math.sin(t * 2 + i) * 0.15, k * 6.5 + lift, o.z); q.identity(); sc.setScalar(0.09 * (0.5 + k)); bub.setMatrixAt(i, m4.compose(p, q, sc)); });
+            bub.instanceMatrix.needsUpdate = true;
+        });
+    },
+
+    /* 시계탑의 주인 공병은 — 실크해트와 외눈 안경, 등 뒤의 거대한 시계(초침이 빙빙),
+       맞물려 도는 톱니바퀴들과 흔들리는 진자, 흩날리는 모래 시간 */
+    clockTower({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, glowMat, rand, square } = kit;
+        const { box, attach } = sk(group, kit, stage);
+        stage.setSky('#0c0a06');
+        const brass = new THREE.MeshStandardMaterial({ color: 0xd9a84a, metalness: 0.9, roughness: 0.25, emissive: 0x3a2a00, emissiveIntensity: 0.35 });
+        const black = new THREE.MeshStandardMaterial({ color: 0x14110c, roughness: 0.5 });
+        const face = new THREE.MeshStandardMaterial({ color: 0xf2e6c8, roughness: 0.5, emissive: 0x6a5a30, emissiveIntensity: 0.35 });
+        // 실크해트 + 외눈 안경
+        const hat = new THREE.Group(); hat.position.y = 0.62;
+        box(black, 1.7, 0.1, 1.7, 0, 0, 0, hat); box(black, 1.05, 1.0, 1.05, 0, 0.55, 0, hat); box(brass, 1.08, 0.15, 1.08, 0, 0.18, 0, hat);
+        attach(dummy.head, hat);
+        const mono = new THREE.Group(); box(brass, 0.36, 0.36, 0.04, 0.3, 0.1, 0.64, mono); box(glowMat(0xfff3c0, 0.6), 0.26, 0.26, 0.05, 0.3, 0.1, 0.65, mono); attach(dummy.head, mono);
+        // 등 뒤 큰 시계
+        const clock = new THREE.Group(); clock.position.set(0, 4.4, -1.8); group.add(clock);
+        const R = 2.6;
+        for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2; box(brass, 0.5, 0.2, 0.2, Math.cos(a) * R, Math.sin(a) * R, 0, clock).rotation.z = a + Math.PI / 2; }
+        for (let r = 0; r < 5; r++) box(face, (R - 0.15) * 2 * Math.sin(Math.acos((r - 2) / 2.6)), (R * 2) / 5.2, 0.05, 0, (r - 2) * (R * 2 / 5.2), -0.05, clock);
+        for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; box(i % 3 ? black : glowMat(pick(0), 1), 0.12, i % 3 ? 0.3 : 0.5, 0.06, Math.sin(a) * (R - 0.45), Math.cos(a) * (R - 0.45), 0.02, clock).rotation.z = -a; }
+        const hands = [[1.4, 0.14], [2.0, 0.09], [2.2, 0.04]].map(([l, w], i) => { const h = new THREE.Group(); h.position.z = 0.06 + i * 0.02; clock.add(h); box(i === 2 ? glowMat(pick(1), 1) : black, w, l, 0.03, 0, l / 2 - 0.15, 0, h); return h; });
+        box(brass, 0.3, 0.3, 0.1, 0, 0, 0.12, clock);
+        // 진자
+        const pend = new THREE.Group(); pend.position.set(0, -R, 0); clock.add(pend);
+        box(brass, 0.06, 1.6, 0.06, 0, -0.8, 0, pend); box(brass, 0.55, 0.55, 0.12, 0, -1.7, 0, pend).rotation.z = Math.PI / 4;
+        // 톱니바퀴
+        const gear = (r, teeth, mat) => { const g = new THREE.Group(); box(mat, r * 1.4, r * 1.4, 0.12, 0, 0, 0, g).rotation.z = Math.PI / 4; box(mat, r * 1.4, r * 1.4, 0.12, 0, 0, 0, g); for (let i = 0; i < teeth; i++) { const a = i / teeth * Math.PI * 2; box(mat, 0.18, 0.22, 0.12, Math.cos(a) * r, Math.sin(a) * r, 0, g).rotation.z = a; } box(black, r * 0.4, r * 0.4, 0.14, 0, 0, 0.02, g); return g; };
+        const gears = [[2.6, 6.6, -1.2, 0.7, 10, 1], [-2.7, 6.1, -1.0, 0.55, 8, -1.3], [-3.0, 2.2, -0.6, 0.8, 12, 0.8], [2.9, 1.8, -0.4, 0.5, 8, -1.5]].map(([x, y, z, r, n, sp]) => { const g = gear(r, n, brass); g.position.set(x, y, z); group.add(g); return { g, sp, y }; });
+        // 모래 시간
+        const N = 30, sand = new THREE.InstancedMesh(kit.BOX, glowMat(0xffd98a, 0.9), N); group.add(sand);
+        const sp = Array.from({ length: N }, () => ({ a: rand(0, 6.28), r: rand(1.2, 3), ph: Math.random() }));
+        const { m4, q, p, sc, e } = kit.TMP;
+        sig.tock = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            clock.position.y = 4.4 + lift;
+            hands[0].rotation.z = -t * 0.08; hands[1].rotation.z = -t * 0.6; hands[2].rotation.z = -Math.floor(t * 2) * (Math.PI / 30);
+            pend.rotation.z = Math.sin(t * 2.4) * 0.35; sig.tock = Math.sin(t * 2.4);
+            gears.forEach(o => { o.g.rotation.z = t * o.sp; o.g.position.y = o.y + lift; });
+            sp.forEach((o, i) => { const k = (t * 0.2 + o.ph) % 1; p.set(Math.cos(o.a + k * 3) * o.r, 6 - k * 6 + lift, Math.sin(o.a + k * 3) * o.r); q.identity(); sc.setScalar(0.06); sand.setMatrixAt(i, m4.compose(p, q, sc)); });
+            sand.instanceMatrix.needsUpdate = true;
+        });
+    },
+
+    /* 일식의 김건우 — 등 뒤에 떠오른 검은 태양과 불꽃 코로나, 한 바퀴씩 휘어 솟는 홍염,
+       어둠의 망토와 손 위에 띄운 작은 일식 구슬, 주위를 도는 검은 파편 */
+    eclipse({ group, tick, pick, dummy, kit, stage, sig }) {
+        const { THREE, glowMat, rand, square } = kit;
+        const { box, attach } = sk(group, kit, stage);
+        stage.setSky('#030202');
+        const dark = new THREE.MeshStandardMaterial({ color: 0x0a0806, roughness: 0.4, metalness: 0.4, emissive: 0x1a0a00, emissiveIntensity: 0.4 });
+        const gold = new THREE.MeshStandardMaterial({ color: 0xffb03a, metalness: 0.9, roughness: 0.2, emissive: 0x6a3a00, emissiveIntensity: 0.6 });
+        // 왕관 (해살 모양)
+        const crown = new THREE.Group(); crown.position.y = 0.66;
+        box(gold, 1.3, 0.18, 1.3, 0, 0, 0, crown);
+        for (let i = 0; i < 9; i++) { const x = (i - 4) * 0.15; const h = 0.3 + (4 - Math.abs(i - 4)) * 0.1; box(gold, 0.08, h, 0.08, x, h / 2 + 0.08, 0.62, crown); }
+        box(new THREE.MeshBasicMaterial({ color: 0x000000 }), 0.22, 0.22, 0.05, 0, 0.35, 0.66, crown);
+        attach(dummy.head, crown);
+        // 망토
+        const cape = new THREE.Group(); cape.position.set(0, 0.95, -0.62);
+        const capeSegs = Array.from({ length: 6 }, (_, i) => { const g = new THREE.Group(); g.position.y = -i * 0.55; cape.add(g); box(dark, 2.4, 0.56, 0.08, 0, 0, 0, g); box(glowMat(pick(0), 0.4), 2.42, 0.04, 0.09, 0, -0.26, 0, g); return g; });
+        attach(dummy.torso, cape);
+        // 검은 태양 + 코로나 + 홍염
+        const sun = new THREE.Group(); sun.position.set(0, 5.6, -2.0); group.add(sun);
+        const disc = new THREE.Mesh(new THREE.CircleGeometry(1.7, 40), new THREE.MeshBasicMaterial({ color: 0x000000 })); disc.position.z = 0.05; sun.add(disc);
+        const halo = new THREE.Mesh(new THREE.CircleGeometry(2.05, 40), glowMat(0xffe0a0, 0.95)); sun.add(halo);
+        const halo2 = new THREE.Mesh(new THREE.CircleGeometry(2.8, 40), glowMat(pick(0), 0.35)); halo2.position.z = -0.05; sun.add(halo2);
+        const rays = Array.from({ length: 28 }, (_, i) => { const a = i / 28 * Math.PI * 2; const m = box(glowMat(i % 2 ? pick(0) : 0xffe0a0, 0.6), 0.1, 1.2, 0.02, Math.cos(a) * 2.5, Math.sin(a) * 2.5, -0.02, sun); m.rotation.z = a - Math.PI / 2; return { m, a }; });
+        const prom = Array.from({ length: 3 }, (_, k) => Array.from({ length: 12 }, (_, i) => box(glowMat(pick(1), 0.8), 0.16, 0.16, 0.02, 0, 0, 0.02, sun)));
+        // 손 위 일식 구슬
+        const orb = new THREE.Group(); orb.position.set(0, -2.3, 0.2); attach(dummy.armR, orb);
+        box(new THREE.MeshBasicMaterial({ color: 0x000000 }), 0.3, 0.3, 0.3, 0, 0, 0, orb);
+        const orbHalo = box(glowMat(0xffc24a, 0.8), 0.45, 0.45, 0.45, 0, 0, 0, orb);
+        // 검은 파편
+        const shards = Array.from({ length: 14 }, (_, i) => ({ m: box(i % 3 ? dark : glowMat(pick(0), 0.9), 0.2, 0.36, 0.2, 0, 0, 0), a: i / 14 * Math.PI * 2, r: 2.2 + (i % 3) * 0.4, y: 0.8 + (i % 5) * 0.9 }));
+        sig.flare = 0;
+        tick(t => {
+            const lift = dummy.root.position.y;
+            sun.position.y = 5.6 + lift;
+            halo.scale.setScalar(1 + Math.sin(t * 2) * 0.03); halo2.scale.setScalar(1 + Math.sin(t * 1.3) * 0.08);
+            rays.forEach((r, i) => { const l = 1 + 0.5 * Math.sin(t * 3 + i * 1.7); r.m.scale.y = 1.2 * l; r.m.position.set(Math.cos(r.a) * (2.1 + 0.6 * l), Math.sin(r.a) * (2.1 + 0.6 * l), -0.02); });
+            prom.forEach((arc, k) => { const base = t * 0.3 + k * 2.1, ph = ((t * 0.5 + k / 3) % 1); arc.forEach((m, i) => { const u = i / 11, a = base + u * 0.9, h = Math.sin(u * Math.PI) * 1.2 * Math.sin(ph * Math.PI); m.position.set(Math.cos(a) * (1.8 + h), Math.sin(a) * (1.8 + h), 0.02); m.material.opacity = 0.8 * Math.sin(ph * Math.PI); }); });
+            capeSegs.forEach((g, i) => { g.rotation.x = 0.1 + Math.sin(t * 2 - i * 0.6) * 0.05 * i; });
+            orb.rotation.set(t, t * 1.3, 0); orbHalo.scale.setScalar(0.45 * (1 + Math.sin(t * 5) * 0.15) / 0.45);
+            shards.forEach((s, i) => { const a = s.a + t * 0.7; s.m.position.set(Math.cos(a) * s.r, s.y + lift + Math.sin(t * 2 + i) * 0.2, Math.sin(a) * s.r); s.m.rotation.set(t * 2 + i, t, 0.4); });
+            sig.flare = Math.sin(t * 0.8);
         });
     },
 
