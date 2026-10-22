@@ -1,9 +1,9 @@
-import { AURA_DATA } from './auras.js?v=65';
-import { CRAFT_ITEMS } from './craftItems.js?v=65';
-import { createMusicPlayer, coverArt } from './music.js?v=65';
-import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=65';
-import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=65';
-import { createDungeon, raidInfo, bossesWeakTo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=65';
+import { AURA_DATA } from './auras.js?v=66';
+import { CRAFT_ITEMS } from './craftItems.js?v=66';
+import { createMusicPlayer, coverArt } from './music.js?v=66';
+import { PETS, PET_BY_ID, EGGS, EGG_BY_ID, STAR_MAX, starMult } from './petsData.js?v=66';
+import { BIOMES, BIOME_BY_ID, BIOME_CHECK_MS, rollBiome, randomBiome, createBiomeFx } from './biomes.js?v=66';
+import { createDungeon, raidInfo, bossesWeakTo, TICKET_PRICE as DUNGEON_TICKET_PRICE } from './dungeon.js?v=66';
 
 /* =========================================================
    📦 게임 데이터
@@ -1304,7 +1304,7 @@ function attachGearPreviews(root = ui.craftGrid) {
     if (gearPreviews) { gearPreviews.attach(root); return; }
     if (gearPreviewLoading || !stage3d) return;
     gearPreviewLoading = true;
-    import('./gearPreview.js?v=65').then(({ createGearPreviews }) => {
+    import('./gearPreview.js?v=66').then(({ createGearPreviews }) => {
         gearPreviews = createGearPreviews(stage3d.getRenderer());
         if (gearPreviewRoot?.isConnected && gearPreviewRoot.offsetParent) gearPreviews.attach(gearPreviewRoot);
     }).catch(err => console.warn('장비 미리보기를 켤 수 없어요', err));
@@ -4088,6 +4088,20 @@ function startStarfield2D() {
 
 let stage3d = null;
 const nametag = $('nametag');
+// 머리 위 이름표가 위쪽 글자(안내문/방금 결과)와 겹치면: 안내문이면 안내문을, 결과면 이름표를 잠깐 숨김
+let tagCheckN = 0;
+function tagCollide(x, y) {
+    if (++tagCheckN % 8) return;
+    const box = $('aura-display')?.firstElementChild;
+    const hint = box?.classList.contains('stage-hint');
+    let hit = false;
+    if (box && !nametag.classList.contains('hidden')) {
+        const r = box.getBoundingClientRect(), w = nametag.offsetWidth, h = nametag.offsetHeight;
+        hit = r.height > 0 && x - w / 2 < r.right - 4 && x + w / 2 > r.left + 4 && y - h < r.bottom - 2 && y > r.top + 2;
+    }
+    box?.classList.toggle('tag-over', hit && hint);
+    nametag.classList.toggle('collide', hit && !hint);
+}
 
 // 화질 설정
 const QUALITY_KEY = 'js_rng_quality';
@@ -4152,14 +4166,14 @@ function applyEquippedAura() {
     }
 }
 
-import('./aura3d.js?v=65')
+import('./aura3d.js?v=66')
     .then(({ createAuraStage }) => {
         stage3d = createAuraStage($('stage3d'), {
             getStageRect: () => {
                 const r = ui.stage.getBoundingClientRect();
                 return r.height > 0 ? r : null;
             },
-            onLabel: (x, y) => { nametag.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`; }
+            onLabel: (x, y) => { nametag.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`; tagCollide(x, y); }
         });
         applyQuality();
         applyFxMode();
@@ -4301,3 +4315,29 @@ if (gameState.rolls > 0) {
     $('lobby-save-info').textContent = `${fmt(gameState.rolls)} ROLLS`;
 }
 playBgm('lobby');
+
+/* ---------- 📱 휴대폰 뒤로가기 / Esc: 게임에서 튕겨 나가지 않고 맨 위 창부터 닫기 ---------- */
+(() => {
+    const topLayer = () => {
+        const dlg = [...document.querySelectorAll('.dialog-backdrop:not(.hidden)')].pop();
+        if (dlg) return () => { const b = dlg.querySelector('[data-ad="close"], [data-qty="cancel"], [data-ask="cancel"], [class*="close"]'); b ? b.click() : dlg.classList.add('hidden'); };
+        const chest = document.querySelector('#chest-open:not(.hidden)');
+        if (chest) return () => (chest.querySelector('[data-co="ok"]') || chest).click();
+        const gr = document.querySelector('#gacha-result:not(.hidden)');
+        if (gr) return () => (gr.querySelector('.gr-ok') || gr).click();
+        if (!$('dock-menu').classList.contains('hidden')) return () => $('menu-btn').click();
+        const sh = [...document.querySelectorAll('.sheet-backdrop:not(.hidden):not(.closing)')].pop();
+        if (sh) return () => closeSheet(sh.id);
+        return null;
+    };
+    let armed = false;
+    try { history.pushState({ jsrng: 1 }, ''); } catch (e) {}
+    window.addEventListener('popstate', () => {
+        const busy = document.body.classList.contains('cine-on') || document.body.classList.contains('in-dng');
+        const close = busy ? null : topLayer();
+        if (busy || close) { close?.(); armed = false; try { history.pushState({ jsrng: 1 }, ''); } catch (e) {} return; }
+        if (!armed) { armed = true; toast('한 번 더 누르면 게임에서 나가요'); try { history.pushState({ jsrng: 1 }, ''); } catch (e) {} setTimeout(() => { armed = false; }, 2000); return; }
+        history.back();
+    });
+    window.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.body.classList.contains('cine-on')) topLayer()?.(); });
+})();

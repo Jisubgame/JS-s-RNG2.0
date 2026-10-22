@@ -607,7 +607,7 @@ export function createDungeon(api) {
         wireNet();
         api.setBusy(true);
         buildBattleUI();
-        import('./boss3d.js?v=65').then(({ createBossScene }) => {
+        import('./boss3d.js?v=66').then(({ createBossScene }) => {
             if (!B || B.net !== net) return;
             B.scene = createBossScene(B.bd.id);
             api.setTakeover(B.scene);

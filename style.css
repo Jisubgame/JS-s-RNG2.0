@@ -1823,10 +1823,10 @@ body.cine-on #biome-fx { opacity: 0; }
 #attend-panel .at-day { min-height: 74px; padding: 5px 2px; }
 #attend-panel .at-day.big { grid-column: auto; flex-direction: column; gap: 3px; }
 #attend-panel .at-day.final { grid-column: 1 / -1; flex-direction: row; gap: 14px; min-height: 84px; border-color: #ffd23a; background: linear-gradient(90deg, rgba(255, 210, 58, 0.16), rgba(176, 38, 255, 0.14), rgba(0, 229, 255, 0.12)); }
-#attend-panel .at-num { font-size: 8.5px; letter-spacing: 0.08em; }
+#attend-panel .at-num { font-size: 9.5px; letter-spacing: 0.08em; }
 #attend-panel .at-items { gap: 3px; }
 #attend-panel .at-rw { font-size: 10px; }
-#attend-panel .at-rw small { font-size: 8px; }
+#attend-panel .at-rw small { font-size: 9px; }
 #attend-panel .at-rw .vial { transform: scale(0.62); margin: -4px 0; }
 #attend-panel .at-rw .coin { width: 14px; height: 14px; }
 #attend-panel .at-day:not(.final) .at-rw small { display: none; }
@@ -1959,7 +1959,7 @@ body.cine-on #biome-fx { opacity: 0; }
 .bm-sign { font-family: var(--display); font-size: 34px; letter-spacing: 0.3em; color: #5a3a5a; border: 2px solid #5a3a5a; padding: 6px 18px 6px 28px; transform: rotate(-4deg); }
 .bm-next { font-size: 13px; color: var(--muted); }
 .bm-next b { color: #ff7ae0; font-weight: 400; }
-.ps-cell .at-rw small { display: block !important; font-size: 8.5px; color: var(--muted); max-width: 100%; }
+.ps-cell .at-rw small { display: block !important; font-size: 9px; color: var(--muted); max-width: 100%; }
 
 /* =========================================================
    ✨ UI v2 — 게임 HUD 스타일 (모서리 깎인 패널, 금속 테두리, 빛나는 강조)
@@ -2008,7 +2008,7 @@ body.cine-on #biome-fx { opacity: 0; }
 .readout::after { content: ''; position: absolute; left: 0; right: 14px; bottom: 0; height: 2px; background: linear-gradient(90deg, var(--aura), transparent); }
 .profile-btn { margin-right: 0; clip-path: var(--chamfer); --cut: 7px; border-width: 2px; }
 .readout-item { gap: 1px; min-width: 0; }
-.readout-label { font-size: 8.5px; letter-spacing: 0.26em; color: #8f8fbf; display: flex; align-items: center; gap: 4px; }
+.readout-label { font-size: 9.5px; letter-spacing: 0.26em; color: #8f8fbf; display: flex; align-items: center; gap: 4px; }
 .readout-item:nth-of-type(1) .readout-label::before { content: ''; width: 8px; height: 8px; background: #b9a8ff; transform: rotate(45deg); box-shadow: 0 0 6px #b9a8ff; }
 .readout-item:nth-of-type(2) .readout-label::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff2a8, #e8a420 70%); box-shadow: 0 0 6px #ffd24a; }
 .readout-val { font-size: 16px; font-weight: 700; text-shadow: 0 0 10px rgba(255, 255, 255, 0.15); }
@@ -2815,3 +2815,16 @@ body.in-dng #biome-banner, body.in-dng #border-glow-overlay, body.in-dng #rare-b
 #cine.tier-billion .cine-chance { color: #ffe9a0; letter-spacing: 0.2em; }
 #cine.tier-billion .cine-title.show::before { content: ''; position: absolute; left: 50%; top: 50%; width: 120vmax; height: 120vmax; margin: -60vmax 0 0 -60vmax; z-index: -1; opacity: 0.35;
     background: repeating-conic-gradient(from 0deg, rgba(255, 210, 58, 0.35) 0 4deg, transparent 4deg 14deg); -webkit-mask: radial-gradient(circle, #000 0, transparent 45%); mask: radial-gradient(circle, #000 0, transparent 45%); animation: co-rays 30s linear infinite; }
+
+/* ---------- QA 다듬기 (v66) ---------- */
+/* 이름표 ↔ 위쪽 글자 겹침 방지 */
+#nametag.collide { opacity: 0; }
+.stage-hint { transition: opacity 0.3s; }
+.stage-hint.tag-over { opacity: 0; }
+/* 배율 줄: 캐릭터·파티클 위에서도 읽히게 반투명 받침 */
+.stats { left: 50%; right: auto; transform: translateX(-50%); padding: 5px 16px; background: linear-gradient(90deg, transparent, rgba(5, 4, 14, 0.62) 18%, rgba(5, 4, 14, 0.62) 82%, transparent); }
+/* 작은 글씨 조금 키움 (출석·패스·상단 숫자 라벨) / 유튜브 미니 플레이어 버튼 누르는 면적 넓힘 */
+.yt-pip-x { position: relative; }
+.yt-pip-x::after { content: ''; position: absolute; inset: -12px -8px; }
+/* 숫자 흔들림 방지 */
+#rolls-count, #jc-count, .readout b, .readout-val { font-variant-numeric: tabular-nums; }
